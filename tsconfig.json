@@ -8,13 +8,14 @@
         "jsx": "react",
         "declaration": true,
         "rootDir": "./src",
-        "experimentalDecorators": true,
-        "allowJs": true
+        "experimentalDecorators": true
     },
     "include": [
       "./src/**/*"
     ],
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "server.js",
+        "webpack.config.js"
     ]
 }

@@ -5,39 +5,40 @@ const path = require('path');
 module.exports = {
     entry: {
         bundle: [
-            'webpack-dev-middleware/client',
+            'webpack-hot-middleware/client',
             'webpack/hot/only-dev-server',
-            'react-hot-loader/patch',
             'lodash',
-            path.join(__dirname, './src/index.tsx')
+            path.join(__dirname, 'src/index.tsx')
         ]
     },
 
     output: {
-        path: path.join(__dirname, './dist'),
+        path: path.join(__dirname, 'dist'),
         filename: '[name].js',
         publicPath: '/'
     },
 
     resolve: {
-        extensions: ['', '.ts', '.tsx', '.js', '.jsx']
+        extensions: ['.ts', '.tsx', '.js', '.jsx']
     },
 
     module: {
-        loaders: [{
-            test: /\.(ts|tsx)$/,
-            loaders: ['react-hot-loader/webpack', 'ts']
-        }],
-
-        preLoaders: [{
-            test: /\.js$/,
-            loaders: ['source-map']
-        }]
+        loaders: [
+            {
+                test: /\.tsx?$/,
+                loaders: [
+                    'react-hot-loader',
+                    'awesome-typescript-loader'
+                ],
+                include: path.join(__dirname, 'src')
+            }
+        ]
     },
 
     plugins: [
+        new webpack.HotModuleReplacementPlugin(),
         new HtmlWebpackPlugin({
-            template: path.join(__dirname, './src/index.html')
+            template: path.join(__dirname, 'src/index.html')
         }),
     ]
-}
+};
