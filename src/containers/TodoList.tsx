@@ -1,20 +1,58 @@
 import * as React from "react";
+import * as Redux from "redux";
+import {connect} from "react-redux";
+
 import ComponentState = React.ComponentState;
+import {Todo} from "../../typings/todo";
 import {TodoItem} from "./TodoItem";
 
-export interface TodoListProperties { }
+import {toggleTodo} from "../actions/index";
 
+export interface TodoListProperties {
+    todos?: Array<Todo.Item>;
+    dispatch?(action: Redux.Action);
+}
+
+function map(state: Todo.State, props: TodoListProperties): TodoListProperties {
+    let todos: Array<Todo.Item>;
+
+    switch (state.visibilityFilter) {
+        case 'active':
+            todos = state.todos.filter(t => !t.completed);
+            break;
+        case 'completed':
+            todos = state.todos.filter(t => t.completed);
+            break;
+        default:
+            todos = state.todos;
+    }
+
+    return {
+        todos
+    }
+}
+
+@connect(map)
 export class TodoList extends React.Component<TodoListProperties, ComponentState> {
     constructor() {
         super();
     }
 
     render() {
+        const { dispatch, todos } = this.props;
+
         return (
             <div>
                 {
-                    ['Roman', 'Anna', 'Oleg', 'Nikolay', 'Natali', 'Vadim', 'Tatiyana'].map((name) => (
-                        <TodoItem text={ name } />
+                    todos.map((todo, idx) => (
+                        <TodoItem
+                            key={ idx }
+                            {...todo}
+                            text={ todo.text }
+                            onClick={ () => {
+                                dispatch(toggleTodo(idx));
+                            } }
+                        />
                     ))
                 }
             </div>

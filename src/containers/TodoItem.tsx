@@ -6,13 +6,22 @@ export interface TodoItemProperties extends Todo.Item {
 }
 
 export class TodoItem extends React.Component<TodoItemProperties, any> {
-    constructor() {
-        super();
-    }
 
     render() {
+
+        const {text, completed, onClick} = this.props;
+
+        const todoStyle = {
+            color: completed ? 'green' : 'black',
+            cursor: 'pointer'
+        };
+
         return (
-            <h1>{ this.props.text }</h1>
+            <div>
+                <h1 style={ todoStyle } onClick={ onClick }>
+                    { text }
+                </h1>
+            </div>
         )
     }
 }

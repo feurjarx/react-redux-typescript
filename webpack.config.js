@@ -30,6 +30,7 @@ module.exports = {
                     'react-hot-loader',
                     'awesome-typescript-loader'
                 ],
+                exclude: path.resolve(__dirname, 'node_modules'),
                 include: path.join(__dirname, 'src')
             }
         ]
