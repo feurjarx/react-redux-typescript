@@ -13,13 +13,13 @@ export interface FooterProperties {
     dispatch?(action: Redux.Action)
 }
 
-function map(state: Todo.State, props: FooterProperties): FooterProperties {
+function mapStateToProps(state: Todo.State, props: FooterProperties): FooterProperties {
     return {
         visibilityFilter: state.visibilityFilter
     }
 }
 
-@connect(map)
+@connect(mapStateToProps)
 export class Footer extends React.Component<FooterProperties, ComponentState> {
     constructor() {
         super();

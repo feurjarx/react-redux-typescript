@@ -13,7 +13,7 @@ export interface TodoListProperties {
     dispatch?(action: Redux.Action);
 }
 
-function map(state: Todo.State, props: TodoListProperties): TodoListProperties {
+function mapStateToProps(state: Todo.State, props: TodoListProperties): TodoListProperties {
     let todos: Array<Todo.Item>;
 
     switch (state.visibilityFilter) {
@@ -32,7 +32,7 @@ function map(state: Todo.State, props: TodoListProperties): TodoListProperties {
     }
 }
 
-@connect(map)
+@connect(mapStateToProps)
 export class TodoList extends React.Component<TodoListProperties, ComponentState> {
     constructor() {
         super();

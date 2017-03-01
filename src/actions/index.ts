@@ -1,4 +1,4 @@
-import {ADD_TODO,TOGGLE_TODO, SET_VISIBILITY_FILTER} from '../constants/actionTypes'
+import {ADD_TODO,TOGGLE_TODO, SET_VISIBILITY_FILTER} from '../constants/actions'
 import {Todo} from "../../typings/todo";
 
 export function addTodo(text: string) {
