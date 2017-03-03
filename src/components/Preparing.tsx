@@ -48,6 +48,9 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                     modal={ false }
                     open={ this.state.open }
                     onRequestClose={ this.handleClose }
+                    contentStyle={styles.dialog.content}
+                    bodyStyle={styles.dialog.body}
+                    titleStyle={styles.dialog.title}
                 >
 
                     <DatePicker hintText="Date Picker" />
@@ -61,3 +64,24 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         );
     }
 }
+
+import reactCSS from 'reactcss';
+import CSSProperties = React.CSSProperties;
+const styles = reactCSS({
+    default: {
+        dialog: {
+            content: {
+                width: 'calc(100% / 4)'
+            } as CSSProperties,
+            body: {
+                display: 'flex',
+                justifuContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'column'
+            },
+            title: {
+                textAlign: 'center'
+            } as CSSProperties
+        }
+    }
+});
