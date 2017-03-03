@@ -1,18 +1,20 @@
 import * as React from "react";
-import { TextField } from "material-ui"
 import reactCSS from "reactcss"
+import {Preparing} from "../components/Preparing";
+import {Monitoring} from "../components/Monitoring";
 
 export class Content extends React.Component<any, React.ComponentState> {
+
     constructor() {
         super();
     }
 
-
     render() {
+
         return (
             <div style={ styles.base }>
-                <TextField floatingLabelText="Введите количество клиентов"/>
-                <TextField floatingLabelText="Введите количество серверов"/>
+                <Preparing />
+                <Monitoring />
             </div>
         )
     }
@@ -24,7 +26,9 @@ const styles = reactCSS({
             padding: 20,
             display: 'flex',
             flexDirection: 'column',
-            flexGrow: 1
+            flexGrow: 1,
+            alignItems: 'center',
+            justifyContent: 'space-around'
         }
     }
 });

@@ -10,6 +10,8 @@ header {
     align-self: center;
     padding: 10px;
     font-size: 20px;
+    width: 100%;
+    background-color: rgb(232, 232, 232);
 }
 
 .app-container {
@@ -27,6 +29,10 @@ header {
 .space-between {
     display: flex;
     justify-content: space-between;
+}
+
+.margin-none {
+    margin: 0;
 }
 
 footer {

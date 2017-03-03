@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CardHeader } from 'material-ui'
+import { Toolbar, ToolbarGroup } from 'material-ui'
 
 export class Header extends React.Component<any, React.ComponentState> {
     constructor() {
@@ -10,7 +10,7 @@ export class Header extends React.Component<any, React.ComponentState> {
 
         return (
             <header>
-                <CardHeader title="Моделирование" subtitle="СМО"/>
+                <h1 className="text-center margin-none">Моделирование</h1>
             </header>
         )
     }
