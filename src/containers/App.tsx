@@ -1,7 +1,8 @@
 import * as React from "react";
+
 import {Header} from "./Header";
-import {TodoList} from "./TodoList";
 import {Footer} from "./Footer";
+import {Content} from "./Content";
 
 export interface AppProperties { }
 
@@ -14,9 +15,9 @@ export class App extends React.Component<AppProperties, AppState> {
 
     render() {
         return (
-            <div>
+            <div className="app-container">
                 <Header />
-                <TodoList />
+                <Content />
                 <Footer />
             </div>
         )

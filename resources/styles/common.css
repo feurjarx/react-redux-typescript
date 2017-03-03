@@ -1,0 +1,44 @@
+html, body, #root {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+}
+
+header {
+    align-self: center;
+    padding: 10px;
+    font-size: 20px;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+}
+
+.flexbox-aligned {
+    display: flex;
+    align-items: center;
+}
+
+.space-between {
+    display: flex;
+    justify-content: space-between;
+}
+
+footer {
+    background-color: #b3c4d2;
+    padding: 5px 10px;
+}
+
+footer .github-url {
+    align-self: flex-end;
+    color: black;
+}
+
+footer .developer {
+    margin: 0;
+}
