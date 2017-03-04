@@ -1,5 +1,7 @@
 const express = require('express');
 const webpack = require('webpack');
+const api = require('./api');
+
 const webpackDevMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
 
@@ -23,4 +25,6 @@ app.use(express.static(path.join(__dirname, 'dist')));
 app.listen(port, () => {
     console.log('Server listen on: ', port);
 });
+
+api.run();
 

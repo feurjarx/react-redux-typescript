@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "system",
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "outFile": "./api/dist/api.js",
+        "sourceMap": false
+    },
+    "include": [
+        "./api/src/**/*"
+    ],
+    "exclude": [
+        "./node_modules"
+    ]
+}

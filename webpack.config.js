@@ -23,6 +23,8 @@ module.exports = {
         extensions: ['.ts', '.tsx', '.js', '.jsx']
     },
 
+    devtool: 'eval-source-map',
+
     module: {
         loaders: [
             {

@@ -1,7 +1,7 @@
 import * as React from "react";
 import reactCSS from "reactcss"
-import {Preparing} from "../components/Preparing";
-import {Monitoring} from "../components/Monitoring";
+import {Preparing} from "../components/preparing/Preparing";
+import {Monitoring} from "../components/monitoring/Monitoring";
 
 export class Content extends React.Component<any, React.ComponentState> {
 
