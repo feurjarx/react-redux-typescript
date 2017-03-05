@@ -7,13 +7,14 @@
         "target": "es6",
         "jsx": "react",
         "declaration": true,
-        "rootDir": "./src",
+        "rootDir": "./src/",
         "experimentalDecorators": true
     },
     "include": [
       "./src/**/*"
     ],
     "exclude": [
+        "api",
         "node_modules",
         "server.js",
         "webpack.config.js"

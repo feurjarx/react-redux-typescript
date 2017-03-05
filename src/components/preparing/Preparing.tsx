@@ -14,12 +14,7 @@ import styles from './preparing.styles';
 
 import Ref = React.Ref;
 
-import {EVENT_IO_LIFE} from "../../constants/events";
-
-export interface FormDataProps {
-    nClients: number;
-    nServers: number;
-}
+import { EVENT_IO_LIFE } from "../../constants/events";
 
 export class Preparing extends React.Component<any, React.ComponentState> {
 

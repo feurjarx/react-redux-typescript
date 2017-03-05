@@ -9,7 +9,7 @@ const styles = reactCSS({
             },
             body: {
                 display: 'flex',
-                justifuContent: 'center',
+                justifyContent: 'center',
                 alignItems: 'center',
                 flexDirection: 'column'
             },
