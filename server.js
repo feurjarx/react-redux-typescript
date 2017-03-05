@@ -26,5 +26,5 @@ app.listen(port, () => {
     console.log('Server listen on: ', port);
 });
 
-api.run();
+// api.run();
 

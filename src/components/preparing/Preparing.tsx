@@ -1,21 +1,20 @@
 import * as React from "react";
-
 const socket = require('socket.io-client')('http://localhost:3003');
-
 
 import {
 
     TextField,
     Dialog,
     FlatButton,
-    RaisedButton,
-    DatePicker
+    RaisedButton
 
 } from 'material-ui';
 
 import styles from './preparing.styles';
 
 import Ref = React.Ref;
+
+import {EVENT_IO_LIFE} from "../../constants/events";
 
 export interface FormDataProps {
     nClients: number;
@@ -31,28 +30,30 @@ export class Preparing extends React.Component<any, React.ComponentState> {
     constructor() {
         super();
 
-        socket.on('connect', function () {
-        });
+        // socket.on('connect', function () {});
 
-        socket.on('myevent', function () {
-            debugger
-        });
+        // socket.on('myevent', function () {
+        //     debugger
+        // });
 
-        socket.on('disconnect', function () {
-        });
+        // socket.on('disconnect', function () {});
     }
 
     handleOpen = () => {
-        this.setState({open: true});
+        this.setState({
+            open: true
+        });
     };
 
     handleClose = () => {
-        this.setState({open: false});
+        this.setState({
+            open: false
+        });
     };
 
     handleRunning = () => {
         if (this.state) {
-            socket.emit('myevent', this.state);
+            socket.emit(EVENT_IO_LIFE, this.state);
             this.handleClose();
         }
     };
@@ -95,8 +96,6 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
                     <form onChange={ this.handleFormChange }>
 
-                        <DatePicker className="hidden" hintText="Date Picker" />
-
                         <TextField
                             name="nClients"
                             floatingLabelText="Введите количество клиентов"
@@ -107,7 +106,6 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                             floatingLabelText="Введите количество серверов"
                         />
                     </form>
-
                 </Dialog>
             </div>
         );

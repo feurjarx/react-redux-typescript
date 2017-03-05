@@ -4,7 +4,7 @@ export class Footer extends React.Component<any, React.ComponentState> {
 
     render() {
 
-        const githubUrl = 'https://github.com/feurjarx/react-redux-typescript';
+        const githubUrl = 'https://github.com/feurjarx/react-redux-typescript/tree/thesis';
 
         return (
             <footer>
