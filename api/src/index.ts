@@ -26,20 +26,16 @@ export const run = () => {
 
         client.on(EVENT_IO_LIFE, data => {
             life.clear();
-            life.live(data, browserData => {
-                debugger
-                client.emit(EVENT_IO_LIFE, browserData);
-            });
+            life.live(data, browserData => client.emit(EVENT_IO_LIFE, browserData));
         });
 
-        client.on(EVENT_IO_DISCONNECT, disconnect);
+        client.on(EVENT_IO_DISCONNECT, () => {
+            life.clear();
+            console.log('browser client was disconnected.');
+        });
     });
 
     httpServer.listen(ioConfig.port);
 };
-
-function disconnect() {
-    console.log('browser client was disconnected.');
-}
 
 run();

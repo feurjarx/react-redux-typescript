@@ -1,4 +1,5 @@
 import {IQueue} from "../services/IQueue";
+import rabbitmqConfig from "../configs/rabbitmq";
 
 export default class Client {
     id: number;
@@ -12,7 +13,7 @@ export default class Client {
 
     requestServer(data: string = 'Hello world') {
 
-        const queueName = 'test';
+        const { queueName } = rabbitmqConfig;
 
         this.provider
             .publish(queueName, data)

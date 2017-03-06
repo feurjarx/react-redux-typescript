@@ -2,6 +2,7 @@ import Client from "./Client";
 import Server from "./Server";
 import RabbitMQ from "../services/RabbitMQ";
 import ExpectantClient from "./clients/Expectant";
+import SleepCalculating from "./servers/SleepCalculating";
 export class Life {
 
     servers: Array<Server> = [];
@@ -16,10 +17,13 @@ export class Life {
 
         for (let i = 0; i < nServers; i++) {
             const server = new Server(new RabbitMQ());
+
+            server.setCalculateBehavior(new SleepCalculating(100));
+
             server.id = i;
-            server.listen(() => {
+            server.listen(function() {
                 if (callback instanceof Function) {
-                    const {id, requestCounter} = server;
+                    const {id, requestCounter} = this;
                     callback({
                         id,
                         requestCounter
@@ -39,12 +43,13 @@ export class Life {
     };
 
     clear() {
-        const { servers } = this;
+
+        const { servers, clients } = this;
         if (servers.length) {
             servers.forEach(s => s.close());
-
-            this.servers = [];
-            this.clients = [];
         }
+
+        this.servers = [];
+        this.clients = [];
     }
 }

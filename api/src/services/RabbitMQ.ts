@@ -61,11 +61,13 @@ export default class RabbitMQ implements IQueue {
                         durable: false
                     });
 
-                    ch.sendToQueue(queueName, new Buffer(data));
+                    setTimeout(() => { // todo: ????
+                        ch.sendToQueue(queueName, new Buffer(data));
 
-                    setTimeout(() => this.connection.close(), 500);
+                        setTimeout(() => this.connection.close(), 500);
 
-                    resolve();
+                        resolve();
+                    }, 100);
                 })
                 .catch(err => reject(err))
         });

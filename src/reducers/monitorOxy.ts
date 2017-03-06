@@ -1,23 +1,28 @@
-import {UPDATE_MONITOR} from "../constants/actions";
+import {UPDATE_MONITOR, CLEAR_MONITOR} from "../constants/actions";
 
 export const monitorOxy = (state = [], action) => {
 
     let nextState: Array<any>;
 
     switch (action.type) {
+        case CLEAR_MONITOR:
+            nextState = [];
+            break;
+
         case UPDATE_MONITOR:
 
-            debugger
-
             const { id, requestCounter } = action.data;
+            const oxyItem = {
+                id,
+                requestCounter,
+                name: `Server ${ id + 1 }`
+            };
 
             let existedId = false;
             nextState = state.map(it => {
 
                 if (id === it.id) {
-                    it = Object.assign({}, it); // todo: immutable ??
-                    it.y = requestCounter;
-
+                    it = oxyItem;
                     existedId = true;
                 }
 
@@ -25,13 +30,9 @@ export const monitorOxy = (state = [], action) => {
             });
 
             if (!existedId) {
-                nextState.push({
-                    id,
-                    y: requestCounter
-                })
+                nextState.push(oxyItem)
             }
 
-            // nextState = action.data;
             break;
 
         default:

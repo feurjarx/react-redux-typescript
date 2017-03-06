@@ -1,4 +1,5 @@
 "use strict";
+var rabbitmq_1 = require("../configs/rabbitmq");
 var Client = (function () {
     function Client(provider) {
         this.id = new Date().getTime();
@@ -7,7 +8,7 @@ var Client = (function () {
     Client.prototype.requestServer = function (data) {
         var _this = this;
         if (data === void 0) { data = 'Hello world'; }
-        var queueName = 'test';
+        var queueName = rabbitmq_1.default.queueName;
         this.provider
             .publish(queueName, data)
             .then(function () {
