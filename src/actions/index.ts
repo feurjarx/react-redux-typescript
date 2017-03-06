@@ -1,23 +1,12 @@
-import {ADD_TODO,TOGGLE_TODO, SET_VISIBILITY_FILTER} from '../constants/actions'
-import {Todo} from "../../typings/todo";
+import {
 
-export function addTodo(text: string) {
-    return {
-        type: ADD_TODO,
-        text
-    }
-}
+    UPDATE_MONITOR
 
-export function toggleTodo(idx: number) {
-    return {
-        type: TOGGLE_TODO,
-        idx
-    }
-}
+} from '../constants/actions'
 
-export function setVisibilityFilter(filter: Todo.VisibilityFilter) {
+export function updateMonitor(data) {
     return {
-        type: SET_VISIBILITY_FILTER,
-        filter
+        type: UPDATE_MONITOR,
+        data
     };
 }

@@ -12,10 +12,11 @@ import {
 
 import styles from './preparing.styles';
 
-import Ref = React.Ref;
-
 import { EVENT_IO_LIFE } from "../../constants/events";
+import {connect} from "react-redux";
+import {updateMonitor} from "../../actions/index";
 
+@connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
 
     state = {
@@ -27,9 +28,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
         // socket.on('connect', function () {});
 
-        // socket.on('myevent', function () {
-        //     debugger
-        // });
+        socket.on(EVENT_IO_LIFE, this.receiveLifeResponse);
 
         // socket.on('disconnect', function () {});
     }
@@ -51,6 +50,10 @@ export class Preparing extends React.Component<any, React.ComponentState> {
             socket.emit(EVENT_IO_LIFE, this.state);
             this.handleClose();
         }
+    };
+
+    receiveLifeResponse = (data) => {
+        this.props.dispatch(updateMonitor(data));
     };
 
     handleFormChange = (event) => {

@@ -1,10 +1,8 @@
 import * as Redux from 'redux';
-import { todos } from './todos';
-import { visibilityFilter } from './visibilityFilter';
+import { monitorOxy } from './monitorOxy';
 
-export const todoApp = Redux.combineReducers({
-    todos,
-    visibilityFilter
+export const app = Redux.combineReducers({
+    monitorOxy
 });
 
-export default todoApp;
+export default app;

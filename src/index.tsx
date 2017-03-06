@@ -12,14 +12,14 @@ import 'bootstrap/dist/css/bootstrap.css';
 // redux
 import {createStore} from "redux";
 import {Provider} from "react-redux";
-import {todoApp} from "./reducers";
+import {app} from "./reducers";
 
 // material-ui
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 require("react-tap-event-plugin")();
 
 const root = document.getElementById('root');
-const store = createStore(todoApp);
+const store = createStore(app);
 
 function updateRender() {
 

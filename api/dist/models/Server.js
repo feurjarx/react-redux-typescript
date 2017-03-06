@@ -17,6 +17,7 @@ var Server = (function () {
                 .subscribe(function (msg) {
                 console.log("Server #" + _this.id + " received " + msg.content.toString());
                 observer.next();
+                _this.requestCounter++;
             });
         });
         var subscription;

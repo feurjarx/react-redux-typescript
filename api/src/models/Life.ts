@@ -7,7 +7,7 @@ export class Life {
     servers: Array<Server> = [];
     clients: Array<Client> = [];
 
-    live(data) {
+    live(data, callback = null) {
         console.log(data);
 
         const { nClients, nServers } = data;
@@ -15,8 +15,17 @@ export class Life {
         const { servers, clients } = this;
 
         for (let i = 0; i < nServers; i++) {
-            const server = new Server(new RabbitMQ())
-            server.listen();
+            const server = new Server(new RabbitMQ());
+            server.id = i;
+            server.listen(() => {
+                if (callback instanceof Function) {
+                    const {id, requestCounter} = server;
+                    callback({
+                        id,
+                        requestCounter
+                    });
+                }
+            });
 
             servers.push(server);
         }

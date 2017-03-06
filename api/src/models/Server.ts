@@ -28,6 +28,7 @@ export default class Server {
                 .subscribe(msg => {
                     console.log(`Server #${ this.id } received ${ msg.content.toString() }`);
                     observer.next();
+                    this.requestCounter++;
                 });
         });
 

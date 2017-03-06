@@ -4,7 +4,7 @@ import {Channel} from "amqplib/callback_api";
 import {Message} from "amqplib";
 import {Connection} from "amqplib/callback_api";
 import {Observable} from 'rxjs/Observable';
-
+import {Promise} from 'es6-shim';
 import rabbitmqConfig from './../configs/rabbitmq';
 
 export default class RabbitMQ implements IQueue {
@@ -75,7 +75,6 @@ export default class RabbitMQ implements IQueue {
 
         return new Observable<Message>(observer => {
 
-            debugger
             this.connect()
                 .then(ch => {
 

@@ -12,7 +12,10 @@ exports.run = function () {
         var life = new Life_1.Life();
         client.on(events_1.EVENT_IO_LIFE, function (data) {
             life.clear();
-            life.live(data);
+            life.live(data, function (browserData) {
+                debugger;
+                client.emit(events_1.EVENT_IO_LIFE, browserData);
+            });
         });
         client.on(events_1.EVENT_IO_DISCONNECT, disconnect);
     });

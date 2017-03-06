@@ -26,7 +26,10 @@ export const run = () => {
 
         client.on(EVENT_IO_LIFE, data => {
             life.clear();
-            life.live(data);
+            life.live(data, browserData => {
+                debugger
+                client.emit(EVENT_IO_LIFE, browserData);
+            });
         });
 
         client.on(EVENT_IO_DISCONNECT, disconnect);
