@@ -51,11 +51,9 @@ var RabbitMQ = (function () {
                 ch.assertQueue(queueName, {
                     durable: false
                 });
-                setTimeout(function () {
-                    ch.sendToQueue(queueName, new Buffer(data));
-                    setTimeout(function () { return _this.connection.close(); }, 500);
-                    resolve();
-                }, 100);
+                ch.sendToQueue(queueName, new Buffer(data));
+                setTimeout(function () { return _this.connection.close(); }, 500);
+                resolve();
             })
                 .catch(function (err) { return reject(err); });
         });

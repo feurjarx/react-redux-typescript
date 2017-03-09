@@ -1,10 +1,35 @@
-import {UPDATE_MONITOR, CLEAR_MONITOR} from "../constants/actions";
+import {
+
+    INIT_MONITOR,
+    UPDATE_MONITOR,
+    CLEAR_MONITOR
+
+} from "../constants/actions";
 
 export const monitorOxy = (state = [], action) => {
 
     let nextState: Array<any>;
 
     switch (action.type) {
+        case INIT_MONITOR:
+
+            const { nServers } = action;
+
+            nextState = [];
+
+            for (let i = 0; i < nServers; i++) {
+
+                const oxyItem = {
+                    id: i,
+                    requestCounter: 0,
+                    name: `Server ${ i + 1 }`
+                };
+
+                nextState.push(oxyItem);
+            }
+
+            break;
+
         case CLEAR_MONITOR:
             nextState = [];
             break;

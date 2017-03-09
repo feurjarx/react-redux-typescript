@@ -1,17 +1,23 @@
 import * as React from "react";
-import {
 
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend
-
-} from 'recharts';
-
+import "./monitoring.css";
 import {connect} from "react-redux";
+
+const CanvasJS = require('canvasjs/dist/canvasjs.js');
+
+interface Oxy {
+    x: number;
+    y: number;
+    label?: string;
+}
+
+interface MonitoringProps {
+    monitorOxy: Array<{
+        id: number;
+        name: string;
+        requestCounter: number;
+    }>
+}
 
 function mapStateToProps(state, props) {
 
@@ -22,27 +28,79 @@ function mapStateToProps(state, props) {
     }
 }
 
-@connect(mapStateToProps)
-export class Monitoring extends React.Component<any, React.ComponentState> {
+class MonitoringConnectable extends React.Component<MonitoringProps, React.ComponentState> {
+
+    chartId = 'life-rt-chart';
+
+    chart: CanvasJS.Chart;
+
+    dataPoints: Array<Oxy> = [];
 
     constructor() {
         super();
     }
 
+    initChart() {
+
+        const { dataPoints } = this;
+
+        this.chart = new CanvasJS.Chart(this.chartId, {
+            title :{
+                text: "Обработка клиентских запросов"
+            },
+            theme: "theme2",
+            legend:{
+                verticalAlign: "top",
+                horizontalAlign: "centre",
+                fontSize: 18
+            },
+            data: [{
+                type: "column",
+                // showInLegend: true,
+                legendMarkerType: "none",
+                legendText: 'text',
+                indexLabel: "{y}",
+                dataPoints
+            }]
+        });
+    }
+
+    componentDidMount() {
+        this.initChart()
+    }
+
+    // todo: try receiving from io
+
+    componentWillReceiveProps(props) {
+
+        const { dataPoints, chart } = this;
+
+        const { monitorOxy } = props;
+
+        monitorOxy.forEach(it => {
+
+            if (dataPoints[it.id]) {
+                dataPoints[it.id].y = it.requestCounter;
+
+            } else {
+
+                dataPoints[it.id] = {
+                    x: it.id,
+                    y: it.requestCounter,
+                    label: it.name
+                };
+            }
+        });
+
+        chart.render();
+    }
+
     render() {
 
-        const { monitorOxy } = this.props;
-
         return (
-            <LineChart width={600} height={300} data={ monitorOxy }
-                       margin={{top: 5, right: 30, left: 20, bottom: 5}}>
-                <XAxis dataKey="name"/>
-                <YAxis />
-                <CartesianGrid strokeDasharray="3 3"/>
-                <Tooltip/>
-                <Legend />
-                <Line type="monotone" dataKey="requestCounter" stroke="#8884d8" activeDot={{r: 8}}/>
-            </LineChart>
+            <div id={ this.chartId }></div>
         );
     }
 }
+
+export const Monitoring = connect(mapStateToProps)(MonitoringConnectable);

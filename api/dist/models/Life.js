@@ -2,7 +2,7 @@
 var Server_1 = require("./Server");
 var RabbitMQ_1 = require("../services/RabbitMQ");
 var Expectant_1 = require("./clients/Expectant");
-var SleepCalculating_1 = require("./servers/SleepCalculating");
+var RandomSleepCalculating_1 = require("./servers/RandomSleepCalculating");
 var Life = (function () {
     function Life() {
         this.servers = [];
@@ -15,11 +15,12 @@ var Life = (function () {
         var _a = this, servers = _a.servers, clients = _a.clients;
         for (var i = 0; i < nServers; i++) {
             var server = new Server_1.default(new RabbitMQ_1.default());
-            server.setCalculateBehavior(new SleepCalculating_1.default(100));
+            server.setCalculateBehavior(new RandomSleepCalculating_1.default(5000));
             server.id = i;
             server.listen(function () {
                 if (callback instanceof Function) {
                     var _a = this, id = _a.id, requestCounter = _a.requestCounter;
+                    console.log({ id: id, requestCounter: requestCounter });
                     callback({
                         id: id,
                         requestCounter: requestCounter
