@@ -49,6 +49,7 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
                 text: "Обработка клиентских запросов"
             },
             axisY: {
+                gridThickness: 0,
                 minimum: 0,
                 maximum: nClients + 10,
             },
