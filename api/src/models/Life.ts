@@ -25,6 +25,7 @@ export class Life {
                 if (callback instanceof Function) {
                     const {id, requestCounter} = this;
                     console.log({id, requestCounter});
+                    debugger
                     callback({
                         id,
                         requestCounter
@@ -45,7 +46,7 @@ export class Life {
 
     clear() {
 
-        const { servers, clients } = this;
+        const { servers } = this;
         if (servers.length) {
             servers.forEach(s => s.close());
         }

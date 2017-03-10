@@ -14,7 +14,7 @@ import styles from './preparing.styles';
 
 import { EVENT_IO_LIFE } from "../../constants/events";
 import {connect} from "react-redux";
-import {initMonitor, updateMonitor, clearMonitor} from "../../actions/index";
+import {updateMonitorItem, initialLifeData} from "../../actions/index";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -47,15 +47,19 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
     handleRunning = () => {
         if (this.state) {
-            this.props.dispatch(clearMonitor());
-            this.props.dispatch(initMonitor(this.state['nServers']));
+
+            const { dispatch } = this.props;
+
+            dispatch(initialLifeData(this.state));
+
             socket.emit(EVENT_IO_LIFE, this.state);
+
             this.handleClose();
         }
     };
 
     receiveLifeResponse = (data) => {
-        this.props.dispatch(updateMonitor(data));
+        this.props.dispatch(updateMonitorItem(data));
     };
 
     handleFormChange = (event) => {

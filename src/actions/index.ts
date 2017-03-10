@@ -1,25 +1,20 @@
 import {
 
-    UPDATE_MONITOR, CLEAR_MONITOR, INIT_MONITOR
+    UPDATE_MONITOR_ITEM,
+    INITIAL_LIFE_DATA
 
 } from '../constants/actions'
 
-export function initMonitor(nServers: number) {
+export function updateMonitorItem(data) {
     return {
-        type: INIT_MONITOR,
-        nServers
-    };
-}
-
-export function updateMonitor(data) {
-    return {
-        type: UPDATE_MONITOR,
+        type: UPDATE_MONITOR_ITEM,
         data
     };
 }
 
-export function clearMonitor() {
+export function initialLifeData(data) {
     return {
-        type: CLEAR_MONITOR
+        type: INITIAL_LIFE_DATA,
+        data
     };
 }

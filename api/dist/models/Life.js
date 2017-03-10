@@ -21,6 +21,7 @@ var Life = (function () {
                 if (callback instanceof Function) {
                     var _a = this, id = _a.id, requestCounter = _a.requestCounter;
                     console.log({ id: id, requestCounter: requestCounter });
+                    debugger;
                     callback({
                         id: id,
                         requestCounter: requestCounter
@@ -37,7 +38,7 @@ var Life = (function () {
     };
     ;
     Life.prototype.clear = function () {
-        var _a = this, servers = _a.servers, clients = _a.clients;
+        var servers = this.servers;
         if (servers.length) {
             servers.forEach(function (s) { return s.close(); });
         }

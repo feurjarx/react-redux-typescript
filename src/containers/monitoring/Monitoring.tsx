@@ -2,30 +2,19 @@ import * as React from "react";
 
 import "./monitoring.css";
 import {connect} from "react-redux";
+import {Monitor, Life} from "../../../typings/todo";
+import ChartOptions = CanvasJS.ChartOptions;
+import ChartDataPoint = CanvasJS.ChartDataPoint;
 
 const CanvasJS = require('canvasjs/dist/canvasjs.js');
 
-interface Oxy {
-    x: number;
-    y: number;
-    label?: string;
-}
-
 interface MonitoringProps {
-    monitorOxy: Array<{
-        id: number;
-        name: string;
-        requestCounter: number;
-    }>
+    monitorItem: Monitor.Item;
+    lifeData: Life.Params;
 }
 
 function mapStateToProps(state, props) {
-
-    const { monitorOxy } = state;
-
-    return {
-        monitorOxy
-    }
+    return state;
 }
 
 class MonitoringConnectable extends React.Component<MonitoringProps, React.ComponentState> {
@@ -34,65 +23,59 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
 
     chart: CanvasJS.Chart;
 
-    dataPoints: Array<Oxy> = [];
+    dataPoints: Array<CanvasJS.ChartDataPoint> = [];
 
     constructor() {
         super();
     }
 
-    initChart() {
+    initChart(initialLifeData:Life.Params) {
+
+        this.clearMonitor();
 
         const { dataPoints } = this;
+        let { nClients, nServers } = initialLifeData;
+
+        for (let i = 0; i < nServers; i++) {
+            dataPoints.push({
+                x: i,
+                y: 0,
+                label: `Server ${ i + 1 }`
+            })
+        }
 
         this.chart = new CanvasJS.Chart(this.chartId, {
             title :{
                 text: "Обработка клиентских запросов"
             },
-            theme: "theme2",
-            legend:{
-                verticalAlign: "top",
-                horizontalAlign: "centre",
-                fontSize: 18
+            axisY: {
+                minimum: 0,
+                maximum: nClients + 10,
             },
             data: [{
                 type: "column",
-                // showInLegend: true,
-                legendMarkerType: "none",
-                legendText: 'text',
+                bevelEnabled: true,
                 indexLabel: "{y}",
                 dataPoints
             }]
         });
     }
 
-    componentDidMount() {
-        this.initChart()
+    clearMonitor() {
+        // Warning! Can not dataPoints = []
+        while (this.dataPoints.pop()) {}
     }
 
-    // todo: try receiving from io
+    componentWillReceiveProps(props: MonitoringProps) {
 
-    componentWillReceiveProps(props) {
+        const {lifeData, monitorItem} = props;
+        if (lifeData) {
+            this.initChart(lifeData);
+        } else {
+            this.dataPoints[monitorItem.id].y = monitorItem.requestCounter;
+        }
 
-        const { dataPoints, chart } = this;
-
-        const { monitorOxy } = props;
-
-        monitorOxy.forEach(it => {
-
-            if (dataPoints[it.id]) {
-                dataPoints[it.id].y = it.requestCounter;
-
-            } else {
-
-                dataPoints[it.id] = {
-                    x: it.id,
-                    y: it.requestCounter,
-                    label: it.name
-                };
-            }
-        });
-
-        chart.render();
+        this.chart.render();
     }
 
     render() {

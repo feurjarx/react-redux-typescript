@@ -1,8 +1,10 @@
 import * as Redux from 'redux';
-import { monitorOxy } from './monitorOxy';
+import { monitorItem } from './monitorItem';
+import { lifeData } from './lifeData';
 
 export const app = Redux.combineReducers({
-    monitorOxy
+    monitorItem,
+    lifeData
 });
 
 export default app;

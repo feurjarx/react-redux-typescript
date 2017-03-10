@@ -1,3 +1,2 @@
-export const UPDATE_MONITOR = 'update_monitor';
-export const CLEAR_MONITOR = 'clear_monitor';
-export const INIT_MONITOR = 'init_monitor';
+export const UPDATE_MONITOR_ITEM = 'update_monitor_item';
+export const INITIAL_LIFE_DATA = 'initial_life_data';

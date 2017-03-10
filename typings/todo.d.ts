@@ -11,3 +11,19 @@ export declare namespace Todo {
 
     export type VisibilityFilter = 'all' | 'active' | 'completed';
 }
+
+export declare namespace Monitor {
+    export interface Item {
+        id: number;
+        requestCounter: number;
+        name?: string;
+    }
+}
+
+export declare namespace Life {
+    export interface Params {
+        nClients: number;
+        nServers: number;
+    }
+}
+
