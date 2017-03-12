@@ -12,7 +12,7 @@ exports.run = function () {
         var life = new Life_1.Life();
         client.on(events_1.EVENT_IO_LIFE, function (data) {
             life.clear();
-            life.live(data, function (browserData) { return client.emit(events_1.EVENT_IO_LIFE, browserData); });
+            life.live(data, function (browserData) { return client.emit(events_1.EVENT_IO_LIFE, browserData); }, function () { return client.emit(events_1.EVENT_IO_THE_END); });
         });
         client.on(events_1.EVENT_IO_DISCONNECT, function () {
             life.clear();

@@ -58,8 +58,7 @@ var RabbitMQ = (function () {
     };
     RabbitMQ.prototype.publishAndWaitSender = function (queueName, tempQueueName, data) {
         var correlationId = data.correlationId;
-        var message = data.msg || 'Hello world from publishAndWaitSender()';
-        this.channel.sendToQueue(queueName, new Buffer(message), {
+        this.channel.sendToQueue(queueName, new Buffer(JSON.stringify(data)), {
             correlationId: correlationId,
             replyTo: tempQueueName
         });
@@ -80,14 +79,14 @@ var RabbitMQ = (function () {
                     }
                     else {
                         var correlationId_1 = md5(Date.now());
-                        var send_1 = _this.publishAndWaitSender.bind(_this, queueName, queueTemp.queue);
+                        var sendCall_1 = _this.publishAndWaitSender.bind(_this, queueName, queueTemp.queue);
                         ch.consume(queueTemp.queue, function (response) {
                             if (response.properties.correlationId === correlationId_1) {
                                 observer.next({
                                     type: 'received',
                                     data: response,
                                     repeat: function (newData) {
-                                        send_1(__assign({ correlationId: correlationId_1 }, newData));
+                                        sendCall_1(__assign({ correlationId: correlationId_1 }, newData));
                                         observer.next({
                                             type: 'sent'
                                         });
@@ -95,7 +94,7 @@ var RabbitMQ = (function () {
                                 });
                             }
                         });
-                        send_1(__assign({ correlationId: correlationId_1 }, data));
+                        sendCall_1(__assign({ correlationId: correlationId_1 }, data));
                         observer.next({
                             type: 'sent'
                         });
@@ -106,6 +105,7 @@ var RabbitMQ = (function () {
     };
     RabbitMQ.prototype.publish = function (queueName, data) {
         var _this = this;
+        if (data === void 0) { data = {}; }
         return new es6_shim_1.Promise(function (resolve, reject) {
             // this.openConnection()
             _this.connect()
@@ -113,7 +113,7 @@ var RabbitMQ = (function () {
                 ch.assertQueue(queueName, {
                     durable: false
                 });
-                ch.sendToQueue(queueName, new Buffer(data));
+                ch.sendToQueue(queueName, new Buffer(JSON.stringify(data)));
                 setTimeout(function () { return _this.connection.close(); }, 500);
                 resolve();
             })

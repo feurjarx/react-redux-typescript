@@ -15,12 +15,15 @@ var ExpectantClient = (function (_super) {
     ExpectantClient.prototype.setRequestsNumber = function (v) {
         this.requestsNumber = v;
     };
-    ExpectantClient.prototype.requestServer = function (requestsNumber) {
+    ExpectantClient.prototype.requestToServer = function (requestsNumber) {
         var _this = this;
         if (requestsNumber === void 0) { requestsNumber = this.requestsNumber; }
         var queueName = rabbitmq_1.default.queueName;
         this.subscription = this.provider
-            .publishAndWait(queueName)
+            .publishAndWait(queueName, {
+            clientId: this.id,
+            last: this.requestsNumber <= 1
+        })
             .subscribe(function (response) {
             switch (response.type) {
                 case 'sent':
@@ -30,7 +33,10 @@ var ExpectantClient = (function (_super) {
                     console.log("Client #" + _this.id + " received response from server.");
                     requestsNumber--;
                     if (requestsNumber > 0) {
-                        response.repeat();
+                        response.repeat({
+                            clientId: _this.id,
+                            last: requestsNumber <= 1
+                        });
                     }
                     else {
                         _this.stop();

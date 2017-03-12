@@ -9,6 +9,7 @@ import ChartDataPoint = CanvasJS.ChartDataPoint;
 const CanvasJS = require('canvasjs/dist/canvasjs.js');
 
 interface MonitoringProps {
+    monitor: any;
     monitorItem: Monitor.Item;
     lifeData: Life.Params;
 }
@@ -82,6 +83,13 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
     }
 
     render() {
+
+        if (this.props.monitor) {
+            const {last} = this.props.monitor;
+            if (last) {
+                // todo: stop component timer!!!
+            }
+        }
 
         return (
             <div id={ this.chartId }></div>

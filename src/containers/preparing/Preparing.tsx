@@ -18,9 +18,9 @@ import InfoSlider from '../../components/info-slider/InfoSlider';
 import styles from './preparing.styles';
 import './preparing.css';
 
-import { EVENT_IO_LIFE } from "../../constants/events";
+import {EVENT_IO_LIFE, EVENT_IO_THE_END} from "../../constants/events";
 import {connect} from "react-redux";
-import {updateMonitorItem, initialLifeData} from "../../actions/index";
+import {updateMonitorItem, initialLifeData, stopMonitor} from "../../actions/index";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -37,6 +37,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
         // socket.on('connect', function () {});
         socket.on(EVENT_IO_LIFE, this.receiveLifeResponse);
+        socket.on(EVENT_IO_THE_END, this.onCompleteLife);
         // socket.on('disconnect', function () {});
     }
 
@@ -51,16 +52,16 @@ export class Preparing extends React.Component<any, React.ComponentState> {
     };
 
     handleRunning = () => {
+
         if (this.state) {
 
             const { dispatch } = this.props;
 
-            debugger
             dispatch(initialLifeData(this.state));
 
             const clients = [];
             for (let i = 0; i < this.state.nClients; i++) {
-                const requestsNumber = Math.round(Math.random() * +this.state.requestsLimit);
+                const requestsNumber = Math.round(Math.random() * +this.state.requestsLimit) || 1;
                 clients.push({ requestsNumber });
             }
 
@@ -75,6 +76,11 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
     receiveLifeResponse = (data) => {
         this.props.dispatch(updateMonitorItem(data));
+    };
+
+    onCompleteLife = () => {
+        debugger
+        this.props.dispatch(stopMonitor());
     };
 
     handleFormChange = (event) => {
@@ -118,7 +124,6 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                     bodyStyle={styles.dialog.body}
                     titleStyle={styles.dialog.title}
                 >
-
                     <form onChange={ this.handleFormChange } id="life-data-form">
 
                         <div id="clients-settings-block" className="v-internal-interval-10">

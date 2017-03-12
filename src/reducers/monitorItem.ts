@@ -1,6 +1,6 @@
 import {
 
-    UPDATE_MONITOR_ITEM
+    UPDATE_MONITOR_ITEM, STOP_MONITOR
 
 } from "../constants/actions";
 
@@ -13,10 +13,11 @@ export const monitorItem = (state = null, action) => {
     switch (action.type) {
         case UPDATE_MONITOR_ITEM:
 
-            const { id, requestCounter } = action.data;
+            // const { id, requestCounter } = action.data;
+            const { id } = action.data;
             nextState = {
                 id,
-                requestCounter,
+                ...action.data,
                 name: `Server ${ id + 1 }`
             };
 

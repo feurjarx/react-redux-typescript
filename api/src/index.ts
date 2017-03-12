@@ -5,7 +5,7 @@ import {
 
     EVENT_IO_LIFE,
     EVENT_IO_CONNECTION,
-    EVENT_IO_DISCONNECT
+    EVENT_IO_DISCONNECT, EVENT_IO_THE_END
 
 } from './constants/events';
 
@@ -26,7 +26,10 @@ export const run = () => {
 
         client.on(EVENT_IO_LIFE, data => {
             life.clear();
-            life.live(data, browserData => client.emit(EVENT_IO_LIFE, browserData));
+            life.live(data,
+                browserData => client.emit(EVENT_IO_LIFE, browserData),
+                () => client.emit(EVENT_IO_THE_END)
+            );
         });
 
         client.on(EVENT_IO_DISCONNECT, () => {

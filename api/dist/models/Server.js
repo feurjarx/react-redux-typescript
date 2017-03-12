@@ -15,19 +15,20 @@ var Server = (function () {
             var queueName = rabbitmq_1.default.queueName;
             _this.provider
                 .consume(queueName)
-                .subscribe(function (msg) {
-                console.log("Server #" + _this.id + " received " + msg.content.toString());
+                .subscribe(function (response) {
+                response = JSON.parse(response.content.toString());
+                console.log("Server #" + _this.id + " received " + JSON.stringify(response, null, 2));
                 if (_this.calculateBehavior) {
                     _this.calculateBehavior
                         .calculate()
                         .then(function () {
                         _this.requestCounter++;
-                        observer.next();
+                        observer.next(response);
                     });
                 }
                 else {
                     _this.requestCounter++;
-                    observer.next();
+                    observer.next(response);
                 }
             });
         });

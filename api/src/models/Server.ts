@@ -29,21 +29,24 @@ export default class Server {
 
             this.provider
                 .consume(queueName)
-                .subscribe(msg => {
-                    console.log(`Server #${ this.id } received ${ msg.content.toString() }`);
+                .subscribe(response => {
+
+                    response = JSON.parse(response.content.toString());
+
+                    console.log(`Server #${ this.id } received ${ JSON.stringify(response, null, 2) }`);
 
                     if (this.calculateBehavior) {
                         this.calculateBehavior
                             .calculate()
                             .then(() => {
                                 this.requestCounter++;
-                                observer.next();
+                                observer.next(response);
                             });
 
                     } else {
 
                         this.requestCounter++;
-                        observer.next();
+                        observer.next(response);
                     }
                 });
         });

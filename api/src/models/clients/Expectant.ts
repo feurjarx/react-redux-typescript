@@ -15,12 +15,15 @@ export default class ExpectantClient extends Client {
         this.requestsNumber = v;
     }
 
-    requestServer(requestsNumber = this.requestsNumber) {
+    requestToServer(requestsNumber = this.requestsNumber) {
 
         const { queueName } = rabbitmqConfig;
 
         this.subscription = this.provider
-            .publishAndWait(queueName)
+            .publishAndWait(queueName, {
+                clientId: this.id,
+                last: this.requestsNumber <= 1
+            })
             .subscribe(response => {
 
                 switch (response.type) {
@@ -30,10 +33,14 @@ export default class ExpectantClient extends Client {
                     case 'received':
 
                         console.log(`Client #${ this.id } received response from server.`);
+
                         requestsNumber--;
 
                         if (requestsNumber > 0) {
-                            response.repeat();
+                            response.repeat({
+                                clientId: this.id,
+                                last: requestsNumber <= 1
+                            });
                         } else {
                             this.stop();
                         }

@@ -61,10 +61,9 @@ export default class RabbitMQ implements IQueue {
     private publishAndWaitSender(queueName: string, tempQueueName: string, data) {
 
         const { correlationId } = data;
-        const message = data.msg || 'Hello world from publishAndWaitSender()';
 
         this.channel.sendToQueue(queueName,
-            new Buffer(message), {
+            new Buffer(JSON.stringify(data)), {
                 correlationId,
                 replyTo: tempQueueName
             }
@@ -93,7 +92,7 @@ export default class RabbitMQ implements IQueue {
 
                             const correlationId = md5(Date.now());
 
-                            const send = this.publishAndWaitSender.bind(this, queueName, queueTemp.queue);
+                            const sendCall = this.publishAndWaitSender.bind(this, queueName, queueTemp.queue);
 
                             ch.consume(queueTemp.queue, response => {
 
@@ -103,7 +102,8 @@ export default class RabbitMQ implements IQueue {
                                         type: 'received',
                                         data: response,
                                         repeat: newData => {
-                                            send({
+
+                                            sendCall({
                                                 correlationId,
                                                 ...newData
                                             });
@@ -116,7 +116,7 @@ export default class RabbitMQ implements IQueue {
                                 }
                             });
 
-                            send({
+                            sendCall({
                                 correlationId,
                                 ...data
                             });
@@ -131,7 +131,7 @@ export default class RabbitMQ implements IQueue {
         })
     }
 
-    publish(queueName: string, data: any): Promise<void> {
+    publish(queueName: string, data = {}): Promise<void> {
 
         return new Promise((resolve, reject) => {
 
@@ -143,7 +143,7 @@ export default class RabbitMQ implements IQueue {
                         durable: false
                     });
 
-                    ch.sendToQueue(queueName, new Buffer(data));
+                    ch.sendToQueue(queueName, new Buffer(JSON.stringify(data)));
 
                     setTimeout(() => this.connection.close(), 500);
 

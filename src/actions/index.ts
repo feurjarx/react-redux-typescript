@@ -1,7 +1,8 @@
 import {
 
     UPDATE_MONITOR_ITEM,
-    INITIAL_LIFE_DATA
+    INITIAL_LIFE_DATA,
+    STOP_MONITOR
 
 } from '../constants/actions'
 
@@ -18,3 +19,10 @@ export function initialLifeData(data) {
         data
     };
 }
+
+export function stopMonitor() {
+    return {
+        type: STOP_MONITOR
+    };
+}
+

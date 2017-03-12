@@ -7,7 +7,7 @@ export default class Client {
     protected provider: IQueue;
 
     constructor(provider = null) {
-        this.id = new Date().getTime() % 1000;
+        this.id = new Date().getTime() % 10000;
         this.provider = provider;
     }
 
@@ -15,12 +15,16 @@ export default class Client {
         this.provider = provider;
     }
 
-    requestServer({message = 'Hello world'}) {
+    requestToServer({message = 'Hello world'}) {
 
         const { queueName } = rabbitmqConfig;
 
         this.provider
-            .publish(queueName, message)
+            .publish(queueName, {
+                message,
+                clientId: this.id,
+                last: true
+            })
             .then(() => {
                 console.log(`Client #${ this.id } request done.`);
             });
