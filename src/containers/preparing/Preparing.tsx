@@ -1,16 +1,22 @@
 import * as React from "react";
+import lifeConfig from "../../configs/life";
+
 const socket = require('socket.io-client')('http://localhost:3003');
+const syntaxConfig = require('./../../configs/syntax.json');
 
 import {
 
     TextField,
     Dialog,
     FlatButton,
-    RaisedButton
+    RaisedButton,
 
 } from 'material-ui';
 
+import InfoSlider from '../../components/info-slider/InfoSlider';
+
 import styles from './preparing.styles';
+import './preparing.css';
 
 import { EVENT_IO_LIFE } from "../../constants/events";
 import {connect} from "react-redux";
@@ -21,28 +27,27 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
     state = {
         open: false,
+        nClients: lifeConfig.nClients,
+        nServers: lifeConfig.nServers,
+        requestsLimit: lifeConfig.requestsLimit,
     };
 
     constructor() {
         super();
 
         // socket.on('connect', function () {});
-
         socket.on(EVENT_IO_LIFE, this.receiveLifeResponse);
-
         // socket.on('disconnect', function () {});
     }
 
     handleOpen = () => {
-        this.setState({
-            open: true
-        });
+        const open = true;
+        this.setState({ open });
     };
 
     handleClose = () => {
-        this.setState({
-            open: false
-        });
+        const open = false;
+        this.setState({ open });
     };
 
     handleRunning = () => {
@@ -50,9 +55,19 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
             const { dispatch } = this.props;
 
+            debugger
             dispatch(initialLifeData(this.state));
 
-            socket.emit(EVENT_IO_LIFE, this.state);
+            const clients = [];
+            for (let i = 0; i < this.state.nClients; i++) {
+                const requestsNumber = Math.round(Math.random() * +this.state.requestsLimit);
+                clients.push({ requestsNumber });
+            }
+
+            socket.emit(EVENT_IO_LIFE, {
+                ...this.state,
+                clients
+            });
 
             this.handleClose();
         }
@@ -66,6 +81,12 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         const { target } = event;
         this.setState({
             [target.name]: target.value
+        })
+    };
+
+    handleSlidersChange = (v: number, name: string) => {
+        this.setState({
+            [name]: v
         })
     };
 
@@ -98,17 +119,38 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                     titleStyle={styles.dialog.title}
                 >
 
-                    <form onChange={ this.handleFormChange }>
+                    <form onChange={ this.handleFormChange } id="life-data-form">
 
-                        <TextField
-                            name="nClients"
-                            floatingLabelText="Введите количество клиентов"
-                        />
+                        <div id="clients-settings-block" className="v-internal-interval-10">
 
-                        <TextField
-                            name="nServers"
-                            floatingLabelText="Введите количество серверов"
-                        />
+                            <InfoSlider
+                                name="nClients"
+                                syntax={syntaxConfig['client']}
+                                min={1}
+                                defaultValue={ this.state.nClients }
+                                onChange={ this.handleSlidersChange }
+                            />
+
+                            <InfoSlider
+                                label="Лимит клиента"
+                                name="requestsLimit"
+                                syntax={syntaxConfig['request']}
+                                min={1}
+                                defaultValue={ this.state.requestsLimit }
+                                onChange={ this.handleSlidersChange }
+                            />
+                        </div>
+
+                        <div id="servers-settings-block">
+                            <InfoSlider
+                                name="nServers"
+                                syntax={syntaxConfig['server']}
+                                min={1}
+                                max={10}
+                                defaultValue={ this.state.nServers }
+                                onChange={ this.handleSlidersChange }
+                            />
+                        </div>
                     </form>
                 </Dialog>
             </div>

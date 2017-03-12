@@ -15,13 +15,12 @@ var Life = (function () {
         var _a = this, servers = _a.servers, clients = _a.clients;
         for (var i = 0; i < nServers; i++) {
             var server = new Server_1.default(new RabbitMQ_1.default());
-            server.setCalculateBehavior(new RandomSleepCalculating_1.default(5000));
+            server.calculateBehavior = new RandomSleepCalculating_1.default(5000);
             server.id = i;
             server.listen(function () {
                 if (callback instanceof Function) {
                     var _a = this, id = _a.id, requestCounter = _a.requestCounter;
                     console.log({ id: id, requestCounter: requestCounter });
-                    debugger;
                     callback({
                         id: id,
                         requestCounter: requestCounter
@@ -30,11 +29,12 @@ var Life = (function () {
             });
             servers.push(server);
         }
-        for (var i = 0; i < nClients; i++) {
-            var client = new Expectant_1.default();
+        data.clients.forEach(function (clientData) {
+            var client = new Expectant_1.default(new RabbitMQ_1.default());
+            client.setRequestsNumber(clientData['requestsNumber']);
             client.requestServer();
             clients.push(client);
-        }
+        });
     };
     ;
     Life.prototype.clear = function () {

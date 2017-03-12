@@ -1,0 +1,17 @@
+{
+  "client": {
+    "root": "клиент",
+    "declension": 2,
+    "kind": "man"
+  },
+  "server": {
+    "root": "сервер",
+    "declension": 2,
+    "kind": "man"
+  },
+  "request": {
+    "root": "запрос",
+    "declension": 2,
+    "kind": "man"
+  }
+}

@@ -21,10 +21,6 @@ export default class Server {
         this.provider = provider;
     }
 
-    setCalculateBehavior(cb) {
-        this.calculateBehavior = cb;
-    }
-
     listen(callback = null) {
 
         const observable = new Observable(observer => {

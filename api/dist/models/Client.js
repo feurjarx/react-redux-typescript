@@ -2,15 +2,19 @@
 var rabbitmq_1 = require("../configs/rabbitmq");
 var Client = (function () {
     function Client(provider) {
-        this.id = new Date().getTime();
+        if (provider === void 0) { provider = null; }
+        this.id = new Date().getTime() % 1000;
         this.provider = provider;
     }
-    Client.prototype.requestServer = function (data) {
+    Client.prototype.setProvider = function (provider) {
+        this.provider = provider;
+    };
+    Client.prototype.requestServer = function (_a) {
         var _this = this;
-        if (data === void 0) { data = 'Hello world'; }
+        var _b = _a.message, message = _b === void 0 ? 'Hello world' : _b;
         var queueName = rabbitmq_1.default.queueName;
         this.provider
-            .publish(queueName, data)
+            .publish(queueName, message)
             .then(function () {
             console.log("Client #" + _this.id + " request done.");
         });

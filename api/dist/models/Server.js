@@ -8,9 +8,6 @@ var Server = (function () {
         this.id = new Date().getTime();
         this.provider = provider;
     }
-    Server.prototype.setCalculateBehavior = function (cb) {
-        this.calculateBehavior = cb;
-    };
     Server.prototype.listen = function (callback) {
         var _this = this;
         if (callback === void 0) { callback = null; }

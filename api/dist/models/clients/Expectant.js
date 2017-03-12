@@ -5,13 +5,46 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Client_1 = require("../Client");
-var RabbitMQ_1 = require("../../services/RabbitMQ");
+var rabbitmq_1 = require("../../configs/rabbitmq");
 var ExpectantClient = (function (_super) {
     __extends(ExpectantClient, _super);
-    function ExpectantClient() {
-        return _super.call(this, new RabbitMQ_1.default()) || this;
+    function ExpectantClient(provider) {
+        if (provider === void 0) { provider = null; }
+        return _super.call(this, provider) || this;
     }
-    ExpectantClient.prototype.accept = function (callback) {
+    ExpectantClient.prototype.setRequestsNumber = function (v) {
+        this.requestsNumber = v;
+    };
+    ExpectantClient.prototype.requestServer = function (requestsNumber) {
+        var _this = this;
+        if (requestsNumber === void 0) { requestsNumber = this.requestsNumber; }
+        var queueName = rabbitmq_1.default.queueName;
+        this.subscription = this.provider
+            .publishAndWait(queueName)
+            .subscribe(function (response) {
+            switch (response.type) {
+                case 'sent':
+                    console.log("Client #" + _this.id + " request done.");
+                    break;
+                case 'received':
+                    console.log("Client #" + _this.id + " received response from server.");
+                    requestsNumber--;
+                    if (requestsNumber > 0) {
+                        response.repeat();
+                    }
+                    else {
+                        _this.stop();
+                    }
+                    break;
+                //...
+                default:
+                    throw new Error("Unexpected response type from server. Type: " + response.type);
+            }
+        });
+    };
+    ExpectantClient.prototype.stop = function () {
+        this.provider.destroy();
+        this.subscription.unsubscribe();
     };
     return ExpectantClient;
 }(Client_1.default));

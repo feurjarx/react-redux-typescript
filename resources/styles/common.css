@@ -21,7 +21,22 @@ header {
     justify-content: space-between;
 }
 
-.flexbox-aligned {
+footer {
+    background-color: #b3c4d2;
+    padding: 5px 15px 10px 15px;
+}
+
+footer .github-url {
+    align-self: flex-end;
+    color: black;
+}
+
+footer .developer {
+    margin: 0;
+}
+
+/* CSS class helpers */
+.flex-aligned {
     display: flex;
     align-items: center;
 }
@@ -35,16 +50,54 @@ header {
     margin: 0;
 }
 
-footer {
-    background-color: #b3c4d2;
-    padding: 5px 15px 10px 15px;
+.flex-row {
+    display: flex;
 }
 
-footer .github-url {
-    align-self: flex-end;
-    color: black;
+.flex-column {
+    display: flex;
+    flex-direction: column;
 }
 
-footer .developer {
-    margin: 0;
+.center {
+    align-items: center;
+}
+
+.internal-interval-10 > * {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.internal-interval-5 > * {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.internal-interval-10 > *:first-child,
+.internal-interval-5 > *:first-child {
+    margin-left: 0;
+}
+
+.internal-interval-10 > *:last-child,
+.internal-interval-5 > *:last-child {
+    margin-right: 0;
+}
+
+
+.v-internal-interval-10 > * {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.v-internal-interval-5 > * {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.v-internal-interval-10 > *:first-child,
+.v-internal-interval-5 > *:first-child {
+    margin-top: 0;
+}
+
+.v-internal-interval-10 > *:last-child,
+.v-internal-interval-5 > *:last-child {
+    margin-bottom: 0;
 }

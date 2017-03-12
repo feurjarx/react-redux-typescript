@@ -1,13 +1,25 @@
 "use strict";
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
 var amqp = require("amqplib/callback_api");
 var Observable_1 = require("rxjs/Observable");
 var es6_shim_1 = require("es6-shim");
 var rabbitmq_1 = require("./../configs/rabbitmq");
+var md5 = require('md5');
 var RabbitMQ = (function () {
     function RabbitMQ() {
     }
     RabbitMQ.prototype.openConnection = function () {
         var _this = this;
+        if (this.connection) {
+            this.destroy();
+        }
         var amqpUrl = rabbitmq_1.default.amqpUrl;
         return new es6_shim_1.Promise(function (resolve, reject) {
             amqp.connect(amqpUrl, function (err, conn) {
@@ -22,13 +34,15 @@ var RabbitMQ = (function () {
         });
     };
     RabbitMQ.prototype.getChannelFromConnection = function (conn) {
+        var _this = this;
         return new es6_shim_1.Promise(function (resolve, reject) {
-            conn.createChannel(function (err, channel) {
+            conn.createChannel(function (err, ch) {
                 if (err) {
                     reject(err);
                 }
                 else {
-                    resolve(channel);
+                    _this.channel = ch;
+                    resolve(ch);
                 }
             });
         });
@@ -42,11 +56,59 @@ var RabbitMQ = (function () {
                 .catch(function (err) { return reject(err); });
         });
     };
+    RabbitMQ.prototype.publishAndWaitSender = function (queueName, tempQueueName, data) {
+        var correlationId = data.correlationId;
+        var message = data.msg || 'Hello world from publishAndWaitSender()';
+        this.channel.sendToQueue(queueName, new Buffer(message), {
+            correlationId: correlationId,
+            replyTo: tempQueueName
+        });
+    };
+    /**
+     * Warning! Need call destroy after use
+     */
+    RabbitMQ.prototype.publishAndWait = function (queueName, data) {
+        var _this = this;
+        if (data === void 0) { data = {}; }
+        return new Observable_1.Observable(function (observer) {
+            _this.connect()
+                .then(function (ch) {
+                var exclusive = true;
+                var noAck = true;
+                ch.assertQueue('', { exclusive: exclusive }, function (err, queueTemp) {
+                    if (err) {
+                    }
+                    else {
+                        var correlationId_1 = md5(Date.now());
+                        var send_1 = _this.publishAndWaitSender.bind(_this, queueName, queueTemp.queue);
+                        ch.consume(queueTemp.queue, function (response) {
+                            if (response.properties.correlationId === correlationId_1) {
+                                observer.next({
+                                    type: 'received',
+                                    data: response,
+                                    repeat: function (newData) {
+                                        send_1(__assign({ correlationId: correlationId_1 }, newData));
+                                        observer.next({
+                                            type: 'sent'
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                        send_1(__assign({ correlationId: correlationId_1 }, data));
+                        observer.next({
+                            type: 'sent'
+                        });
+                    }
+                }, { noAck: noAck });
+            });
+        });
+    };
     RabbitMQ.prototype.publish = function (queueName, data) {
         var _this = this;
         return new es6_shim_1.Promise(function (resolve, reject) {
-            _this.openConnection()
-                .then(function (c) { return _this.getChannelFromConnection(c); })
+            // this.openConnection()
+            _this.connect()
                 .then(function (ch) {
                 ch.assertQueue(queueName, {
                     durable: false
@@ -63,12 +125,18 @@ var RabbitMQ = (function () {
         return new Observable_1.Observable(function (observer) {
             _this.connect()
                 .then(function (ch) {
-                ch.assertQueue(queueName, {
-                    durable: false
-                });
-                ch.consume(queueName, function (msg) { return observer.next(msg); }, {
-                    noAck: true
-                });
+                var durable = false;
+                var noAck = true;
+                ch.assertQueue(queueName, { durable: durable });
+                ch.consume(queueName, function (msg) {
+                    var _a = msg.properties, replyTo = _a.replyTo, correlationId = _a.correlationId;
+                    if (correlationId && replyTo) {
+                        ch.sendToQueue(replyTo, new Buffer('ok'), {
+                            correlationId: correlationId
+                        });
+                    }
+                    observer.next(msg);
+                }, { noAck: noAck });
             })
                 .catch(function (err) {
                 throw new Error('Connect invalid');

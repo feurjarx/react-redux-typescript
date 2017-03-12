@@ -1,0 +1,20 @@
+#life-data-form {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-around;
+}
+
+#life-data-form > * {
+    max-width: 300px;
+}
+
+#clients-settings-block {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+#servers-settings-block {
+    flex-grow: 1;
+}

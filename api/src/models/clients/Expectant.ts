@@ -1,12 +1,53 @@
 import Client from "../Client";
-import RabbitMQ from "../../services/RabbitMQ";
+import rabbitmqConfig from "../../configs/rabbitmq";
+import {Subscription} from "rxjs";
 
 export default class ExpectantClient extends Client {
-    constructor() {
-        super(new RabbitMQ());
+
+    private requestsNumber: number;
+    private subscription: Subscription;
+
+    constructor(provider = null) {
+        super(provider);
     }
 
-    accept(callback) {
+    setRequestsNumber(v: number) {
+        this.requestsNumber = v;
+    }
 
+    requestServer(requestsNumber = this.requestsNumber) {
+
+        const { queueName } = rabbitmqConfig;
+
+        this.subscription = this.provider
+            .publishAndWait(queueName)
+            .subscribe(response => {
+
+                switch (response.type) {
+                    case 'sent':
+                        console.log(`Client #${ this.id } request done.`);
+                        break;
+                    case 'received':
+
+                        console.log(`Client #${ this.id } received response from server.`);
+                        requestsNumber--;
+
+                        if (requestsNumber > 0) {
+                            response.repeat();
+                        } else {
+                            this.stop();
+                        }
+
+                        break;
+                    //...
+                    default:
+                        throw new Error(`Unexpected response type from server. Type: ${ response.type }`);
+                }
+            });
+    }
+
+    stop() {
+        this.provider.destroy();
+        this.subscription.unsubscribe();
     }
 }

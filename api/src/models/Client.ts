@@ -4,19 +4,23 @@ import rabbitmqConfig from "../configs/rabbitmq";
 export default class Client {
     id: number;
 
-    provider: IQueue;
+    protected provider: IQueue;
 
-    constructor(provider) {
-        this.id = new Date().getTime();
+    constructor(provider = null) {
+        this.id = new Date().getTime() % 1000;
         this.provider = provider;
     }
 
-    requestServer(data: string = 'Hello world') {
+    setProvider(provider: IQueue) {
+        this.provider = provider;
+    }
+
+    requestServer({message = 'Hello world'}) {
 
         const { queueName } = rabbitmqConfig;
 
         this.provider
-            .publish(queueName, data)
+            .publish(queueName, message)
             .then(() => {
                 console.log(`Client #${ this.id } request done.`);
             });

@@ -24,6 +24,7 @@ export declare namespace Life {
     export interface Params {
         nClients: number;
         nServers: number;
+        requestsLimit: number;
     }
 }
 

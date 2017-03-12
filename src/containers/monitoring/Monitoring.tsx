@@ -34,7 +34,7 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
         this.clearMonitor();
 
         const { dataPoints } = this;
-        let { nClients, nServers } = initialLifeData;
+        let { nClients, nServers, requestsLimit } = initialLifeData;
 
         for (let i = 0; i < nServers; i++) {
             dataPoints.push({
@@ -44,6 +44,8 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
             })
         }
 
+        const maximum = requestsLimit * nClients;
+
         this.chart = new CanvasJS.Chart(this.chartId, {
             title :{
                 text: "Обработка клиентских запросов"
@@ -51,7 +53,7 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
             axisY: {
                 gridThickness: 0,
                 minimum: 0,
-                maximum: nClients + 10,
+                maximum
             },
             data: [{
                 type: "column",
