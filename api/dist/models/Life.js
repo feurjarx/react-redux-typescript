@@ -14,7 +14,9 @@ var Life = (function () {
         console.log(data);
         var nClients = data.nClients, nServers = data.nServers, requestTimeLimit = data.requestTimeLimit;
         var _a = this, servers = _a.servers, clients = _a.clients;
+        var timerId;
         var completedClientsCounter = 0;
+        var requestsCounter = 0;
         for (var i = 0; i < nServers; i++) {
             var server = new Server_1.default(new RabbitMQ_1.default());
             server.calculateBehavior = new RandomSleepCalculating_1.default(5000);
@@ -30,6 +32,7 @@ var Life = (function () {
                 }
                 if (data.last) {
                     completedClientsCounter++;
+                    clearInterval(timerId);
                     if (completedClientsCounter === nClients && complete instanceof Function) {
                         complete();
                     }
@@ -41,9 +44,25 @@ var Life = (function () {
             var client = new Expectant_1.default(new RabbitMQ_1.default());
             client.requestsNumber = +clientData['requestsNumber'];
             client.requestTimeLimit = requestTimeLimit;
-            client.requestToServer();
+            client
+                .requestToServer()
+                .subscribe(function (response) {
+                if (response.type === 'sent') {
+                    requestsCounter++;
+                }
+            });
             clients.push(client);
         });
+        var time = 0;
+        timerId = setInterval(function () {
+            time += 4;
+            var absThroughput = requestsCounter / nServers / time;
+            callback({
+                type: 'load',
+                absThroughput: absThroughput
+            });
+            console.log("**** AbsThroughput = " + absThroughput);
+        }, 4);
     };
     ;
     Life.prototype.clear = function () {

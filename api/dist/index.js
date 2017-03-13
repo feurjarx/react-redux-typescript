@@ -12,8 +12,15 @@ exports.run = function () {
         var life = new Life_1.Life();
         client.on(events_1.EVENT_IO_LIFE, function (data) {
             life.clear();
-            life.live(data, function (browserData) { return client.emit(events_1.EVENT_IO_LIFE, browserData); }, function () { return client.emit(events_1.EVENT_IO_THE_END); });
+            life.live(data, function (browserData) {
+                if (browserData.type === 'load') {
+                }
+                else {
+                    client.emit(events_1.EVENT_IO_LIFE, browserData);
+                }
+            }, function () { return client.emit(events_1.EVENT_IO_THE_END); });
         });
+        // client.emit(EVENT_IO_LOAD_LINE, );
         client.on(events_1.EVENT_IO_DISCONNECT, function () {
             life.clear();
             console.log('browser client was disconnected.');

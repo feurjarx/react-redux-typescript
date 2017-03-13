@@ -16,7 +16,9 @@ export class Life {
 
         const { servers, clients } = this;
 
+        let timerId;
         let completedClientsCounter = 0;
+        let requestsCounter = 0;
 
         for (let i = 0; i < nServers; i++) {
             const server = new Server(new RabbitMQ());
@@ -37,6 +39,7 @@ export class Life {
 
                 if (data.last) {
                     completedClientsCounter++;
+                    clearInterval(timerId);
 
                     if (completedClientsCounter === nClients && complete instanceof Function) {
                         complete();
@@ -52,10 +55,31 @@ export class Life {
             const client = new ExpectantClient(new RabbitMQ());
             client.requestsNumber = +clientData['requestsNumber'];
             client.requestTimeLimit = requestTimeLimit;
-            client.requestToServer();
+            client
+                .requestToServer()
+                .subscribe(response => {
+                    if (response.type === 'sent') {
+                        requestsCounter++;
+                    }
+                });
 
             clients.push(client);
         });
+
+        let time = 0;
+        timerId = setInterval(() => {
+
+            time += 4;
+
+            const absThroughput = requestsCounter / nServers / time;
+            callback({
+                type: 'load',
+                absThroughput
+            });
+
+            console.log(`**** AbsThroughput = ${ absThroughput }`);
+
+        }, 4);
     };
 
     clear() {

@@ -1,6 +1,6 @@
 import {
 
-    UPDATE_MONITOR_ITEM, STOP_MONITOR
+    UPDATE_MONITOR_ITEM
 
 } from "../constants/actions";
 

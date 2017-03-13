@@ -17,12 +17,13 @@ var ExpectantClient = (function (_super) {
         if (requestsNumber === void 0) { requestsNumber = this.requestsNumber; }
         var queueName = rabbitmq_1.default.queueName;
         var requestTimeLimit = this.requestTimeLimit;
-        this.subscription = this.provider
+        var observable = this.provider
             .publishAndWait(queueName, {
             clientId: this.id,
             last: this.requestsNumber <= 1,
             requestTimeLimit: requestTimeLimit
-        })
+        });
+        this.subscription = observable
             .subscribe(function (response) {
             switch (response.type) {
                 case 'sent':
@@ -46,6 +47,7 @@ var ExpectantClient = (function (_super) {
                     throw new Error("Unexpected response type from server. Type: " + response.type);
             }
         });
+        return observable;
     };
     ExpectantClient.prototype.stop = function () {
         this.provider.destroy();

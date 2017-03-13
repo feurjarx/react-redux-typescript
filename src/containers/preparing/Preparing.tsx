@@ -20,7 +20,7 @@ import './preparing.css';
 
 import {EVENT_IO_LIFE, EVENT_IO_THE_END} from "../../constants/events";
 import {connect} from "react-redux";
-import {updateMonitorItem, initialLifeData, stopMonitor, startStopwatch, stopStopwatch} from "../../actions/index";
+import {updateMonitorItem, initialLifeData, startStopwatch, stopStopwatch} from "../../actions/index";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -33,13 +33,15 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         requestTimeLimit: lifeConfig.requestTimeLimit,
     };
 
-    constructor() {
+    constructor(props) {
         super();
 
         // socket.on('connect', function () {});
         socket.on(EVENT_IO_LIFE, this.receiveLifeResponse);
         socket.on(EVENT_IO_THE_END, this.onCompleteLife);
-        // socket.on('disconnect', function () {});
+        socket.on('disconnect', function () {
+            props.dispatch(stopStopwatch());
+        });
     }
 
     handleOpen = () => {
@@ -86,7 +88,6 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         const { dispatch } =  this.props;
 
         dispatch(stopStopwatch());
-        dispatch(stopMonitor());
     };
 
     handleFormChange = (event) => {

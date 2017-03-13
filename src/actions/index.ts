@@ -2,7 +2,7 @@ import {
 
     UPDATE_MONITOR_ITEM,
     INITIAL_LIFE_DATA, INITIAL_LIFE_DATA_COMPLETED,
-    STOP_MONITOR, STOP_STOPWATCH, START_STOPWATCH,
+    STOP_STOPWATCH, START_STOPWATCH,
 
 
 } from '../constants/actions'
@@ -24,12 +24,6 @@ export function initialLifeData(data) {
 export function initialLifeDataCompleted() {
     return {
         type: INITIAL_LIFE_DATA_COMPLETED
-    };
-}
-
-export function stopMonitor() {
-    return {
-        type: STOP_MONITOR
     };
 }
 

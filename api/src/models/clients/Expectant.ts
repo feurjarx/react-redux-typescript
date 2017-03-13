@@ -17,12 +17,14 @@ export default class ExpectantClient extends Client {
 
         const { requestTimeLimit } = this;
 
-        this.subscription = this.provider
+        const observable = this.provider
             .publishAndWait(queueName, {
                 clientId: this.id,
                 last: this.requestsNumber <= 1,
                 requestTimeLimit
-            })
+            });
+
+        this.subscription = observable
             .subscribe(response => {
 
                 switch (response.type) {
@@ -50,6 +52,8 @@ export default class ExpectantClient extends Client {
                         throw new Error(`Unexpected response type from server. Type: ${ response.type }`);
                 }
             });
+
+        return observable;
     }
 
     stop() {

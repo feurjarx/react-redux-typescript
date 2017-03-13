@@ -20,9 +20,9 @@ function mapStateToProps(state, props) {
     return state;
 }
 
-class MonitoringConnectable extends React.Component<MonitoringProps, React.ComponentState> {
+class CpuChartConnectable extends React.Component<MonitoringProps, React.ComponentState> {
 
-    chartId = 'life-rt-chart';
+    chartId = 'life-rt-cpu-chart';
 
     chart: CanvasJS.Chart;
 
@@ -39,29 +39,15 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
         const { dataPoints } = this;
         let { nClients, nServers, requestsLimit } = initialLifeData;
 
-        for (let i = 0; i < nServers; i++) {
-            dataPoints.push({
-                x: i,
-                y: 0,
-                label: `Server ${ i + 1 }`
-            })
-        }
+        /// ...
 
-        const maximum = requestsLimit * nClients;
 
         this.chart = new CanvasJS.Chart(this.chartId, {
             title :{
-                text: "Обработка клиентских запросов"
-            },
-            axisY: {
-                gridThickness: 0,
-                minimum: 0,
-                maximum
+                text: "Нагрузка на систему"
             },
             data: [{
-                type: "column",
-                bevelEnabled: true,
-                indexLabel: "{y}",
+                type: "line",
                 dataPoints
             }]
         });
@@ -76,11 +62,12 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
 
         const {monitorItem, lifeData, dispatch} = props;
         if (lifeData.actual) {
-            this.initChart(lifeData);
-            dispatch(initialLifeDataCompleted());
+            // this.initChart(lifeData);
+            // dispatch(initialLifeDataCompleted());
 
         } else if (monitorItem) {
-            this.dataPoints[monitorItem.id].y = monitorItem.requestCounter;
+            // this.dataPoints[monitorItem.id].y = monitorItem.requestCounter;
+            // todo: push + shift
         }
 
         this.chart.render();
@@ -94,4 +81,4 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
     }
 }
 
-export const Monitoring = connect(mapStateToProps)(MonitoringConnectable);
+export const CpuChart = connect(mapStateToProps)(CpuChartConnectable);
