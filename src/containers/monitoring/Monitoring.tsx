@@ -5,6 +5,7 @@ import {connect} from "react-redux";
 import {Monitor, Life} from "../../../typings/todo";
 import ChartOptions = CanvasJS.ChartOptions;
 import ChartDataPoint = CanvasJS.ChartDataPoint;
+import {initialLifeDataCompleted} from "../../actions/index";
 
 const CanvasJS = require('canvasjs/dist/canvasjs.js');
 
@@ -12,6 +13,7 @@ interface MonitoringProps {
     monitor: any;
     monitorItem: Monitor.Item;
     lifeData: Life.Params;
+    dispatch(...args);
 }
 
 function mapStateToProps(state, props) {
@@ -72,10 +74,12 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
 
     componentWillReceiveProps(props: MonitoringProps) {
 
-        const {lifeData, monitorItem} = props;
-        if (lifeData) {
+        const {monitorItem, lifeData, dispatch} = props;
+        if (lifeData.actual) {
             this.initChart(lifeData);
-        } else {
+            dispatch(initialLifeDataCompleted());
+
+        } else if (monitorItem) {
             this.dataPoints[monitorItem.id].y = monitorItem.requestCounter;
         }
 

@@ -2,6 +2,7 @@ import * as React from "react";
 import reactCSS from "reactcss"
 import {Preparing} from "./preparing/Preparing";
 import {Monitoring} from "./monitoring/Monitoring";
+import {Stopwatch} from "./stopwatch/Stopwatch";
 
 export class Content extends React.Component<any, React.ComponentState> {
 
@@ -14,6 +15,7 @@ export class Content extends React.Component<any, React.ComponentState> {
         return (
             <div style={ styles.base }>
                 <Preparing />
+                <Stopwatch />
                 <Monitoring />
             </div>
         )

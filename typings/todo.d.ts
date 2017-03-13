@@ -26,6 +26,7 @@ export declare namespace Life {
         nServers: number;
         requestsLimit: number;
         requestTimeLimit: number;
+        actual?: boolean;
     }
 }
 
