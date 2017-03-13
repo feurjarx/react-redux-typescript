@@ -4,25 +4,24 @@ import {Subscription} from "rxjs";
 
 export default class ExpectantClient extends Client {
 
-    private requestsNumber: number;
+    requestsNumber: number;
     private subscription: Subscription;
 
     constructor(provider = null) {
         super(provider);
     }
 
-    setRequestsNumber(v: number) {
-        this.requestsNumber = v;
-    }
-
     requestToServer(requestsNumber = this.requestsNumber) {
 
         const { queueName } = rabbitmqConfig;
 
+        const { requestTimeLimit } = this;
+
         this.subscription = this.provider
             .publishAndWait(queueName, {
                 clientId: this.id,
-                last: this.requestsNumber <= 1
+                last: this.requestsNumber <= 1,
+                requestTimeLimit
             })
             .subscribe(response => {
 

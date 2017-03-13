@@ -12,7 +12,7 @@ export class Life {
     live(data, callback = null, complete = null) {
         console.log(data);
 
-        const { nClients, nServers } = data;
+        const { nClients, nServers, requestTimeLimit } = data;
 
         const { servers, clients } = this;
 
@@ -50,7 +50,8 @@ export class Life {
         data.clients.forEach(clientData => {
 
             const client = new ExpectantClient(new RabbitMQ());
-            client.setRequestsNumber(clientData['requestsNumber']);
+            client.requestsNumber = +clientData['requestsNumber'];
+            client.requestTimeLimit = requestTimeLimit;
             client.requestToServer();
 
             clients.push(client);

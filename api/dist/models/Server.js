@@ -18,9 +18,10 @@ var Server = (function () {
                 .subscribe(function (response) {
                 response = JSON.parse(response.content.toString());
                 console.log("Server #" + _this.id + " received " + JSON.stringify(response, null, 2));
+                var requestTimeLimit = response.requestTimeLimit;
                 if (_this.calculateBehavior) {
                     _this.calculateBehavior
-                        .calculate()
+                        .calculate(requestTimeLimit)
                         .then(function () {
                         _this.requestCounter++;
                         observer.next(response);

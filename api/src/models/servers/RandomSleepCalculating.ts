@@ -2,14 +2,14 @@ import {CalculateBehavior} from './behaviors/CalculateBehavior';
 import {Promise} from 'es6-shim';
 
 export default class RandomSleepCalculating implements CalculateBehavior {
-    dispersion: number;
+    max: number;
 
-    constructor(dispersion = 1000) {
-        this.dispersion = dispersion;
+    constructor(max = 1000) {
+        this.max = max;
     }
 
-    calculate() {
-        const sleep = Math.round(Math.random() * this.dispersion);
+    calculate(max = this.max) {
+        const sleep = Math.round(Math.random() * max);
         return new Promise(resolve => setTimeout(() => resolve(), sleep));
     }
 }

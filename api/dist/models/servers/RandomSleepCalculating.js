@@ -1,12 +1,13 @@
 "use strict";
 var es6_shim_1 = require("es6-shim");
 var RandomSleepCalculating = (function () {
-    function RandomSleepCalculating(dispersion) {
-        if (dispersion === void 0) { dispersion = 1000; }
-        this.dispersion = dispersion;
+    function RandomSleepCalculating(max) {
+        if (max === void 0) { max = 1000; }
+        this.max = max;
     }
-    RandomSleepCalculating.prototype.calculate = function () {
-        var sleep = Math.round(Math.random() * this.dispersion);
+    RandomSleepCalculating.prototype.calculate = function (max) {
+        if (max === void 0) { max = this.max; }
+        var sleep = Math.round(Math.random() * max);
         return new es6_shim_1.Promise(function (resolve) { return setTimeout(function () { return resolve(); }, sleep); });
     };
     return RandomSleepCalculating;

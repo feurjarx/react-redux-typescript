@@ -35,9 +35,11 @@ export default class Server {
 
                     console.log(`Server #${ this.id } received ${ JSON.stringify(response, null, 2) }`);
 
+                    const {requestTimeLimit} = response;
+
                     if (this.calculateBehavior) {
                         this.calculateBehavior
-                            .calculate()
+                            .calculate(requestTimeLimit)
                             .then(() => {
                                 this.requestCounter++;
                                 observer.next(response);

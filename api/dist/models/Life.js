@@ -12,7 +12,7 @@ var Life = (function () {
         if (callback === void 0) { callback = null; }
         if (complete === void 0) { complete = null; }
         console.log(data);
-        var nClients = data.nClients, nServers = data.nServers;
+        var nClients = data.nClients, nServers = data.nServers, requestTimeLimit = data.requestTimeLimit;
         var _a = this, servers = _a.servers, clients = _a.clients;
         var completedClientsCounter = 0;
         for (var i = 0; i < nServers; i++) {
@@ -39,7 +39,8 @@ var Life = (function () {
         }
         data.clients.forEach(function (clientData) {
             var client = new Expectant_1.default(new RabbitMQ_1.default());
-            client.setRequestsNumber(clientData['requestsNumber']);
+            client.requestsNumber = +clientData['requestsNumber'];
+            client.requestTimeLimit = requestTimeLimit;
             client.requestToServer();
             clients.push(client);
         });

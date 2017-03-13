@@ -30,6 +30,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         nClients: lifeConfig.nClients,
         nServers: lifeConfig.nServers,
         requestsLimit: lifeConfig.requestsLimit,
+        requestTimeLimit: lifeConfig.requestTimeLimit,
     };
 
     constructor() {
@@ -142,6 +143,16 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                                 syntax={syntaxConfig['request']}
                                 min={1}
                                 defaultValue={ this.state.requestsLimit }
+                                onChange={ this.handleSlidersChange }
+                            />
+
+                            <InfoSlider
+                                label="Лимит сложности запроса"
+                                name="requestTimeLimit"
+                                shortSyntax="мс"
+                                min={1}
+                                max={10000}
+                                defaultValue={ this.state.requestTimeLimit }
                                 onChange={ this.handleSlidersChange }
                             />
                         </div>
