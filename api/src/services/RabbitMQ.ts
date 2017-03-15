@@ -153,7 +153,11 @@ export default class RabbitMQ implements IQueue {
         });
     }
 
-    consume(queueName: string): Observable<Message> {
+    acknowledge(msg) {
+        this.channel.ack(msg);
+    }
+
+    consume(queueName: string, { lazy = false }): Observable<Message> {
 
         return new Observable<Message>(observer => {
 
@@ -161,9 +165,13 @@ export default class RabbitMQ implements IQueue {
                 .then(ch => {
 
                     const durable = false;
-                    const noAck = true;
-
                     ch.assertQueue(queueName, { durable });
+
+                    let noAck = true;
+                    if (lazy) {
+                        noAck = false;
+                        ch.prefetch(1);
+                    }
 
                     ch.consume(queueName, msg => {
 
@@ -176,8 +184,6 @@ export default class RabbitMQ implements IQueue {
                                     correlationId
                                 }
                             );
-
-                            // ch.ack(msg);
                         }
 
                         observer.next(msg);

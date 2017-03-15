@@ -11,8 +11,9 @@ export interface PublishAndWaitResponse {
 
 export interface IQueue {
     publish(queueName: string, data: any): Promise<void>;
-    consume(data: any): Observable<any>;
+    consume(data: any, ...args): Observable<any>;
     destroy();
 
+    acknowledge?(msg: string);
     publishAndWait?(queueName: string, data?: any): Observable<PublishAndWaitResponse>;
 }

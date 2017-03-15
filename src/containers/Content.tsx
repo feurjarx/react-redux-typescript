@@ -3,6 +3,7 @@ import reactCSS from "reactcss"
 import {Preparing} from "./preparing/Preparing";
 import {Monitoring} from "./monitoring/Monitoring";
 import {Stopwatch} from "./stopwatch/Stopwatch";
+import {CpuChart} from "./cpu-chart/CpuChart";
 
 export class Content extends React.Component<any, React.ComponentState> {
 
@@ -17,6 +18,7 @@ export class Content extends React.Component<any, React.ComponentState> {
                 <Preparing />
                 <Stopwatch />
                 <Monitoring />
+                <CpuChart />
             </div>
         )
     }

@@ -20,6 +20,8 @@ export class Life {
         let completedClientsCounter = 0;
         let requestsCounter = 0;
 
+        let totalProcessingTimeCounter = 0;
+
         for (let i = 0; i < nServers; i++) {
             const server = new Server(new RabbitMQ());
 
@@ -28,21 +30,33 @@ export class Life {
             server.listen(function(data) {
 
                 if (callback instanceof Function) {
-                    const {id, requestCounter} = this; // server
-                    // console.log({id, requestCounter});
+                    const {
+
+                        id,
+                        requestCounter,
+                        processingTimeCounter,
+                        lastProcessingTime
+
+                    } = this as Server; // server
+
+                    console.log({id, requestCounter, processingTimeCounter});
 
                     callback({
                         id,
                         requestCounter
                     });
+
+                    totalProcessingTimeCounter += lastProcessingTime;
                 }
 
                 if (data.last) {
                     completedClientsCounter++;
-                    clearInterval(timerId);
 
-                    if (completedClientsCounter === nClients && complete instanceof Function) {
-                        complete();
+                    if (completedClientsCounter === nClients) {
+                        clearInterval(timerId);
+                        if (complete instanceof Function) {
+                            complete();
+                        }
                     }
                 }
             });
@@ -67,19 +81,21 @@ export class Life {
         });
 
         let time = 0;
+        const interval = 300;
         timerId = setInterval(() => {
 
-            time += 4;
+            time += interval;
 
-            const absThroughput = requestsCounter / nServers / time;
+            // const absThroughput = requestsCounter / nServers / time;
+            const absThroughput = totalProcessingTimeCounter / nServers / time;
             callback({
-                type: 'load',
+                type: 'load_line',
                 absThroughput
             });
 
             console.log(`**** AbsThroughput = ${ absThroughput }`);
 
-        }, 4);
+        }, interval);
     };
 
     clear() {

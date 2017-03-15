@@ -1,7 +1,7 @@
 import * as React from "react";
 import lifeConfig from "../../configs/life";
-
-const socket = require('socket.io-client')('http://localhost:3003');
+import socketConfig from "../../configs/socket.io"
+const socket = require('socket.io-client')(socketConfig.host);
 const syntaxConfig = require('./../../configs/syntax.json');
 
 import {
@@ -18,9 +18,9 @@ import InfoSlider from '../../components/info-slider/InfoSlider';
 import styles from './preparing.styles';
 import './preparing.css';
 
-import {EVENT_IO_LIFE, EVENT_IO_THE_END} from "../../constants/events";
+import {EVENT_IO_LIFE, EVENT_IO_THE_END, EVENT_IO_LOAD_LINE} from "../../constants/events";
 import {connect} from "react-redux";
-import {updateMonitorItem, initialLifeData, startStopwatch, stopStopwatch} from "../../actions/index";
+import {updateMonitorItem, initialLifeData, startStopwatch, stopStopwatch, updateCpuChart} from "../../actions/index";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -42,6 +42,8 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         socket.on('disconnect', function () {
             props.dispatch(stopStopwatch());
         });
+
+        socket.on(EVENT_IO_LOAD_LINE, this.receiveLoadLineResponse);
     }
 
     handleOpen = () => {
@@ -77,6 +79,10 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
             this.handleClose();
         }
+    };
+
+    receiveLoadLineResponse = (data) => {
+        this.props.dispatch(updateCpuChart(data));
     };
 
     receiveLifeResponse = (data) => {

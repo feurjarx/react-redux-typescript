@@ -47,7 +47,7 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
             })
         }
 
-        const maximum = requestsLimit * nClients;
+        const maximum = requestsLimit * nClients + 5;
 
         this.chart = new CanvasJS.Chart(this.chartId, {
             title :{
@@ -78,8 +78,9 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
         if (lifeData.actual) {
             this.initChart(lifeData);
             dispatch(initialLifeDataCompleted());
+        }
 
-        } else if (monitorItem) {
+        if (monitorItem && this.dataPoints[monitorItem.id]) {
             this.dataPoints[monitorItem.id].y = monitorItem.requestCounter;
         }
 

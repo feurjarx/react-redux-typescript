@@ -13,6 +13,7 @@ export const lifeData = (state = null, action) => {
     switch (action.type) {
 
         case INITIAL_LIFE_DATA:
+
             const nClients = +action.data.nClients;
             const nServers = +action.data.nServers;
             const actual = true;

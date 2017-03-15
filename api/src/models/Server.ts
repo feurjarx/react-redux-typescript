@@ -2,19 +2,23 @@ import {IQueue} from "../services/IQueue";
 import {Observable} from "rxjs/Observable";
 import {Subscription} from "rxjs";
 import rabbitmqConfig from "./../configs/rabbitmq";
-import {CalculateBehavior} from './servers/behaviors/CalculateBehavior'
+import {CalculateBehavior} from './servers/behaviors/CalculateBehavior';
 
 export default class Server {
 
     id: number;
 
-    requestCounter: number = 0;
+    requestCounter = 0;
+    processingTimeCounter = 0;
+    lastProcessingTime = 0;
 
     provider: IQueue;
 
     subscriptions: Array<Subscription> = [];
 
     calculateBehavior: CalculateBehavior;
+
+    busy = false;
 
     constructor(provider) {
         this.id = new Date().getTime();
@@ -27,28 +31,33 @@ export default class Server {
 
             const { queueName } = rabbitmqConfig;
 
+            const lazy = true;
+
             this.provider
-                .consume(queueName)
+                .consume(queueName, { lazy })
                 .subscribe(response => {
 
-                    response = JSON.parse(response.content.toString());
+                    const body = JSON.parse(response.content.toString());
 
-                    console.log(`Server #${ this.id } received ${ JSON.stringify(response, null, 2) }`);
+                    console.log(`Server #${ this.id } received ${ response }`);
 
-                    const {requestTimeLimit} = response;
+                    const {requestTimeLimit} = body;
 
                     if (this.calculateBehavior) {
                         this.calculateBehavior
                             .calculate(requestTimeLimit)
-                            .then(() => {
+                            .then(({ duration }) => {
+
                                 this.requestCounter++;
-                                observer.next(response);
+                                this.processingTimeCounter += duration;
+                                this.lastProcessingTime = duration;
+
+                                if (lazy) {
+                                    this.provider.acknowledge(response);
+                                }
+
+                                observer.next(body);
                             });
-
-                    } else {
-
-                        this.requestCounter++;
-                        observer.next(response);
                     }
                 });
         });

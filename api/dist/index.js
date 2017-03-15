@@ -13,14 +13,14 @@ exports.run = function () {
         client.on(events_1.EVENT_IO_LIFE, function (data) {
             life.clear();
             life.live(data, function (browserData) {
-                if (browserData.type === 'load') {
+                if (browserData.type === 'load_line') {
+                    client.emit(events_1.EVENT_IO_LOAD_LINE, browserData);
                 }
                 else {
                     client.emit(events_1.EVENT_IO_LIFE, browserData);
                 }
             }, function () { return client.emit(events_1.EVENT_IO_THE_END); });
         });
-        // client.emit(EVENT_IO_LOAD_LINE, );
         client.on(events_1.EVENT_IO_DISCONNECT, function () {
             life.clear();
             console.log('browser client was disconnected.');

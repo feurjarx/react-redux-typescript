@@ -28,8 +28,8 @@ export const run = () => {
             life.clear();
             life.live(data,
                 browserData => {
-                    if (browserData.type === 'load') {
-                        // todo: emit load data
+                    if (browserData.type === 'load_line') {
+                        client.emit(EVENT_IO_LOAD_LINE, browserData);
                     } else {
                         client.emit(EVENT_IO_LIFE, browserData);
                     }
@@ -37,9 +37,6 @@ export const run = () => {
                 () => client.emit(EVENT_IO_THE_END)
             );
         });
-
-
-        // client.emit(EVENT_IO_LOAD_LINE, );
 
         client.on(EVENT_IO_DISCONNECT, () => {
             life.clear();

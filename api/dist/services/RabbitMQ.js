@@ -120,14 +120,22 @@ var RabbitMQ = (function () {
                 .catch(function (err) { return reject(err); });
         });
     };
-    RabbitMQ.prototype.consume = function (queueName) {
+    RabbitMQ.prototype.acknowledge = function (msg) {
+        this.channel.ack(msg);
+    };
+    RabbitMQ.prototype.consume = function (queueName, _a) {
         var _this = this;
+        var _b = _a.lazy, lazy = _b === void 0 ? false : _b;
         return new Observable_1.Observable(function (observer) {
             _this.connect()
                 .then(function (ch) {
                 var durable = false;
-                var noAck = true;
                 ch.assertQueue(queueName, { durable: durable });
+                var noAck = true;
+                if (lazy) {
+                    noAck = false;
+                    ch.prefetch(1);
+                }
                 ch.consume(queueName, function (msg) {
                     var _a = msg.properties, replyTo = _a.replyTo, correlationId = _a.correlationId;
                     if (correlationId && replyTo) {

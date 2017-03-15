@@ -4,7 +4,10 @@ var rabbitmq_1 = require("./../configs/rabbitmq");
 var Server = (function () {
     function Server(provider) {
         this.requestCounter = 0;
+        this.processingTimeCounter = 0;
+        this.lastProcessingTime = 0;
         this.subscriptions = [];
+        this.busy = false;
         this.id = new Date().getTime();
         this.provider = provider;
     }
@@ -13,23 +16,26 @@ var Server = (function () {
         if (callback === void 0) { callback = null; }
         var observable = new Observable_1.Observable(function (observer) {
             var queueName = rabbitmq_1.default.queueName;
+            var lazy = true;
             _this.provider
-                .consume(queueName)
+                .consume(queueName, { lazy: lazy })
                 .subscribe(function (response) {
-                response = JSON.parse(response.content.toString());
-                console.log("Server #" + _this.id + " received " + JSON.stringify(response, null, 2));
-                var requestTimeLimit = response.requestTimeLimit;
+                var body = JSON.parse(response.content.toString());
+                console.log("Server #" + _this.id + " received " + response);
+                var requestTimeLimit = body.requestTimeLimit;
                 if (_this.calculateBehavior) {
                     _this.calculateBehavior
                         .calculate(requestTimeLimit)
-                        .then(function () {
+                        .then(function (_a) {
+                        var duration = _a.duration;
                         _this.requestCounter++;
-                        observer.next(response);
+                        _this.processingTimeCounter += duration;
+                        _this.lastProcessingTime = duration;
+                        if (lazy) {
+                            _this.provider.acknowledge(response);
+                        }
+                        observer.next(body);
                     });
-                }
-                else {
-                    _this.requestCounter++;
-                    observer.next(response);
                 }
             });
         });

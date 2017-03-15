@@ -17,24 +17,28 @@ var Life = (function () {
         var timerId;
         var completedClientsCounter = 0;
         var requestsCounter = 0;
+        var totalProcessingTimeCounter = 0;
         for (var i = 0; i < nServers; i++) {
             var server = new Server_1.default(new RabbitMQ_1.default());
             server.calculateBehavior = new RandomSleepCalculating_1.default(5000);
             server.id = i;
             server.listen(function (data) {
                 if (callback instanceof Function) {
-                    var _a = this, id = _a.id, requestCounter = _a.requestCounter; // server
-                    // console.log({id, requestCounter});
+                    var _a = this, id = _a.id, requestCounter = _a.requestCounter, processingTimeCounter = _a.processingTimeCounter, lastProcessingTime = _a.lastProcessingTime; // server
+                    console.log({ id: id, requestCounter: requestCounter, processingTimeCounter: processingTimeCounter });
                     callback({
                         id: id,
                         requestCounter: requestCounter
                     });
+                    totalProcessingTimeCounter += lastProcessingTime;
                 }
                 if (data.last) {
                     completedClientsCounter++;
-                    clearInterval(timerId);
-                    if (completedClientsCounter === nClients && complete instanceof Function) {
-                        complete();
+                    if (completedClientsCounter === nClients) {
+                        clearInterval(timerId);
+                        if (complete instanceof Function) {
+                            complete();
+                        }
                     }
                 }
             });
@@ -54,15 +58,17 @@ var Life = (function () {
             clients.push(client);
         });
         var time = 0;
+        var interval = 300;
         timerId = setInterval(function () {
-            time += 4;
-            var absThroughput = requestsCounter / nServers / time;
+            time += interval;
+            // const absThroughput = requestsCounter / nServers / time;
+            var absThroughput = totalProcessingTimeCounter / nServers / time;
             callback({
-                type: 'load',
+                type: 'load_line',
                 absThroughput: absThroughput
             });
             console.log("**** AbsThroughput = " + absThroughput);
-        }, 4);
+        }, interval);
     };
     ;
     Life.prototype.clear = function () {

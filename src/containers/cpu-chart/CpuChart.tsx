@@ -1,26 +1,18 @@
 import * as React from "react";
-
-import "./monitoring.css";
 import {connect} from "react-redux";
-import {Monitor, Life} from "../../../typings/todo";
+
+import "./cpu-chart.css";
+
 import ChartOptions = CanvasJS.ChartOptions;
 import ChartDataPoint = CanvasJS.ChartDataPoint;
-import {initialLifeDataCompleted} from "../../actions/index";
-
+import {updateCpuChartCompleted} from "../../actions/index";
 const CanvasJS = require('canvasjs/dist/canvasjs.js');
-
-interface MonitoringProps {
-    monitor: any;
-    monitorItem: Monitor.Item;
-    lifeData: Life.Params;
-    dispatch(...args);
-}
 
 function mapStateToProps(state, props) {
     return state;
 }
 
-class CpuChartConnectable extends React.Component<MonitoringProps, React.ComponentState> {
+class CpuChartConnectable extends React.Component<any, React.ComponentState> {
 
     chartId = 'life-rt-cpu-chart';
 
@@ -28,20 +20,15 @@ class CpuChartConnectable extends React.Component<MonitoringProps, React.Compone
 
     dataPoints: Array<CanvasJS.ChartDataPoint> = [];
 
+    offset = 100;
+
     constructor() {
         super();
     }
 
-    initChart(initialLifeData:Life.Params) {
-
-        this.clearMonitor();
+    initChart() {
 
         const { dataPoints } = this;
-        let { nClients, nServers, requestsLimit } = initialLifeData;
-
-        /// ...
-
-
         this.chart = new CanvasJS.Chart(this.chartId, {
             title :{
                 text: "Нагрузка на систему"
@@ -53,24 +40,32 @@ class CpuChartConnectable extends React.Component<MonitoringProps, React.Compone
         });
     }
 
-    clearMonitor() {
-        // Warning! Can not dataPoints = []
-        while (this.dataPoints.pop()) {}
+    componentDidMount() {
+        this.initChart();
     }
 
-    componentWillReceiveProps(props: MonitoringProps) {
+    componentWillReceiveProps(props) {
 
-        const {monitorItem, lifeData, dispatch} = props;
-        if (lifeData.actual) {
-            // this.initChart(lifeData);
-            // dispatch(initialLifeDataCompleted());
+        const { cpuChart, dispatch } = props;
 
-        } else if (monitorItem) {
-            // this.dataPoints[monitorItem.id].y = monitorItem.requestCounter;
-            // todo: push + shift
+        if (cpuChart.actual) {
+
+            const { absThroughput } = cpuChart;
+            const { chart, dataPoints, offset } = this;
+
+            dataPoints.push({
+                x: dataPoints.length,
+                y: absThroughput
+            });
+
+            // if (dataPoints.length > offset) {
+            //     dataPoints.shift();
+            // }
+
+            chart.render();
+
+            dispatch(updateCpuChartCompleted());
         }
-
-        this.chart.render();
     }
 
     render() {
