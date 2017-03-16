@@ -8,7 +8,7 @@ var RandomSleepCalculating = (function () {
     RandomSleepCalculating.prototype.calculate = function (max) {
         if (max === void 0) { max = this.max; }
         var sleep = Math.round(Math.random() * max);
-        return new es6_shim_1.Promise(function (resolve) { return setTimeout(function () { return resolve({ duration: sleep }); }, sleep); });
+        return new es6_shim_1.Promise(function (resolve) { return setTimeout(function () { return (resolve({ duration: sleep })); }, sleep); });
     };
     return RandomSleepCalculating;
 }());

@@ -1,0 +1,35 @@
+.design-replica {
+    padding: 10px;
+}
+
+.design-replica .replica-main {
+    padding: 10px;
+}
+
+.design-replica .replica-content {
+    display: flex;
+}
+
+.design-replica .replica-actions {
+    display: flex;
+    flex-direction: column;
+    /*justify-content: space-between;*/
+    opacity: 0;
+}
+
+.design-replica .replica-remove {
+    border-radius: 50%;
+    align-self: flex-start;
+}
+
+.design-replica .replica-add {
+    align-self: flex-end;
+}
+
+.design-replica:hover .replica-actions {
+    opacity: 1;
+    -webkit-transition: opacity .2s ease-in-out;
+    -moz-transition: opacity .2s ease-in-out;
+    -o-transition: opacity .2s ease-in-out;
+    transition: opacity .2s ease-in-out;
+}

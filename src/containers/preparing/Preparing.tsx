@@ -21,6 +21,7 @@ import './preparing.css';
 import {EVENT_IO_LIFE, EVENT_IO_THE_END, EVENT_IO_LOAD_LINE} from "../../constants/events";
 import {connect} from "react-redux";
 import {updateMonitorItem, initialLifeData, startStopwatch, stopStopwatch, updateCpuChart} from "../../actions/index";
+import {DesignReplicator} from "../../components/design-replicator/DesignReplicator";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -125,6 +126,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         ];
 
         return (
+
             <div>
                 <RaisedButton label="Запустить модель" primary={true} onTouchTap={this.handleOpen} />
                 <Dialog
@@ -137,17 +139,20 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                     bodyStyle={styles.dialog.body}
                     titleStyle={styles.dialog.title}
                 >
+
                     <form onChange={ this.handleFormChange } id="life-data-form">
 
                         <div id="clients-settings-block" className="v-internal-interval-10">
 
-                            <InfoSlider
-                                name="nClients"
-                                syntax={syntaxConfig['client']}
-                                min={1}
-                                defaultValue={ this.state.nClients }
-                                onChange={ this.handleSlidersChange }
-                            />
+                            <DesignReplicator>
+                                <InfoSlider
+                                    name="nClients"
+                                    syntax={syntaxConfig['client']}
+                                    min={1}
+                                    defaultValue={ this.state.nClients }
+                                    onChange={ this.handleSlidersChange }
+                                />
+                            </DesignReplicator>
 
                             <InfoSlider
                                 label="Лимит клиента"

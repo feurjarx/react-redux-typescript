@@ -10,6 +10,10 @@ export default class RandomSleepCalculating implements CalculateBehavior {
 
     calculate(max = this.max) {
         const sleep = Math.round(Math.random() * max);
-        return new Promise(resolve => setTimeout(() => resolve({duration: sleep}), sleep));
+        return new Promise(resolve => setTimeout(() => (
+
+            resolve({duration: sleep})
+
+        ), sleep));
     }
 }
