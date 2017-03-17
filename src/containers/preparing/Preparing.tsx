@@ -5,15 +5,15 @@ const socket = require('socket.io-client')(socketConfig.host);
 const syntaxConfig = require('./../../configs/syntax.json');
 
 import {
+    Step,
+    StepLabel,
+} from 'material-ui/Stepper';
 
-    TextField,
+import {
     Dialog,
     FlatButton,
     RaisedButton,
-
 } from 'material-ui';
-
-import InfoSlider from '../../components/info-slider/InfoSlider';
 
 import styles from './preparing.styles';
 import './preparing.css';
@@ -22,6 +22,8 @@ import {EVENT_IO_LIFE, EVENT_IO_THE_END, EVENT_IO_LOAD_LINE} from "../../constan
 import {connect} from "react-redux";
 import {updateMonitorItem, initialLifeData, startStopwatch, stopStopwatch, updateCpuChart} from "../../actions/index";
 import {DesignReplicator} from "../../components/design-replicator/DesignReplicator";
+import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
+import RequestsSettingsStep from "./steps/RequestsSettingsStep";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -110,6 +112,38 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         })
     };
 
+    getStepContent = (index) => {
+
+        const {
+            handleSlidersChange,
+            handleFormChange,
+        } = this;
+
+        const {
+            requestTimeLimit,
+            requestsLimit,
+            nClients,
+            nServers
+
+        } = this.state;
+
+        const requestsSettingsProps = {
+            handleSlidersChange,
+            handleFormChange,
+            requestTimeLimit,
+            requestsLimit,
+            nClients,
+            nServers
+        };
+
+        return [
+            <HardwareSettingsStep />,
+            <PartitionsSettingsStep />,
+            <RequestsSettingsStep { ...requestsSettingsProps }/>
+            // ...
+        ][index];
+    };
+
     render() {
 
         const actions = [
@@ -139,54 +173,31 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                     bodyStyle={styles.dialog.body}
                     titleStyle={styles.dialog.title}
                 >
-
-                    <form onChange={ this.handleFormChange } id="life-data-form">
-
-                        <div id="clients-settings-block" className="v-internal-interval-10">
-
-                            <DesignReplicator>
-                                <InfoSlider
-                                    name="nClients"
-                                    syntax={syntaxConfig['client']}
-                                    min={1}
-                                    defaultValue={ this.state.nClients }
-                                    onChange={ this.handleSlidersChange }
-                                />
-                            </DesignReplicator>
-
-                            <InfoSlider
-                                label="Лимит клиента"
-                                name="requestsLimit"
-                                syntax={syntaxConfig['request']}
-                                min={1}
-                                defaultValue={ this.state.requestsLimit }
-                                onChange={ this.handleSlidersChange }
-                            />
-
-                            <InfoSlider
-                                label="Лимит сложности запроса"
-                                name="requestTimeLimit"
-                                shortSyntax="мс"
-                                min={1}
-                                max={10000}
-                                defaultValue={ this.state.requestTimeLimit }
-                                onChange={ this.handleSlidersChange }
-                            />
-                        </div>
-
-                        <div id="servers-settings-block">
-                            <InfoSlider
-                                name="nServers"
-                                syntax={syntaxConfig['server']}
-                                min={1}
-                                max={10}
-                                defaultValue={ this.state.nServers }
-                                onChange={ this.handleSlidersChange }
-                            />
-                        </div>
-                    </form>
+                    <HorizontalLinearStepper getStepContent={ this.getStepContent }>
+                        <Step>
+                            <StepLabel>Структура хранения данных</StepLabel>
+                        </Step>
+                        <Step>
+                            <StepLabel>Аппаратная архитектура</StepLabel>
+                        </Step>
+                        <Step>
+                            <StepLabel>Сегментация данных</StepLabel>
+                        </Step>
+                    </HorizontalLinearStepper>
                 </Dialog>
             </div>
         );
     }
 }
+
+const HardwareSettingsStep = props => {
+    return (
+        <h1>Hardware</h1>
+    );
+};
+
+const PartitionsSettingsStep = props => {
+    return (
+        <h1>Сегментация данных</h1>
+    );
+};

@@ -1,20 +1,35 @@
+.design-replicator {
+    width: 100%;
+}
+
 .design-replica {
-    padding: 10px;
+    /*padding: 10px;*/
+}
+
+.design-replica:first-child .replica-remove {
+    display: none;
+}
+
+.design-replica:last-child .replica-actions {
+    visibility: visible;
 }
 
 .design-replica .replica-main {
-    padding: 10px;
+    /*padding: 10px;*/
+    width: 100%;
 }
 
 .design-replica .replica-content {
     display: flex;
+    min-height: 50px;
 }
 
 .design-replica .replica-actions {
     display: flex;
     flex-direction: column;
-    /*justify-content: space-between;*/
+    justify-content: space-between;
     opacity: 0;
+    visibility: hidden;
 }
 
 .design-replica .replica-remove {

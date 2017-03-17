@@ -13,8 +13,6 @@ export class DesignReplicator extends React.Component<any, any> {
             replics: [
                 <DesignReplica
                     key={0}
-                    last={true}
-                    first={true}
                     body={ props.children }
                     {...listeners}
                 />
@@ -29,17 +27,8 @@ export class DesignReplicator extends React.Component<any, any> {
 
         const currentPos = replics.length - 1;
 
-        const currentReplica = React.cloneElement(replics[currentPos], {
-            last: false,
-        });
-
-        replics.pop();
-        replics.push(currentReplica);
-
         const replica = React.cloneElement(replics[0], {
             key: currentPos + 1,
-            first: false,
-            last: true,
         });
 
         replics.push(replica);
@@ -50,18 +39,7 @@ export class DesignReplicator extends React.Component<any, any> {
         event.preventDefault();
 
         const { replics } = this.state;
-
-        const currentPos = replics.length - 1;
-        const prevPos = currentPos - 1;
-
-        const prevReplica = React.cloneElement(replics[ currentPos - 1], {
-            first: !prevPos,
-            last: true,
-        });
-
         replics.pop();
-        replics.pop();
-        replics.push(prevReplica);
 
         this.setState({ replics })
     };
@@ -83,9 +61,6 @@ const DesignReplica = (props) => {
     const {
         onReplicaRemove,
         onReplicaAdd,
-        position,
-        first,
-        last,
         body
     } = props;
 
@@ -96,16 +71,14 @@ const DesignReplica = (props) => {
                 { body }
             </div>
 
-            <div className="replica-actions" style={{ display: last ? 'block' : 'none' }}>
+            <div className="replica-actions">
                 <button
                     className="btn btn-danger btn-xs replica-remove"
                     onClick={ onReplicaRemove }
-                    style={{ display: first ? 'none' : 'block' }}
                 >
                     <i className="fa fa-remove"></i>
                 </button>
                 <button
-                    value={ position }
                     className="btn btn-success btn-xs replica-add"
                     onClick={ onReplicaAdd }
                 >
