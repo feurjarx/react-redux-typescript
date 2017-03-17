@@ -1,9 +1,9 @@
 import * as React from "react";
 
-const syntaxConfig = require('../../../configs/syntax.json');
-import InfoSlider from '../../../components/info-slider/InfoSlider';
+const syntaxConfig = require('../../configs/syntax.json');
+import InfoSlider from '../../components/info-slider/InfoSlider';
 
-import {DesignReplicator} from "../../../components/design-replicator/DesignReplicator";
+import {DesignReplicator} from "../design-replicator/DesignReplicator";
 
 const RequestsSettingsStep = (props) => {
 

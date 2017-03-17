@@ -3,6 +3,12 @@ import './design-replicator.css';
 
 export class DesignReplicator extends React.Component<any, any> {
 
+    static defaultProps = {
+        styles: {
+            replica: {}
+        }
+    };
+
     constructor(props) {
         super();
 
@@ -12,6 +18,7 @@ export class DesignReplicator extends React.Component<any, any> {
         this.state = {
             replics: [
                 <DesignReplica
+                    replicaStyle={props.styles.replica}
                     key={0}
                     body={ props.children }
                     {...listeners}
@@ -46,10 +53,11 @@ export class DesignReplicator extends React.Component<any, any> {
 
     render() {
 
+        const { styles } = this.props;
         const { replics } = this.state;
 
         return (
-            <div className="design-replicator">
+            <div className="design-replicator" style={styles.replicator}>
                 { replics }
             </div>
         )
@@ -61,10 +69,11 @@ const DesignReplica = (props) => {
     const {
         onReplicaRemove,
         onReplicaAdd,
+        replicaStyle,
         body
     } = props;
 
-    return <div className="design-replica">
+    return <div className="design-replica" style={replicaStyle}>
         <div className="replica-content">
 
             <div className="replica-main">

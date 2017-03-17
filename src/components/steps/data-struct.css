@@ -1,0 +1,14 @@
+.data-struct-fields-paper,
+.data-struct-table-paper {
+    padding: 0 10px;
+}
+
+.data-struct-table-paper {
+    padding-bottom: 10px;
+    max-height: 240px;
+    overflow: auto;
+}
+.data-struct-fields-paper {
+    display: flex;
+    flex-direction: column;
+}

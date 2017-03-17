@@ -23,7 +23,8 @@ import {connect} from "react-redux";
 import {updateMonitorItem, initialLifeData, startStopwatch, stopStopwatch, updateCpuChart} from "../../actions/index";
 import {DesignReplicator} from "../../components/design-replicator/DesignReplicator";
 import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
-import RequestsSettingsStep from "./steps/RequestsSettingsStep";
+import RequestsSettingsStep from "../../components/steps/RequestsSettingsStep";
+import DataStruct from "../../components/steps/DataStruct";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -137,6 +138,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         };
 
         return [
+            <DataStruct />,
             <HardwareSettingsStep />,
             <PartitionsSettingsStep />,
             <RequestsSettingsStep { ...requestsSettingsProps }/>
@@ -182,6 +184,9 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                         </Step>
                         <Step>
                             <StepLabel>Сегментация данных</StepLabel>
+                        </Step>
+                        <Step>
+                            <StepLabel>Эксперимент</StepLabel>
                         </Step>
                     </HorizontalLinearStepper>
                 </Dialog>

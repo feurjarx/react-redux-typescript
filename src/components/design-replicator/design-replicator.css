@@ -6,42 +6,43 @@
     /*padding: 10px;*/
 }
 
-.design-replica:first-child .replica-remove {
+.design-replica:first-child > .replica-content > .replica-actions > .replica-remove {
     display: none;
 }
 
-.design-replica:last-child .replica-actions {
+.design-replica:last-child > .replica-content > .replica-actions {
     visibility: visible;
 }
 
-.design-replica .replica-main {
+.design-replica > .replica-content > .replica-main {
     /*padding: 10px;*/
     width: 100%;
 }
 
-.design-replica .replica-content {
+.design-replica > .replica-content {
     display: flex;
     min-height: 50px;
 }
 
-.design-replica .replica-actions {
+.design-replica > .replica-content > .replica-actions {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     opacity: 0;
     visibility: hidden;
+    padding-left: 10px;
 }
 
-.design-replica .replica-remove {
+.design-replica > .replica-content > .replica-actions .replica-remove {
     border-radius: 50%;
     align-self: flex-start;
 }
 
-.design-replica .replica-add {
+.design-replica > .replica-content > .replica-actions .replica-add {
     align-self: flex-end;
 }
 
-.design-replica:hover .replica-actions {
+.design-replica:hover > .replica-content > .replica-actions {
     opacity: 1;
     -webkit-transition: opacity .2s ease-in-out;
     -moz-transition: opacity .2s ease-in-out;

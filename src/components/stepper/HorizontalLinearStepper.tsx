@@ -1,9 +1,5 @@
 import * as React from 'react';
-import {
-    Step,
-    Stepper,
-    StepLabel,
-} from 'material-ui/Stepper';
+import { Stepper } from 'material-ui/Stepper';
 import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
 import styles from './horizontal-linear-stepper.style';
@@ -31,11 +27,14 @@ class HorizontalLinearStepper extends React.Component<any, any> {
         let {stepIndex} = this.state;
         if (stepIndex > 0) {
             stepIndex--;
-            this.setState({stepIndex});
+            this.setState({
+                stepIndex,
+                finished: false
+            });
         }
     };
 
-    resetHandle = (event) => {
+    handleReset = (event) => {
         event.preventDefault();
 
         this.setState({
@@ -49,23 +48,22 @@ class HorizontalLinearStepper extends React.Component<any, any> {
         const {finished, stepIndex} = this.state;
         const {getStepContent, children} = this.props;
 
-        let buttonsPanelBody: JSX.Element;
-        if (finished) {
-            buttonsPanelBody = (
-                <p><a href="" onClick={ this.resetHandle }>Вернуться</a></p>
-            );
+        const limit = this.props.children.length;
 
-        } else {
+        const {
+            handleNext,
+            handlePrev,
+            handleReset
+        } = this;
 
-            const {handlePrev, handleNext} = this;
-            const props = {
-                stepIndex,
-                handlePrev,
-                handleNext
-            };
-
-            buttonsPanelBody = <ButtonsPanel {...props} />;
-        }
+        const buttonsPanelProps = {
+            handleReset,
+            handlePrev,
+            handleNext,
+            stepIndex,
+            finished,
+            limit,
+        };
 
         return (
             <div style={ styles.main }>
@@ -73,10 +71,10 @@ class HorizontalLinearStepper extends React.Component<any, any> {
                     { children }
                 </Stepper>
 
-                <div style={styles.content} className="buttons-panel">
+                <div style={styles.content} className="stepper-content">
                     <div>
                         {getStepContent(stepIndex)}
-                        { buttonsPanelBody }
+                        <ButtonsPanel {...buttonsPanelProps} />
                     </div>
                 </div>
             </div>
@@ -89,21 +87,31 @@ export default HorizontalLinearStepper;
 const ButtonsPanel = (props) => {
 
     const {
+        handleReset,
         handlePrev,
         handleNext,
-        stepIndex
+        stepIndex,
+        limit,
+        finished
     } = props;
 
     return (
-        <div style={{marginTop: 12}}>
+        <div style={{marginTop: 5}}>
             <FlatButton
-                label="Back"
+                label="Сначала"
+                disabled={stepIndex === 0}
+                onTouchTap={handleReset}
+                style={styles.buttons.prev}
+            />
+            <FlatButton
+                label="Назад"
                 disabled={stepIndex === 0}
                 onTouchTap={handlePrev}
                 style={styles.buttons.prev}
             />
             <RaisedButton
-                label={stepIndex === 2 ? 'Finish' : 'Next'}
+                className={ finished ? 'hidden' : ''}
+                label={stepIndex === (limit - 1) ? 'Финиш' : 'Далее'}
                 primary={true}
                 onTouchTap={handleNext}
             />
