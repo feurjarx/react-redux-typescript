@@ -1,0 +1,8 @@
+.partitions-settings-paper {
+    padding: 0 10px;
+
+    width: 280px;
+    height: 220px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}

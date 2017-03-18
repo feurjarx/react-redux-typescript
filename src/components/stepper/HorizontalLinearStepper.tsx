@@ -96,7 +96,7 @@ const ButtonsPanel = (props) => {
     } = props;
 
     return (
-        <div style={{marginTop: 5}}>
+        <div style={{marginTop: 15}}>
             <FlatButton
                 label="Сначала"
                 disabled={stepIndex === 0}

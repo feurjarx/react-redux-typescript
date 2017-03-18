@@ -49,13 +49,22 @@ export default class InfoSlider extends React.Component<InfoSliderProps, any> {
 
         const {syntax, name, min, step, max, shortSyntax} = this.props;
 
-        let {label} = this.props;
-        label = label ? label + ': ' : '';
+        let {label = ''} = this.props;
+        if (label) {
+            label += ': ';
+        }
 
-        const {value} = this.state;
+        let {value} = this.state;
+        if (value < min) {
+            value = min;
+        }
+
+        if (value > max) {
+            value = max;
+        }
 
         let info: string;
-        if (shortSyntax) {
+        if (shortSyntax || shortSyntax === '') {
             info = shortSyntax;
         } else {
             info = SyntaxService.getNormalizedNounByValue(value, syntax);
@@ -63,7 +72,7 @@ export default class InfoSlider extends React.Component<InfoSliderProps, any> {
 
         return (
             <div className="flex-column">
-                <p id="slider-label">
+                <p className="info-slider-label">
                     <span>{ label }</span>
                     <span>{ value } { info }</span>
                 </p>

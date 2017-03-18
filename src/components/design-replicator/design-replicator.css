@@ -3,11 +3,11 @@
 }
 
 .design-replica {
-    /*padding: 10px;*/
+    padding: 10px 0;
 }
 
 .design-replica:first-child > .replica-content > .replica-actions > .replica-remove {
-    display: none;
+    visibility: hidden;
 }
 
 .design-replica:last-child > .replica-content > .replica-actions {

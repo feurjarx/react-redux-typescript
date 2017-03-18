@@ -101,3 +101,7 @@ footer .developer {
 .v-internal-interval-5 > *:last-child {
     margin-bottom: 0;
 }
+
+.gray {
+    color: rgba(0, 0, 0, 0.3);
+}

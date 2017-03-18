@@ -1,12 +1,12 @@
-#slider-label {
+.info-slider-label {
     margin: 0;
     font-weight: bold;
 }
 
-#slider-label > span:first-child {
+.info-slider-label > span:first-child {
     color: rgba(0, 0, 0, 0.3);
 }
 
-#slider-label > span:last-child {
+.info-slider-label > span:last-child {
     color: rgb(0, 188, 212);
 }

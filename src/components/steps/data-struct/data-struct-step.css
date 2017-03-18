@@ -4,8 +4,8 @@
 }
 
 .data-struct-table-paper {
-    padding-bottom: 10px;
-    max-height: 240px;
+    /*padding-bottom: 10px;*/
+    height: 220px;
     overflow: auto;
 }
 .data-struct-fields-paper {

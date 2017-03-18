@@ -73,27 +73,29 @@ const DesignReplica = (props) => {
         body
     } = props;
 
-    return <div className="design-replica" style={replicaStyle}>
-        <div className="replica-content">
+    return (
+        <div className="design-replica" style={replicaStyle}>
+            <div className="replica-content">
 
-            <div className="replica-main">
-                { body }
-            </div>
+                <div className="replica-main">
+                    { body }
+                </div>
 
-            <div className="replica-actions">
-                <button
-                    className="btn btn-danger btn-xs replica-remove"
-                    onClick={ onReplicaRemove }
-                >
-                    <i className="fa fa-remove"></i>
-                </button>
-                <button
-                    className="btn btn-success btn-xs replica-add"
-                    onClick={ onReplicaAdd }
-                >
-                    <i className="fa fa-plus"></i>
-                </button>
+                <div className="replica-actions">
+                    <button
+                        className="btn btn-danger btn-xs replica-remove"
+                        onClick={ onReplicaRemove }
+                    >
+                        <i className="fa fa-remove"></i>
+                    </button>
+                    <button
+                        className="btn btn-success btn-xs replica-add"
+                        onClick={ onReplicaAdd }
+                    >
+                        <i className="fa fa-plus"></i>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+    )
 };

@@ -21,7 +21,6 @@ const RequestsSettingsStep = (props) => {
         <form onChange={ handleFormChange } id="life-data-form">
             <div id="clients-settings-block" className="v-internal-interval-10">
 
-                {/*<DesignReplicator>*/}
                 <InfoSlider
                     name="nClients"
                     syntax={syntaxConfig['client']}
@@ -29,8 +28,6 @@ const RequestsSettingsStep = (props) => {
                     defaultValue={ nClients }
                     onChange={ handleSlidersChange }
                 />
-                {/*</DesignReplicator>*/}
-
 
                 <InfoSlider
                     label="Лимит клиента"
@@ -52,7 +49,7 @@ const RequestsSettingsStep = (props) => {
                 />
             </div>
 
-            <div id="servers-settings-block">
+            {/*<div id="servers-settings-block">
                 <InfoSlider
                     name="nServers"
                     syntax={syntaxConfig['server']}
@@ -61,7 +58,7 @@ const RequestsSettingsStep = (props) => {
                     defaultValue={ nServers }
                     onChange={ handleSlidersChange }
                 />
-            </div>
+            </div>*/}
         </form>
     )
 };

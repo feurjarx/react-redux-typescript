@@ -2,7 +2,6 @@ import * as React from "react";
 import lifeConfig from "../../configs/life";
 import socketConfig from "../../configs/socket.io"
 const socket = require('socket.io-client')(socketConfig.host);
-const syntaxConfig = require('./../../configs/syntax.json');
 
 import {
     Step,
@@ -21,10 +20,12 @@ import './preparing.css';
 import {EVENT_IO_LIFE, EVENT_IO_THE_END, EVENT_IO_LOAD_LINE} from "../../constants/events";
 import {connect} from "react-redux";
 import {updateMonitorItem, initialLifeData, startStopwatch, stopStopwatch, updateCpuChart} from "../../actions/index";
-import {DesignReplicator} from "../../components/design-replicator/DesignReplicator";
 import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
 import RequestsSettingsStep from "../../components/steps/RequestsSettingsStep";
-import DataStruct from "../../components/steps/DataStruct";
+import DataStructStep from "../../components/steps/data-struct/DataStructStep";
+import HardwareSettingsStep from "../../components/steps/hardware-settings/HardwareSettingsStep";
+import PartitionsSettingsStep from "../../components/steps/partitions-settings/PartitionsSettingsStep";
+
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -138,7 +139,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         };
 
         return [
-            <DataStruct />,
+            <DataStructStep />,
             <HardwareSettingsStep />,
             <PartitionsSettingsStep />,
             <RequestsSettingsStep { ...requestsSettingsProps }/>
@@ -194,15 +195,3 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         );
     }
 }
-
-const HardwareSettingsStep = props => {
-    return (
-        <h1>Hardware</h1>
-    );
-};
-
-const PartitionsSettingsStep = props => {
-    return (
-        <h1>Сегментация данных</h1>
-    );
-};
