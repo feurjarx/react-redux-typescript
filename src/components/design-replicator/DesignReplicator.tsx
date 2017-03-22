@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import './design-replicator.css';
 
 export class DesignReplicator extends React.Component<any, any> {
@@ -24,6 +25,7 @@ export class DesignReplicator extends React.Component<any, any> {
                     replicaStyle={props.styles.replica}
                     key={0}
                     body={ props.children }
+                    suffix={ generateRandomString(10) }
                     {...listeners}
                 />
             ]
@@ -36,15 +38,35 @@ export class DesignReplicator extends React.Component<any, any> {
         const { replics } = this.state;
 
         const currentPos = replics.length - 1;
+        const nextPos = currentPos + 1;
 
-        const replica = React.cloneElement(replics[0], {
-            key: currentPos + 1,
+        const replica = React.cloneElement(replics[currentPos], {
+            key: nextPos
         });
 
         replics.push(replica);
         this.setState({ replics }, () => {
             if (this.props.onReplicaAdd instanceof Function) {
-                this.props.onReplicaAdd(currentPos + 1);
+
+                const suffix = replica.props['suffix'];
+
+                const replicatorBox = ReactDOM.findDOMNode(this);
+
+                const currentReplicaBox = replicatorBox
+                    .querySelectorAll('.design-replica-' + suffix)[currentPos];
+
+                const nextReplicaBox = replicatorBox
+                    .querySelectorAll('.design-replica-' + suffix)[nextPos];
+
+                const currentNamesElems = currentReplicaBox.querySelectorAll('[name]');
+                const nextNamesElems = nextReplicaBox.querySelectorAll('[name]');
+
+                for (let i = 0; i < currentNamesElems.length; i++) {
+                    const name = currentNamesElems.item(i).getAttribute('name');
+                    nextNamesElems.item(i).setAttribute('name', name);
+                }
+
+                this.props.onReplicaAdd(nextPos, nextReplicaBox);
             }
         });
     };
@@ -64,7 +86,7 @@ export class DesignReplicator extends React.Component<any, any> {
 
     render() {
 
-        const { styles } = this.props;
+        const { styles, id } = this.props;
         const { replics } = this.state;
 
         return (
@@ -75,38 +97,54 @@ export class DesignReplicator extends React.Component<any, any> {
     }
 }
 
-const DesignReplica = (props) => {
 
-    const {
-        onReplicaRemove,
-        onReplicaAdd,
-        replicaStyle,
-        body
-    } = props;
+class DesignReplica extends React.Component<any, any> {
 
-    return (
-        <div className="design-replica" style={replicaStyle}>
-            <div className="replica-content">
+    constructor() {
+        super();
+    }
 
-                <div className="replica-main">
-                    { body }
-                </div>
+    render() {
 
-                <div className="replica-actions">
-                    <button
-                        className="btn btn-danger btn-xs replica-remove"
-                        onClick={ onReplicaRemove }
-                    >
-                        <i className="fa fa-remove"></i>
-                    </button>
-                    <button
-                        className="btn btn-success btn-xs replica-add"
-                        onClick={ onReplicaAdd }
-                    >
-                        <i className="fa fa-plus"></i>
-                    </button>
+        const {
+            onReplicaRemove,
+            onReplicaAdd,
+            replicaStyle,
+            suffix,
+            body
+        } = this.props;
+
+        return (
+            <div
+                className={`design-replica design-replica-${suffix}`}
+                style={replicaStyle}
+            >
+                <div className="replica-content">
+
+                    <div className="replica-main">
+                        { body }
+                    </div>
+
+                    <div className="replica-actions">
+                        <button
+                            className="btn btn-danger btn-xs replica-remove"
+                            onClick={ onReplicaRemove }
+                        >
+                            <i className="fa fa-remove"></i>
+                        </button>
+                        <button
+                            className="btn btn-success btn-xs replica-add"
+                            onClick={ onReplicaAdd }
+                        >
+                            <i className="fa fa-plus"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    )
-};
+        )
+    }
+}
+
+function generateRandomString(length = 10) {
+    return Math.random().toString(36).substr(2, 2 + length);
+}

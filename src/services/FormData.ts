@@ -67,7 +67,7 @@ class FormDataService {
         return pathParts.join('.');
     }
 
-    getPathByValue(path, value, hint = null) {
+    getPathByIndex(path, index, hint = null) {
 
         const pathParts = path.split('.');
         pathParts.forEach((v, i) => {
@@ -77,13 +77,13 @@ class FormDataService {
                 const prev = pathParts[i - 1];
 
                 if (prev === hint && /^\d+$/.test(v)) {
-                    pathParts[i] = value;
+                    pathParts[i] = index;
                     return false;
                 }
 
             } else {
                 if (/^\d+$/.test(v)) {
-                    pathParts[i] = value;
+                    pathParts[i] = index;
                 }
             }
         });

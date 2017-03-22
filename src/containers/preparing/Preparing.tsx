@@ -1,7 +1,8 @@
 import * as React from "react";
 import lifeConfig from "../../configs/life";
 import socketConfig from "../../configs/socket.io"
-const socket = require('socket.io-client')(socketConfig.host);
+// const socket = require('socket.io-client')(socketConfig.host);
+const socket = {on: new Function(), emit: new Function()};
 
 import {
     Step,
@@ -97,7 +98,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
         dispatch(stopStopwatch());
     };
-    // todo: throgh redux
+    // todo: throgth redux
     handleFormChange = (event) => {
         const { target } = event;
         this.setState({

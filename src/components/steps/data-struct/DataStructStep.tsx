@@ -1,14 +1,13 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import "./data-struct-step.css";
 import styles from "./data-struct-step.styles";
 import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField'
-// import AutoComplete from 'material-ui/AutoComplete'
 import AutoComplete from '../../AutoCompleteSyntheticable'
 import Checkbox from 'material-ui/Checkbox';
 
 import FormDataService from './../../../services/FormData'
-
 
 import {DesignReplicator} from '../../design-replicator/DesignReplicator';
 
@@ -56,26 +55,28 @@ class DataStructStep extends React.Component<any, any> {
         this.handleFormChange(event);
     };
 
+    onTableAdd = (index, replicaBox) => {
 
-    onTableAdd = (index) => {
+        const {formDs} = this;
 
-        const {formDs, defaultStepData} = this;
-
-        const form = this.refs['dataStructFormNode'] as HTMLFormElement;
-        const newPaperElem = form.querySelectorAll('.data-struct-table-paper')[index];
-        [].map.call(newPaperElem.querySelectorAll('[name]'), elem => {
+        [].map.call(replicaBox.querySelectorAll('[name]'), elem => {
             if (elem.name) {
-                elem.name = formDs.getIncrementedPath(elem.name, 'tables');
+                elem.name = formDs.getPathByIndex(elem.name, index, 'tables');
+                console.log('tables ', elem.name);
             }
         });
-
-        const formData = formDs.data;
-        formData.tables.push(defaultStepData.tables[0]);
-        formDs.setData(formData);
     };
 
-    onBeforeTableAdd = (index, cmp) => {
-        //cmp.props.body.props.children.props.children[1].props.children.props.children[0].props.children[1].props.name
+    onFieldAdd = (index, replicaBox) => {
+
+        const {formDs} = this;
+
+        [].map.call(replicaBox.querySelectorAll('[name]'), elem => {
+            if (elem.name) {
+                elem.name = formDs.getPathByIndex(elem.name, index, 'fields');
+                console.log('fields ', elem.name);
+            }
+        });
     };
 
     onTableRemove = (index) => {
@@ -93,36 +94,35 @@ class DataStructStep extends React.Component<any, any> {
         if (target.name) {
             formDs.setDataByPath(target.name, target.value);
         }
+
+        console.log(formDs.data);
     };
 
-    onAutoCompleteUpdate = (name, value) => {
+    onAutoCompleteUpdate = (value, _, target) => {
         const { formDs, typeByTextMap } = this;
+        const name = target['name'];
         formDs.setDataByPath(name, typeByTextMap[value]);
+        console.log(formDs.data);
     };
-
-    autocomplets = [];
 
     render() {
 
         const {
             onAutoCompleteUpdate,
             handleFormChange,
-            onBeforeTableAdd,
             onTableRemove,
-            autocomplets,
             typesSource,
             onTableAdd,
-            formDs
+            onFieldAdd
         } = this;
 
         return (
 
-            <form onChange={handleFormChange} ref="dataStructFormNode">
+            <form onChange={handleFormChange}>
                 <DesignReplicator
                     styles={ styles.tables }
                     onReplicaAdd={ onTableAdd }
                     onReplicaRemove={ onTableRemove }
-                    onBeforeReplicaAdd={ onBeforeTableAdd }
                 >
                     <div>
                         <Paper className="data-struct-table-paper">
@@ -133,7 +133,10 @@ class DataStructStep extends React.Component<any, any> {
                                 fullWidth={true}
                             />
 
-                            <DesignReplicator styles={ styles.fields }>
+                            <DesignReplicator
+                                styles={ styles.fields }
+                                onReplicaAdd={ onFieldAdd }
+                            >
                                 <Paper className="data-struct-fields-paper">
                                     <div>
                                         <TextField
@@ -149,6 +152,7 @@ class DataStructStep extends React.Component<any, any> {
                                             dataSource={typesSource}
                                             style={styles.fields.autocompleteField}
                                             name="tables.0.fields.0.type"
+                                            onUpdateInput={ onAutoCompleteUpdate }
                                         />
 
 
@@ -177,19 +181,3 @@ class DataStructStep extends React.Component<any, any> {
 }
 
 export default DataStructStep;
-
-/*
- <AutoComplete
- openOnFocus={true}
- filter={AutoComplete.noFilter}
- hintText="Укажите тип данных"
- dataSource={typesSource}
- style={styles.fields.autocompleteField}
- onUpdateInput={ function(value) {
- debugger
- autocomplets;
- onAutoCompleteUpdate(this.name, value);
- }}
- name="tables.0.fields.0.type"
- />
- */
