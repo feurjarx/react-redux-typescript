@@ -10,7 +10,15 @@ const styles = reactCSS({
                 justifyContent: 'center'
             }
         },
-        fields: { }
+        fields: {
+            textField: {
+                width: 150
+            },
+            autocompleteField: {
+                width: 150,
+                overflow: 'hidden'
+            }
+        }
     }
 });
 

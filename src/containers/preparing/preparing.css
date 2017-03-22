@@ -1,3 +1,7 @@
+.preparing-modal-body {
+    max-height: inherit !important;
+}
+
 #life-data-form {
     display: flex;
     flex-wrap: wrap;

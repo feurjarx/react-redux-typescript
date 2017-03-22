@@ -10,5 +10,17 @@
 }
 .data-struct-fields-paper {
     display: flex;
+}
+
+.data-struct-fields-paper > * {
+    display: flex;
     flex-direction: column;
 }
+
+.data-struct-index-paper {
+    justify-content: flex-end;
+    align-items: center;
+    margin-left: 5px;
+}
+
+

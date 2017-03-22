@@ -6,7 +6,10 @@ export class DesignReplicator extends React.Component<any, any> {
     static defaultProps = {
         styles: {
             replica: {}
-        }
+        },
+        onReplicaAdd: null,
+        onReplicaRemove: null,
+        onBeforeReplicaAdd: null
     };
 
     constructor(props) {
@@ -39,7 +42,11 @@ export class DesignReplicator extends React.Component<any, any> {
         });
 
         replics.push(replica);
-        this.setState({ replics })
+        this.setState({ replics }, () => {
+            if (this.props.onReplicaAdd instanceof Function) {
+                this.props.onReplicaAdd(currentPos + 1);
+            }
+        });
     };
 
     onReplicaRemove = event => {
@@ -48,7 +55,11 @@ export class DesignReplicator extends React.Component<any, any> {
         const { replics } = this.state;
         replics.pop();
 
-        this.setState({ replics })
+        this.setState({ replics });
+
+        if (this.props.onReplicaRemove instanceof Function) {
+            this.props.onReplicaRemove(replics.length - 1);
+        }
     };
 
     render() {

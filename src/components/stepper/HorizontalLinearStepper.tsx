@@ -12,7 +12,7 @@ class HorizontalLinearStepper extends React.Component<any, any> {
 
     state = {
         finished: false,
-        stepIndex: 0,
+        stepIndex: 0
     };
 
     handleNext = () => {
@@ -45,25 +45,32 @@ class HorizontalLinearStepper extends React.Component<any, any> {
 
     render() {
 
+        const { handleNext, handlePrev, handleReset } = this;
+        const {children, steps} = this.props;
         const {finished, stepIndex} = this.state;
-        const {getStepContent, children} = this.props;
 
-        const limit = this.props.children.length;
-
-        const {
-            handleNext,
-            handlePrev,
-            handleReset
-        } = this;
-
+        const limit = children.length;
         const buttonsPanelProps = {
             handleReset,
             handlePrev,
             handleNext,
             stepIndex,
             finished,
-            limit,
+            limit
         };
+
+        const stepsContents = steps.map((step, i) => {
+
+            const displayStyle = {
+                display: stepIndex === i ? 'block' : 'none'
+            };
+
+            return (
+                <div style={displayStyle} key={i}>
+                    { step }
+                </div>
+            )
+        });
 
         return (
             <div style={ styles.main }>
@@ -73,7 +80,7 @@ class HorizontalLinearStepper extends React.Component<any, any> {
 
                 <div style={styles.content} className="stepper-content">
                     <div>
-                        {getStepContent(stepIndex)}
+                        { stepsContents }
                         <ButtonsPanel {...buttonsPanelProps} />
                     </div>
                 </div>

@@ -35,7 +35,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         nClients: lifeConfig.nClients,
         nServers: lifeConfig.nServers,
         requestsLimit: lifeConfig.requestsLimit,
-        requestTimeLimit: lifeConfig.requestTimeLimit,
+        requestTimeLimit: lifeConfig.requestTimeLimit
     };
 
     constructor(props) {
@@ -63,27 +63,24 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
     handleRunning = () => {
 
-        if (this.state) {
+        const { dispatch } = this.props;
 
-            const { dispatch } = this.props;
+        dispatch(initialLifeData(this.state));
 
-            dispatch(initialLifeData(this.state));
-
-            const clients = [];
-            for (let i = 0; i < this.state.nClients; i++) {
-                const requestsNumber = Math.round(Math.random() * +this.state.requestsLimit) || 1;
-                clients.push({ requestsNumber });
-            }
-
-            socket.emit(EVENT_IO_LIFE, {
-                ...this.state,
-                clients
-            });
-
-            dispatch(startStopwatch());
-
-            this.handleClose();
+        const clients = [];
+        for (let i = 0; i < this.state.nClients; i++) {
+            const requestsNumber = Math.round(Math.random() * +this.state.requestsLimit) || 1;
+            clients.push({ requestsNumber });
         }
+
+        socket.emit(EVENT_IO_LIFE, {
+            ...this.state,
+            clients
+        });
+
+        dispatch(startStopwatch());
+
+        this.handleClose();
     };
 
     receiveLoadLineResponse = (data) => {
@@ -100,7 +97,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
         dispatch(stopStopwatch());
     };
-
+    // todo: throgh redux
     handleFormChange = (event) => {
         const { target } = event;
         this.setState({
@@ -112,39 +109,6 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         this.setState({
             [name]: v
         })
-    };
-
-    getStepContent = (index) => {
-
-        const {
-            handleSlidersChange,
-            handleFormChange,
-        } = this;
-
-        const {
-            requestTimeLimit,
-            requestsLimit,
-            nClients,
-            nServers
-
-        } = this.state;
-
-        const requestsSettingsProps = {
-            handleSlidersChange,
-            handleFormChange,
-            requestTimeLimit,
-            requestsLimit,
-            nClients,
-            nServers
-        };
-
-        return [
-            <DataStructStep />,
-            <HardwareSettingsStep />,
-            <PartitionsSettingsStep />,
-            <RequestsSettingsStep { ...requestsSettingsProps }/>
-            // ...
-        ][index];
     };
 
     render() {
@@ -162,6 +126,34 @@ export class Preparing extends React.Component<any, React.ComponentState> {
             />
         ];
 
+        const {
+            handleSlidersChange,
+            handleFormChange,
+        } = this;
+
+        const {
+            requestTimeLimit,
+            requestsLimit,
+            nClients,
+            nServers
+        } = this.state;
+
+        const requestsSettingsProps = {
+            handleSlidersChange,
+            handleFormChange,
+            requestTimeLimit,
+            requestsLimit,
+            nClients,
+            nServers
+        };
+
+        const steps = [
+            <HardwareSettingsStep />,
+            <DataStructStep />,
+            <PartitionsSettingsStep />,
+            <RequestsSettingsStep {...requestsSettingsProps} />
+        ];
+
         return (
 
             <div>
@@ -174,17 +166,18 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                     onRequestClose={ this.handleClose }
                     contentStyle={styles.dialog.content}
                     bodyStyle={styles.dialog.body}
+                    bodyClassName="preparing-modal-body"
                     titleStyle={styles.dialog.title}
                 >
-                    <HorizontalLinearStepper getStepContent={ this.getStepContent }>
+                    <HorizontalLinearStepper steps={steps}>
+                        <Step>
+                            <StepLabel>Аппаратная конфигурация</StepLabel>
+                        </Step>
                         <Step>
                             <StepLabel>Структура хранения данных</StepLabel>
                         </Step>
                         <Step>
-                            <StepLabel>Аппаратная архитектура</StepLabel>
-                        </Step>
-                        <Step>
-                            <StepLabel>Сегментация данных</StepLabel>
+                            <StepLabel>Партиционирование данных</StepLabel>
                         </Step>
                         <Step>
                             <StepLabel>Эксперимент</StepLabel>
@@ -192,6 +185,6 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                     </HorizontalLinearStepper>
                 </Dialog>
             </div>
-        );
+        )
     }
 }

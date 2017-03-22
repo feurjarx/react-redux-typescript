@@ -2,8 +2,7 @@ import * as React from "react";
 
 const syntaxConfig = require('../../configs/syntax.json');
 import InfoSlider from '../../components/info-slider/InfoSlider';
-
-import {DesignReplicator} from "../design-replicator/DesignReplicator";
+import TextField from 'material-ui/TextField'
 
 const RequestsSettingsStep = (props) => {
 
@@ -41,7 +40,7 @@ const RequestsSettingsStep = (props) => {
                 <InfoSlider
                     label="Лимит сложности запроса"
                     name="requestTimeLimit"
-                    shortSyntax="мс"
+                    shortSyntax=""
                     min={1}
                     max={10000}
                     defaultValue={ requestTimeLimit }
@@ -49,16 +48,31 @@ const RequestsSettingsStep = (props) => {
                 />
             </div>
 
-            {/*<div id="servers-settings-block">
-                <InfoSlider
+            <div id="servers-settings-block">
+
+                <TextField
+                    multiLine={true}
+                    floatingLabelText="SQL-запросы:"
+                    rows={2}
+                    defaultValue={
+                        `
+                        SELECT * FROM user AS u WHERE u.id > 1000
+                        <br>
+                        SELECT * FROM phone AS p WHERE p.tel like %+7%
+                        `
+                    }
+                />
+
+                {/*<InfoSlider
                     name="nServers"
                     syntax={syntaxConfig['server']}
                     min={1}
                     max={10}
                     defaultValue={ nServers }
                     onChange={ handleSlidersChange }
-                />
-            </div>*/}
+                />*/}
+
+            </div>
         </form>
     )
 };
