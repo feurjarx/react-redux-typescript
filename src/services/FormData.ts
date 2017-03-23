@@ -35,7 +35,11 @@ class FormDataService {
         const targetKey = pathParts.pop();
         pathParts.forEach(key => {
             if (!targetParent[key]) {
-                targetParent[key] = {};
+                if (/^\d+$/.test(key)) {
+                    targetParent[key] = {};
+                } else {
+                    targetParent[key] = [];
+                }
             }
             targetParent = targetParent[key];
         });
@@ -65,6 +69,14 @@ class FormDataService {
         });
 
         return pathParts.join('.');
+    }
+
+    normalizeElementPath(type, index, targetElem) {
+        [].map.call(targetElem.querySelectorAll('[name]'), elem => {
+            if (elem.name) {
+                elem.name = this.getPathByIndex(elem.name, index, type);
+            }
+        });
     }
 
     getPathByIndex(path, index, hint = null) {

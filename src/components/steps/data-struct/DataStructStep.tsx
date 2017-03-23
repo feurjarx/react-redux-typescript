@@ -45,46 +45,21 @@ class DataStructStep extends React.Component<any, any> {
         this.formDs = new FormDataService(defaultStepData);
     }
 
-    primaryCheckHandle = (event, checked) => {
-        event.currentTarget
-            .closest('.data-struct-index-paper')
-            .querySelector('.data-struct-external-index-checkbox')
-            .querySelector('input')
-            .disabled = checked;
-
-        this.handleFormChange(event);
-    };
 
     onTableAdd = (index, replicaBox) => {
-
-        const {formDs} = this;
-
-        [].map.call(replicaBox.querySelectorAll('[name]'), elem => {
-            if (elem.name) {
-                elem.name = formDs.getPathByIndex(elem.name, index, 'tables');
-                console.log('tables ', elem.name);
-            }
-        });
+        const {formDs, defaultStepData} = this;
+        formDs.normalizeElementPath('tables', index, replicaBox);
     };
 
     onFieldAdd = (index, replicaBox) => {
-
-        const {formDs} = this;
-
-        [].map.call(replicaBox.querySelectorAll('[name]'), elem => {
-            if (elem.name) {
-                elem.name = formDs.getPathByIndex(elem.name, index, 'fields');
-                console.log('fields ', elem.name);
-            }
-        });
+        const {formDs, defaultStepData} = this;
+        formDs.normalizeElementPath('fields', index, replicaBox);
     };
 
-    onTableRemove = (index) => {
+    onTableRemove = () => {
         const {formDs } = this;
-
         const formData = formDs.data;
         formData.tables.pop();
-        formDs.setData(formData);
     };
 
     handleFormChange = (event) => {
@@ -95,14 +70,33 @@ class DataStructStep extends React.Component<any, any> {
             formDs.setDataByPath(target.name, target.value);
         }
 
-        console.log(formDs.data);
+        console.log('***');
+        console.log(JSON.stringify(formDs.data, null, 2));
     };
 
     onAutoCompleteUpdate = (value, _, target) => {
         const { formDs, typeByTextMap } = this;
         const name = target['name'];
         formDs.setDataByPath(name, typeByTextMap[value]);
-        console.log(formDs.data);
+
+        console.log('***');
+        console.log(JSON.stringify(formDs.data, null, 2));
+    };
+
+    externalCheckHandle = (event, checked) => {
+        event.currentTarget.value = checked;
+        this.handleFormChange(event);
+    };
+
+    primaryCheckHandle = (event, checked) => {
+        event.currentTarget
+            .closest('.data-struct-index-paper')
+            .querySelector('.data-struct-external-index-checkbox')
+            .querySelector('input')
+            .disabled = checked;
+
+        event.currentTarget.value = checked;
+        this.handleFormChange(event);
     };
 
     render() {
@@ -155,17 +149,19 @@ class DataStructStep extends React.Component<any, any> {
                                             onUpdateInput={ onAutoCompleteUpdate }
                                         />
 
-
                                     </div>
                                     <div className="data-struct-index-paper">
                                         <span className="gray">Индексы</span>
                                         <Checkbox
+                                            name="tables.0.fields.0.isPrimaryIndexed"
                                             onCheck={this.primaryCheckHandle}
                                             label="первичный"
                                             labelStyle={{color: 'rgba(0, 0, 0, 0.298039)'}}
                                         />
                                         <Checkbox
+                                            name="tables.0.fields.0.isExternalIndexed"
                                             className="data-struct-external-index-checkbox"
+                                            onCheck={this.externalCheckHandle}
                                             label="внешний"
                                             labelStyle={{color: 'rgba(0, 0, 0, 0.298039)'}}
                                         />

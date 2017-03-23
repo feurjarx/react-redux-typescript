@@ -61,7 +61,7 @@ export class DesignReplicator extends React.Component<any, any> {
                 const currentNamesElems = currentReplicaBox.querySelectorAll('[name]');
                 const nextNamesElems = nextReplicaBox.querySelectorAll('[name]');
 
-                for (let i = 0; i < currentNamesElems.length; i++) {
+                for (let i = 0; i < nextNamesElems.length; i++) {
                     const name = currentNamesElems.item(i).getAttribute('name');
                     nextNamesElems.item(i).setAttribute('name', name);
                 }
@@ -75,12 +75,13 @@ export class DesignReplicator extends React.Component<any, any> {
         event.preventDefault();
 
         const { replics } = this.state;
+        const removedIndex = replics.length - 1;
         replics.pop();
 
         this.setState({ replics });
 
         if (this.props.onReplicaRemove instanceof Function) {
-            this.props.onReplicaRemove(replics.length - 1);
+            this.props.onReplicaRemove(removedIndex);
         }
     };
 
