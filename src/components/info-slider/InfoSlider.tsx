@@ -5,6 +5,7 @@ import {Syntax} from "../../../typings/syntax";
 import "./info-slider.css";
 
 import WordData = Syntax.WordData;
+import e = require("express");
 
 export interface InfoSliderProps {
     syntax?: WordData;
@@ -37,12 +38,22 @@ export default class InfoSlider extends React.Component<InfoSliderProps, any> {
     }
 
     handleChangeSlider = (event, value) => {
-        this.setState({value});
+        const {target} = event;
 
-        const { onChange, name } = this.props;
-        if (onChange) {
-            onChange(value, name);
-        }
+        const nameableElem = target
+            .closest('[value]')
+            .querySelector('[name]');
+
+        this.setState({value}, () => {
+
+            // ovet fragile
+            const {name} = nameableElem;
+
+            const {onChange} = this.props;
+            if (onChange) {
+                onChange(value, name);
+            }
+        });
     };
 
     render() {

@@ -72,18 +72,17 @@ export class DesignReplicator extends React.Component<DesignReplicatorProps, any
             const replicatorBox = ReactDOM.findDOMNode(this);
 
             const replicaElem = replicatorBox.querySelectorAll(repSelector)[pos];
-            const namableElems = replicaElem.querySelectorAll('[name]');
+            const nameableElems = replicaElem.querySelectorAll('[name]');
 
             const nextReplicaElem = replicatorBox.querySelectorAll(repSelector)[nextPos];
-            const nextNamableElems = nextReplicaElem.querySelectorAll('[name]');
+            const nextNameableElems = nextReplicaElem.querySelectorAll('[name]');
 
-            for (let i = 0; i < nextNamableElems.length; i++) {
-                const name = namableElems.item(i).getAttribute('name');
-                nextNamableElems.item(i).setAttribute('name', name);
+            for (let i = 0; i < nextNameableElems.length; i++) {
+                const name = nameableElems.item(i).getAttribute('name');
+                nextNameableElems.item(i).setAttribute('name', name);
             }
 
-
-            [].map.call(nextNamableElems, elem => {
+            [].map.call(nextNameableElems, elem => {
                 if (elem.name) {
                     elem.name = calcPathByIndex(elem.name, nextPos, hint);
                 }
@@ -108,11 +107,11 @@ export class DesignReplicator extends React.Component<DesignReplicatorProps, any
         const repSelector = '.design-replica-' + suffix;
         const replicatorBox = ReactDOM.findDOMNode(this);
         const removedReplicaElem = replicatorBox.querySelectorAll(repSelector)[removedIndex];
-        const namableFirstElem = removedReplicaElem.querySelector('[name]:not([name=""])');
+        const nameableFirstElem = removedReplicaElem.querySelector('[name]:not([name=""])');
 
         this.setState({ replics }, () => {
             if (onReplicaRemove instanceof Function) {
-                onReplicaRemove(removedIndex, hint, namableFirstElem.getAttribute('name'));
+                onReplicaRemove(removedIndex, hint, nameableFirstElem.getAttribute('name'));
             }
         });
     };

@@ -36,7 +36,6 @@ class FormDataService {
             return  key !== hint;
         });
 
-        debugger
         delete targetParent[index];
     }
 

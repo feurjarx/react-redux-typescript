@@ -71,13 +71,14 @@ class DataStructStep extends React.Component<any, any> {
     };
 
     primaryCheckHandle = (event, checked) => {
+        debugger
         event.currentTarget
             .closest('.data-struct-index-paper')
             .querySelector('.data-struct-external-index-checkbox')
             .querySelector('input')
             .disabled = checked;
 
-        event.currentTarget.value = checked;
+        event.target.value = checked;
         this.handleFormChange(event);
     };
 
@@ -85,6 +86,8 @@ class DataStructStep extends React.Component<any, any> {
 
         const {
             onAutoCompleteUpdate,
+            externalCheckHandle,
+            primaryCheckHandle,
             handleFormChange,
             typesSource,
             formDs
@@ -137,14 +140,14 @@ class DataStructStep extends React.Component<any, any> {
                                         <span className="gray">Индексы</span>
                                         <Checkbox
                                             name="tables.0.fields.0.isPrimaryIndexed"
-                                            onCheck={this.primaryCheckHandle}
+                                            onCheck={primaryCheckHandle}
                                             label="первичный"
                                             labelStyle={{color: 'rgba(0, 0, 0, 0.298039)'}}
                                         />
                                         <Checkbox
                                             name="tables.0.fields.0.isExternalIndexed"
                                             className="data-struct-external-index-checkbox"
-                                            onCheck={this.externalCheckHandle}
+                                            onCheck={externalCheckHandle}
                                             label="внешний"
                                             labelStyle={{color: 'rgba(0, 0, 0, 0.298039)'}}
                                         />
