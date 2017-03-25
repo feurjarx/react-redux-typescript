@@ -1,16 +1,34 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import './design-replicator.css';
+import SyntheticEvent = React.SyntheticEvent;
 
-export class DesignReplicator extends React.Component<any, any> {
+export interface DesignReplicatorProps {
+    id?: string;
+    styles?: any;
+    hint?: string;
+    onReplicaAdd?(
+        nextPos: number,
+        hint: string,
+        extra?: any
+    );
+    onReplicaRemove?(
+        removedPos: number,
+        hint: string,
+        path: string
+    );
+}
+
+
+export class DesignReplicator extends React.Component<DesignReplicatorProps, any> {
 
     static defaultProps = {
         styles: {
             replica: {}
         },
+        hint: null,
         onReplicaAdd: null,
-        onReplicaRemove: null,
-        onBeforeReplicaAdd: null
+        onReplicaRemove: null
     };
 
     constructor(props) {
@@ -35,38 +53,44 @@ export class DesignReplicator extends React.Component<any, any> {
     onReplicaAdd = event => {
         event.preventDefault();
 
+        const { hint } = this.props;
         const { replics } = this.state;
 
-        const currentPos = replics.length - 1;
-        const nextPos = currentPos + 1;
+        const pos = replics.length - 1;
+        const nextPos = pos + 1;
 
-        const replica = React.cloneElement(replics[currentPos], {
+        const replica = React.cloneElement(replics[pos], {
             key: nextPos
         });
 
         replics.push(replica);
         this.setState({ replics }, () => {
-            if (this.props.onReplicaAdd instanceof Function) {
 
-                const suffix = replica.props['suffix'];
+            const suffix = replica.props['suffix'];
+            const repSelector = '.design-replica-' + suffix;
 
-                const replicatorBox = ReactDOM.findDOMNode(this);
+            const replicatorBox = ReactDOM.findDOMNode(this);
 
-                const currentReplicaBox = replicatorBox
-                    .querySelectorAll('.design-replica-' + suffix)[currentPos];
+            const replicaElem = replicatorBox.querySelectorAll(repSelector)[pos];
+            const namableElems = replicaElem.querySelectorAll('[name]');
 
-                const nextReplicaBox = replicatorBox
-                    .querySelectorAll('.design-replica-' + suffix)[nextPos];
+            const nextReplicaElem = replicatorBox.querySelectorAll(repSelector)[nextPos];
+            const nextNamableElems = nextReplicaElem.querySelectorAll('[name]');
 
-                const currentNamesElems = currentReplicaBox.querySelectorAll('[name]');
-                const nextNamesElems = nextReplicaBox.querySelectorAll('[name]');
+            for (let i = 0; i < nextNamableElems.length; i++) {
+                const name = namableElems.item(i).getAttribute('name');
+                nextNamableElems.item(i).setAttribute('name', name);
+            }
 
-                for (let i = 0; i < nextNamesElems.length; i++) {
-                    const name = currentNamesElems.item(i).getAttribute('name');
-                    nextNamesElems.item(i).setAttribute('name', name);
+
+            [].map.call(nextNamableElems, elem => {
+                if (elem.name) {
+                    elem.name = calcPathByIndex(elem.name, nextPos, hint);
                 }
+            });
 
-                this.props.onReplicaAdd(nextPos, nextReplicaBox);
+            if (this.props.onReplicaAdd instanceof Function) {
+                this.props.onReplicaAdd(nextPos, hint, {nextReplicaElem, replicaElem});
             }
         });
     };
@@ -74,15 +98,23 @@ export class DesignReplicator extends React.Component<any, any> {
     onReplicaRemove = event => {
         event.preventDefault();
 
+        const {onReplicaRemove, hint } = this.props;
         const { replics } = this.state;
+
         const removedIndex = replics.length - 1;
-        replics.pop();
+        const removedReplica = replics.pop();
 
-        this.setState({ replics });
+        const suffix = removedReplica.props['suffix'];
+        const repSelector = '.design-replica-' + suffix;
+        const replicatorBox = ReactDOM.findDOMNode(this);
+        const removedReplicaElem = replicatorBox.querySelectorAll(repSelector)[removedIndex];
+        const namableFirstElem = removedReplicaElem.querySelector('[name]:not([name=""])');
 
-        if (this.props.onReplicaRemove instanceof Function) {
-            this.props.onReplicaRemove(removedIndex);
-        }
+        this.setState({ replics }, () => {
+            if (onReplicaRemove instanceof Function) {
+                onReplicaRemove(removedIndex, hint, namableFirstElem.getAttribute('name'));
+            }
+        });
     };
 
     render() {
@@ -148,4 +180,22 @@ class DesignReplica extends React.Component<any, any> {
 
 function generateRandomString(length = 10) {
     return Math.random().toString(36).substr(2, 2 + length);
+}
+
+function calcPathByIndex(path, index, hint) {
+
+    // const goal = hint.split('..').pop();
+
+    const pathParts = path.split('.');
+    pathParts.forEach((v, i) => {
+
+        const prev = pathParts[i - 1];
+
+        if (prev === hint && /^\d+$/.test(v)) {
+            pathParts[i] = index;
+            return false;
+        }
+    });
+
+    return pathParts.join('.');
 }

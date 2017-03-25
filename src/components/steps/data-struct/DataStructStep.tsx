@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import "./data-struct-step.css";
 import styles from "./data-struct-step.styles";
 import Paper from 'material-ui/Paper';
@@ -45,23 +44,6 @@ class DataStructStep extends React.Component<any, any> {
         this.formDs = new FormDataService(defaultStepData);
     }
 
-
-    onTableAdd = (index, replicaBox) => {
-        const {formDs, defaultStepData} = this;
-        formDs.normalizeElementPath('tables', index, replicaBox);
-    };
-
-    onFieldAdd = (index, replicaBox) => {
-        const {formDs, defaultStepData} = this;
-        formDs.normalizeElementPath('fields', index, replicaBox);
-    };
-
-    onTableRemove = () => {
-        const {formDs } = this;
-        const formData = formDs.data;
-        formData.tables.pop();
-    };
-
     handleFormChange = (event) => {
         const { target } = event;
         const { formDs } = this;
@@ -71,7 +53,7 @@ class DataStructStep extends React.Component<any, any> {
         }
 
         console.log('***');
-        console.log(JSON.stringify(formDs.data, null, 2));
+        console.log(`%c${ JSON.stringify(formDs.data, null, 2) }`, 'color: green; font-weight: bold');
     };
 
     onAutoCompleteUpdate = (value, _, target) => {
@@ -80,7 +62,7 @@ class DataStructStep extends React.Component<any, any> {
         formDs.setDataByPath(name, typeByTextMap[value]);
 
         console.log('***');
-        console.log(JSON.stringify(formDs.data, null, 2));
+        console.log(`%c${ JSON.stringify(formDs.data, null, 2) }`, 'color: green; font-weight: bold');
     };
 
     externalCheckHandle = (event, checked) => {
@@ -104,19 +86,19 @@ class DataStructStep extends React.Component<any, any> {
         const {
             onAutoCompleteUpdate,
             handleFormChange,
-            onTableRemove,
             typesSource,
-            onTableAdd,
-            onFieldAdd
+            formDs
         } = this;
+
+        const onReplicaRemove = formDs.removeArrayElem.bind(formDs);
 
         return (
 
             <form onChange={handleFormChange}>
                 <DesignReplicator
+                    hint="tables"
                     styles={ styles.tables }
-                    onReplicaAdd={ onTableAdd }
-                    onReplicaRemove={ onTableRemove }
+                    onReplicaRemove={ onReplicaRemove }
                 >
                     <div>
                         <Paper className="data-struct-table-paper">
@@ -129,7 +111,8 @@ class DataStructStep extends React.Component<any, any> {
 
                             <DesignReplicator
                                 styles={ styles.fields }
-                                onReplicaAdd={ onFieldAdd }
+                                hint="fields"
+                                onReplicaRemove={ onReplicaRemove }
                             >
                                 <Paper className="data-struct-fields-paper">
                                     <div>
