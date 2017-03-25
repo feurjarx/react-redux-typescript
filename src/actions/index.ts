@@ -1,6 +1,7 @@
 import {
 
     UPDATE_MONITOR_ITEM,
+    LIFE_DATA_FROM_STEPS,
     INITIAL_LIFE_DATA, INITIAL_LIFE_DATA_COMPLETED,
     STOP_STOPWATCH, START_STOPWATCH,
     UPDATE_CPU_CHART, UPDATE_CPU_CHART_COMPLETED
@@ -30,6 +31,13 @@ export function updateCpuChartCompleted() {
 export function initialLifeData(data) {
     return {
         type: INITIAL_LIFE_DATA,
+        data
+    };
+}
+
+export function updateLifeData(data) {
+    return {
+        type: LIFE_DATA_FROM_STEPS,
         data
     };
 }

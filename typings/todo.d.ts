@@ -27,6 +27,7 @@ export declare namespace Life {
         requestsLimit: number;
         requestTimeLimit: number;
         actual?: boolean;
+        stepsData: any;
     }
 }
 

@@ -7,13 +7,13 @@ import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
 import Checkbox from 'material-ui/Checkbox';
 
-import {DesignReplicator} from '../../design-replicator/DesignReplicator';
-import InfoSlider from "../../info-slider/InfoSlider";
+import {DesignReplicator} from '../../../components/design-replicator/DesignReplicator';
+import InfoSlider from "../../../components/info-slider/InfoSlider";
 import FormDataService from "../../../services/FormData";
 
 class HardwareSettingsStep extends React.Component<any, any> {
 
-    formDs: FormDataService;
+    fds: FormDataService;
 
     defaultStepData = {
         servers: [{
@@ -25,23 +25,26 @@ class HardwareSettingsStep extends React.Component<any, any> {
         }]
     };
 
-    constructor() {
+    constructor(props) {
         super();
 
         const {defaultStepData} = this;
-        this.formDs = new FormDataService(defaultStepData);
+        const {formDataService} = props;
+        formDataService.setData(defaultStepData);
+        this.fds = formDataService;
+        // this.fds = new FormDataService(defaultStepData);
     }
 
     handleFormChange = (event) => {
-        const { target } = event;
-        const { formDs } = this;
+        const {target} = event;
+        const {fds} = this;
 
         if (target.name) {
-            formDs.setDataByPath(target.name, target.value);
+            fds.setDataByPath(target.name, target.value);
         }
 
         console.log('***');
-        console.log(`%c${ JSON.stringify(formDs.data, null, 2) }`, 'color: green; font-weight: bold');
+        console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
     };
 
     onCheckHandle = (event, checked) => {
@@ -50,14 +53,14 @@ class HardwareSettingsStep extends React.Component<any, any> {
     };
 
     onSliderUpdate = (v: number, name: string) => {
-        const { formDs } = this;
+        const {fds} = this;
 
         if (name) {
-            formDs.setDataByPath(name, v);
+            fds.setDataByPath(name, v);
         }
 
         console.log('***');
-        console.log(`%c${ JSON.stringify(formDs.data, null, 2) }`, 'color: green; font-weight: bold');
+        console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
     };
 
     render() {
@@ -66,10 +69,10 @@ class HardwareSettingsStep extends React.Component<any, any> {
             handleFormChange,
             onSliderUpdate,
             onCheckHandle,
-            formDs
+            fds
         } = this;
 
-        const onReplicaRemove = formDs.removeArrayElem.bind(formDs);
+        const onReplicaRemove = fds.removeArrayElem.bind(fds);
 
         return (
             <form onChange={handleFormChange}>

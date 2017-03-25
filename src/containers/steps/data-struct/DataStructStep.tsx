@@ -3,16 +3,16 @@ import "./data-struct-step.css";
 import styles from "./data-struct-step.styles";
 import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField'
-import AutoComplete from '../../AutoCompleteSyntheticable'
+import AutoComplete from '../../../components/AutoCompleteSyntheticable'
 import Checkbox from 'material-ui/Checkbox';
 
 import FormDataService from './../../../services/FormData'
 
-import {DesignReplicator} from '../../design-replicator/DesignReplicator';
+import {DesignReplicator} from '../../../components/design-replicator/DesignReplicator';
 
 class DataStructStep extends React.Component<any, any> {
 
-    formDs: FormDataService;
+    fds: FormDataService;
 
     typesSource = [{
         text: 'Строковый',
@@ -37,32 +37,35 @@ class DataStructStep extends React.Component<any, any> {
         }]
     };
 
-    constructor() {
+    constructor(props) {
         super();
 
         const {defaultStepData} = this;
-        this.formDs = new FormDataService(defaultStepData);
+        const { formDataService } = props;
+        formDataService.setData(defaultStepData);
+        this.fds = formDataService;
+        // this.fds = new FormDataService(defaultStepData);
     }
 
     handleFormChange = (event) => {
-        const { target } = event;
-        const { formDs } = this;
+        const {target} = event;
+        const {fds} = this;
 
         if (target.name) {
-            formDs.setDataByPath(target.name, target.value);
+            fds.setDataByPath(target.name, target.value);
         }
 
-        console.log('***');
-        console.log(`%c${ JSON.stringify(formDs.data, null, 2) }`, 'color: green; font-weight: bold');
+        // console.log('***');
+        // console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
     };
 
     onAutoCompleteUpdate = (value, _, target) => {
-        const { formDs, typeByTextMap } = this;
+        const {fds, typeByTextMap} = this;
         const name = target['name'];
-        formDs.setDataByPath(name, typeByTextMap[value]);
+        fds.setDataByPath(name, typeByTextMap[value]);
 
-        console.log('***');
-        console.log(`%c${ JSON.stringify(formDs.data, null, 2) }`, 'color: green; font-weight: bold');
+        // console.log('***');
+        // console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
     };
 
     externalCheckHandle = (event, checked) => {
@@ -89,10 +92,10 @@ class DataStructStep extends React.Component<any, any> {
             primaryCheckHandle,
             handleFormChange,
             typesSource,
-            formDs
+            fds
         } = this;
 
-        const onReplicaRemove = formDs.removeArrayElem.bind(formDs);
+        const onReplicaRemove = fds.removeArrayElem.bind(fds);
 
         return (
 

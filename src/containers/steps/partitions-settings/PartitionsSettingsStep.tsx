@@ -5,17 +5,15 @@ import styles from "./partitions-settings-step.style";
 
 import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
-import AutoComplete from 'material-ui/AutoComplete';
 
-import {DesignReplicator} from '../../design-replicator/DesignReplicator';
+import {DesignReplicator} from '../../../components/design-replicator/DesignReplicator';
 
-import Range from "../../range-field/RangeField";
-import MultiCheckboxesField from "../../multi-checkboxes-field/MultiCheckboxesField";
+import MultiCheckboxesField from "../../../components/multi-checkboxes-field/MultiCheckboxesField";
 import FormDataService from "../../../services/FormData";
 
 class PartitionsSettingsStep extends React.Component<any, any> {
 
-    formDs: FormDataService;
+    fds: FormDataService;
 
     defaultStepData = {
         segments: [{
@@ -25,23 +23,25 @@ class PartitionsSettingsStep extends React.Component<any, any> {
         }]
     };
 
-    constructor() {
+    constructor(props) {
         super();
 
         const {defaultStepData} = this;
-        this.formDs = new FormDataService(defaultStepData);
+        const {formDataService} = props;
+        formDataService.setData(defaultStepData);
+        this.fds = formDataService;
     }
 
     handleFormChange = (event) => {
         const { target } = event;
-        const { formDs } = this;
+        const { fds } = this;
 
         if (target.name) {
-            formDs.setDataByPath(target.name, target.value);
+            fds.setDataByPath(target.name, target.value);
         }
 
         console.log('***');
-        console.log(`%c${ JSON.stringify(formDs.data, null, 2) }`, 'color: green; font-weight: bold');
+        console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
     };
 
     render() {

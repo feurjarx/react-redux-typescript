@@ -1,7 +1,4 @@
 import * as React from "react";
-import lifeConfig from "../../configs/life";
-import socketConfig from "../../configs/socket.io"
-// const socket = require('socket.io-client')(socketConfig.host);
 const socket = {on: new Function(), emit: new Function()};
 
 import {
@@ -18,25 +15,36 @@ import {
 import styles from './preparing.styles';
 import './preparing.css';
 
-import {EVENT_IO_LIFE, EVENT_IO_THE_END, EVENT_IO_LOAD_LINE} from "../../constants/events";
 import {connect} from "react-redux";
-import {updateMonitorItem, initialLifeData, startStopwatch, stopStopwatch, updateCpuChart} from "../../actions/index";
-import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
-import RequestsSettingsStep from "../../components/steps/RequestsSettingsStep";
-import DataStructStep from "../../components/steps/data-struct/DataStructStep";
-import HardwareSettingsStep from "../../components/steps/hardware-settings/HardwareSettingsStep";
-import PartitionsSettingsStep from "../../components/steps/partitions-settings/PartitionsSettingsStep";
 
+import {
+    EVENT_IO_LIFE,
+    EVENT_IO_THE_END,
+    EVENT_IO_LOAD_LINE
+} from "../../constants/events";
+
+import {
+    stopStopwatch,
+    startStopwatch,
+    updateCpuChart,
+    initialLifeData,
+    updateMonitorItem,
+} from "../../actions/index";
+
+import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
+import RequestsSettingsStep from "../steps/RequestsSettingsStep";
+import DataStructStep from "../steps/data-struct/DataStructStep";
+import HardwareSettingsStep from "../steps/hardware-settings/HardwareSettingsStep";
+import PartitionsSettingsStep from "../steps/partitions-settings/PartitionsSettingsStep";
+import FormDataService from "../../services/FormData";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
 
+    fds: FormDataService;
+
     state = {
         open: false,
-        nClients: lifeConfig.nClients,
-        nServers: lifeConfig.nServers,
-        requestsLimit: lifeConfig.requestsLimit,
-        requestTimeLimit: lifeConfig.requestTimeLimit
     };
 
     constructor(props) {
@@ -50,6 +58,8 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         });
 
         socket.on(EVENT_IO_LOAD_LINE, this.receiveLoadLineResponse);
+
+        this.fds = new FormDataService();
     }
 
     handleOpen = () => {
@@ -63,14 +73,16 @@ export class Preparing extends React.Component<any, React.ComponentState> {
     };
 
     handleRunning = () => {
-
-        const { dispatch } = this.props;
+debugger
+        const {fds} = this;
+        const {dispatch} = this.props;
 
         dispatch(initialLifeData(this.state));
 
+        const {nClients, requestsLimit} = fds.data;
         const clients = [];
-        for (let i = 0; i < this.state.nClients; i++) {
-            const requestsNumber = Math.round(Math.random() * +this.state.requestsLimit) || 1;
+        for (let i = 0; i < nClients; i++) {
+            const requestsNumber = Math.round(Math.random() * +requestsLimit) || 1;
             clients.push({ requestsNumber });
         }
 
@@ -93,23 +105,8 @@ export class Preparing extends React.Component<any, React.ComponentState> {
     };
 
     onCompleteLife = () => {
-
         const { dispatch } =  this.props;
-
         dispatch(stopStopwatch());
-    };
-    // todo: throgth redux
-    handleFormChange = (event) => {
-        const { target } = event;
-        this.setState({
-            [target.name]: target.value
-        })
-    };
-
-    handleSlidersChange = (v: number, name: string) => {
-        this.setState({
-            [name]: v
-        })
     };
 
     render() {
@@ -127,33 +124,17 @@ export class Preparing extends React.Component<any, React.ComponentState> {
             />
         ];
 
-        const {
-            handleSlidersChange,
-            handleFormChange,
-        } = this;
-
-        const {
-            requestTimeLimit,
-            requestsLimit,
-            nClients,
-            nServers
-        } = this.state;
-
-        const requestsSettingsProps = {
-            handleSlidersChange,
-            handleFormChange,
-            requestTimeLimit,
-            requestsLimit,
-            nClients,
-            nServers
-        };
+        const { fds } = this;
 
         const steps = [
-            <HardwareSettingsStep />,
-            <DataStructStep />,
-            <PartitionsSettingsStep />,
-            <RequestsSettingsStep {...requestsSettingsProps} />
+            <HardwareSettingsStep formDataService={fds}/>,
+            <DataStructStep formDataService={fds}/>,
+            <PartitionsSettingsStep formDataService={fds}/>,
+            <RequestsSettingsStep formDataService={fds} />
         ];
+
+        console.log('* * *');
+        console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
 
         return (
 
