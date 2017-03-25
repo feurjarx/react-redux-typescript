@@ -71,7 +71,6 @@ class DataStructStep extends React.Component<any, any> {
     };
 
     primaryCheckHandle = (event, checked) => {
-        debugger
         event.currentTarget
             .closest('.data-struct-index-paper')
             .querySelector('.data-struct-external-index-checkbox')

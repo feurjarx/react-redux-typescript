@@ -11,11 +11,38 @@ import {DesignReplicator} from '../../design-replicator/DesignReplicator';
 
 import Range from "../../range-field/RangeField";
 import MultiCheckboxesField from "../../multi-checkboxes-field/MultiCheckboxesField";
+import FormDataService from "../../../services/FormData";
 
 class PartitionsSettingsStep extends React.Component<any, any> {
+
+    formDs: FormDataService;
+
+    defaultStepData = {
+        segments: [{
+            path: null,
+            criteria: null,
+            servers: []
+        }]
+    };
+
     constructor() {
         super();
+
+        const {defaultStepData} = this;
+        this.formDs = new FormDataService(defaultStepData);
     }
+
+    handleFormChange = (event) => {
+        const { target } = event;
+        const { formDs } = this;
+
+        if (target.name) {
+            formDs.setDataByPath(target.name, target.value);
+        }
+
+        console.log('***');
+        console.log(`%c${ JSON.stringify(formDs.data, null, 2) }`, 'color: green; font-weight: bold');
+    };
 
     render() {
 
@@ -30,33 +57,50 @@ class PartitionsSettingsStep extends React.Component<any, any> {
             value: 4
         }];
 
+        const {
+            handleFormChange,
+
+        } = this;
+
         return (
 
-            <DesignReplicator styles={styles}>
-                <div>
-                    <Paper className="partitions-settings-paper">
-                        <AutoComplete
-                            openOnFocus={true}
-                            filter={AutoComplete.noFilter}
-                            floatingLabelText="Укажите поле таблицы"
-                            dataSource={[]}
-                        />
+            <form onChange={handleFormChange}>
+                <DesignReplicator
+                    hint="segments"
+                    styles={styles}
+                >
+                    <div>
+                        <Paper className="partitions-settings-paper">
+                            {/*
+                            <AutoComplete
+                                openOnFocus={true}
+                                filter={AutoComplete.noFilter}
+                                floatingLabelText="Укажите поле таблицы"
+                                dataSource={[]}
+                            />
+                            */}
+                            <TextField
+                                name="segments.0.path"
+                                floatingLabelText="Укажите поле таблицы"
+                            />
 
-                        {/*<Range />*/}
+                            {/*<Range />*/}
 
-                        <TextField
-                            floatingLabelFixed={true}
-                            floatingLabelText="Критерия сегмента"
-                            hintText="Например, $ > 0 and $ <> 1"
-                        />
+                            <TextField
+                                name="segments.0.criteria"
+                                floatingLabelFixed={true}
+                                floatingLabelText="Критерия сегмента"
+                                hintText="Например, $ > 0 and $ <> 1"
+                            />
 
-                        <MultiCheckboxesField labelText="Укажите сервера" items={items}/>
+                            <MultiCheckboxesField labelText="Укажите сервера" items={items}/>
 
 
-                    </Paper>
-                </div>
+                        </Paper>
+                    </div>
 
-            </DesignReplicator>
+                </DesignReplicator>
+            </form>
         )
     }
 }
