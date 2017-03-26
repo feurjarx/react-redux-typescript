@@ -15,7 +15,7 @@ class FormDataService {
 
         let insideData = defaultData;
 
-        watcher.subscribe(v => insideData = v);
+        watcher.subscribe(v => insideData = { ...insideData, ...v });
 
         Object.defineProperty(this, 'data', {
             get() {

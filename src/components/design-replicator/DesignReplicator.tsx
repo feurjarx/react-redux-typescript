@@ -116,11 +116,23 @@ export class DesignReplicator extends React.Component<DesignReplicatorProps, any
         });
     };
 
+    componentWillReceiveProps(props) {
+        const {replics} = this.state;
+        const updateReplics = replics.map(r => (
+            React.cloneElement(r, {
+                body: props.children
+            })
+        ));
+
+        this.setState({
+            replics: updateReplics
+        })
+    }
+
     render() {
 
         const { styles, id } = this.props;
         const { replics } = this.state;
-
         return (
             <div className="design-replicator" style={styles.replicator}>
                 { replics }

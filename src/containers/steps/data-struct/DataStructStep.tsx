@@ -9,10 +9,17 @@ import Checkbox from 'material-ui/Checkbox';
 import FormDataService from './../../../services/FormData'
 
 import {DesignReplicator} from '../../../components/design-replicator/DesignReplicator';
+import {connect} from "react-redux";
+import {updateOtherStepsData} from "../../../actions/index";
 
+@connect()
 class DataStructStep extends React.Component<any, any> {
 
     fds: FormDataService;
+
+    state = {
+        pathSource: []
+    };
 
     typesSource = [{
         text: 'Строковый',
@@ -44,7 +51,6 @@ class DataStructStep extends React.Component<any, any> {
         const { formDataService } = props;
         formDataService.setData(defaultStepData);
         this.fds = formDataService;
-        // this.fds = new FormDataService(defaultStepData);
     }
 
     handleFormChange = (event) => {
@@ -55,17 +61,15 @@ class DataStructStep extends React.Component<any, any> {
             fds.setDataByPath(target.name, target.value);
         }
 
-        // console.log('***');
-        // console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
+        this.props.dispatch(updateOtherStepsData({
+            tables: fds.data.tables
+        }));
     };
 
     onAutoCompleteUpdate = (value, _, target) => {
         const {fds, typeByTextMap} = this;
         const name = target['name'];
         fds.setDataByPath(name, typeByTextMap[value]);
-
-        // console.log('***');
-        // console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
     };
 
     externalCheckHandle = (event, checked) => {
@@ -84,12 +88,35 @@ class DataStructStep extends React.Component<any, any> {
         this.handleFormChange(event);
     };
 
+    handleUpdateInput = (value) => {
+        this.setState({
+            pathSource: [
+                value,
+                value + value,
+                value + value + value,
+            ],
+        });
+    };
+
+    // onReplicaRemove = (index, hint, path) => {
+    //     const {fds} = this;
+    //     const {dispatch} = this.props;
+    //     fds.removeArrayElem(index, hint, path);
+    //
+    //     dispatch(updateOtherStepsData({
+    //         tables: fds.data.tables
+    //     }));
+    // };
+
     render() {
 
         const {
             onAutoCompleteUpdate,
             externalCheckHandle,
             primaryCheckHandle,
+            // onReplicaRemove,
+            handleUpdateInput,
+
             handleFormChange,
             typesSource,
             fds
@@ -100,11 +127,23 @@ class DataStructStep extends React.Component<any, any> {
         return (
 
             <form onChange={handleFormChange}>
+
                 <DesignReplicator
                     hint="tables"
                     styles={ styles.tables }
                     onReplicaRemove={ onReplicaRemove }
                 >
+
+                    {/*
+                    <AutoComplete
+                        hintText="hint"
+                        filter={AutoComplete.noFilter}
+                        openOnFocus={true}
+                        onUpdateInput={handleUpdateInput}
+                        dataSource={this.state.pathSource}
+                    />
+                    */}
+
                     <div>
                         <Paper className="data-struct-table-paper">
                             <TextField

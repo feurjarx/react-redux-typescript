@@ -75,7 +75,7 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
     componentWillReceiveProps(props: MonitoringProps) {
 
         const {monitorItem, lifeData, dispatch} = props;
-        if (lifeData.actual) {
+        if (lifeData && lifeData.actual) {
             this.initChart(lifeData);
             dispatch(initialLifeDataCompleted());
         }
@@ -84,7 +84,10 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
             this.dataPoints[monitorItem.id].y = monitorItem.requestCounter;
         }
 
-        this.chart.render();
+        const {chart} = this;
+        if (chart) {
+            chart.render();
+        }
     }
 
     render() {

@@ -35,7 +35,7 @@ import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearSt
 import RequestsSettingsStep from "../steps/RequestsSettingsStep";
 import DataStructStep from "../steps/data-struct/DataStructStep";
 import HardwareSettingsStep from "../steps/hardware-settings/HardwareSettingsStep";
-import PartitionsSettingsStep from "../steps/partitions-settings/PartitionsSettingsStep";
+import {PartitionsSettingsStep} from "../steps/partitions-settings/PartitionsSettingsStep";
 import FormDataService from "../../services/FormData";
 
 @connect()

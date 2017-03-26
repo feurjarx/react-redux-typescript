@@ -10,7 +10,10 @@ import Checkbox from 'material-ui/Checkbox';
 import {DesignReplicator} from '../../../components/design-replicator/DesignReplicator';
 import InfoSlider from "../../../components/info-slider/InfoSlider";
 import FormDataService from "../../../services/FormData";
+import {updateOtherStepsData} from "../../../actions/index";
+import {connect} from "react-redux";
 
+@connect()
 class HardwareSettingsStep extends React.Component<any, any> {
 
     fds: FormDataService;
@@ -42,6 +45,10 @@ class HardwareSettingsStep extends React.Component<any, any> {
         if (target.name) {
             fds.setDataByPath(target.name, target.value);
         }
+
+        this.props.dispatch(updateOtherStepsData({
+            servers: fds.data.servers
+        }));
 
         console.log('***');
         console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');

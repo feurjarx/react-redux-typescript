@@ -5,13 +5,19 @@ import styles from "./partitions-settings-step.style";
 
 import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
+import AutoComplete from '../../../components/AutoCompleteSyntheticable';
 
 import {DesignReplicator} from '../../../components/design-replicator/DesignReplicator';
 
 import MultiCheckboxesField from "../../../components/multi-checkboxes-field/MultiCheckboxesField";
 import FormDataService from "../../../services/FormData";
+import {connect} from "react-redux";
 
-class PartitionsSettingsStep extends React.Component<any, any> {
+function mapStateToProps(state, props) {
+    return state;
+}
+
+class PartitionsSettingsStepConnectable extends React.Component<any, any> {
 
     fds: FormDataService;
 
@@ -21,6 +27,11 @@ class PartitionsSettingsStep extends React.Component<any, any> {
             criteria: null,
             servers: []
         }]
+    };
+
+    state = {
+        pathSource: [],
+        serversSource: []
     };
 
     constructor(props) {
@@ -33,9 +44,9 @@ class PartitionsSettingsStep extends React.Component<any, any> {
     }
 
     handleFormChange = (event) => {
-        const { target } = event;
         const { fds } = this;
 
+        const { target } = event;
         if (target.name) {
             fds.setDataByPath(target.name, target.value);
         }
@@ -44,23 +55,47 @@ class PartitionsSettingsStep extends React.Component<any, any> {
         console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
     };
 
+    componentWillReceiveProps(props) {
+
+        let {otherStepsData} = props;
+        if (otherStepsData) {
+            const {tables} = otherStepsData;
+            if (tables) {
+                let pathSource = [];
+                tables.forEach(t => {
+                    t.fields.forEach(f => {
+                        pathSource.push(t.name + '/' + f.name,);
+                    });
+                });
+
+                this.setState({pathSource});
+            }
+
+            const {servers} = otherStepsData;
+            if (servers) {
+                const serversSource = servers.map(s => ({
+                    text: s.name,
+                    value: s.name
+                }));
+                this.setState({serversSource});
+            }
+        }
+    }
+
+    onAutoCompleteUpdate = (value, _, target) => {
+        const {fds} = this;
+        const name = target['name'];
+        fds.setDataByPath(name, value);
+    };
+
     render() {
 
-        const items = [{
-            text: 'Сервер А',
-            value: 2
-        }, {
-            text: 'Сервер Б',
-            value: 3
-        }, {
-            text: 'Сервер C',
-            value: 4
-        }];
-
         const {
-            handleFormChange,
-
+            onAutoCompleteUpdate,
+            handleFormChange
         } = this;
+
+        const { pathSource, serversSource } = this.state;
 
         return (
 
@@ -71,20 +106,15 @@ class PartitionsSettingsStep extends React.Component<any, any> {
                 >
                     <div>
                         <Paper className="partitions-settings-paper">
-                            {/*
+
                             <AutoComplete
                                 openOnFocus={true}
                                 filter={AutoComplete.noFilter}
-                                floatingLabelText="Укажите поле таблицы"
-                                dataSource={[]}
-                            />
-                            */}
-                            <TextField
+                                floatingLabelText="Укажите таблицу и поле "
                                 name="segments.0.path"
-                                floatingLabelText="Укажите поле таблицы"
+                                dataSource={pathSource}
+                                onUpdateInput={onAutoCompleteUpdate}
                             />
-
-                            {/*<Range />*/}
 
                             <TextField
                                 name="segments.0.criteria"
@@ -93,9 +123,7 @@ class PartitionsSettingsStep extends React.Component<any, any> {
                                 hintText="Например, $ > 0 and $ <> 1"
                             />
 
-                            <MultiCheckboxesField labelText="Укажите сервера" items={items}/>
-
-
+                            <MultiCheckboxesField labelText="Укажите сервера" items={serversSource}/>
                         </Paper>
                     </div>
 
@@ -105,4 +133,4 @@ class PartitionsSettingsStep extends React.Component<any, any> {
     }
 }
 
-export default PartitionsSettingsStep;
+export const PartitionsSettingsStep = connect(mapStateToProps)(PartitionsSettingsStepConnectable);
