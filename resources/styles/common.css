@@ -35,28 +35,8 @@ footer .developer {
     margin: 0;
 }
 
-/* CSS class helpers */
-.flex-aligned {
-    display: flex;
-    align-items: center;
-}
-
-.space-between {
-    display: flex;
-    justify-content: space-between;
-}
-
 .margin-none {
     margin: 0;
-}
-
-.flex-row {
-    display: flex;
-}
-
-.flex-column {
-    display: flex;
-    flex-direction: column;
 }
 
 .center {
@@ -118,4 +98,33 @@ footer .developer {
 ::-webkit-scrollbar-thumb {
     background-color: darkgrey;
     outline: 1px solid slategrey;
+}
+
+/* FLEX helpers*/
+.flex-row {
+    display: flex;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-aligned {
+    display: flex;
+    align-items: center;
+}
+
+.space-between {
+    display: flex;
+    justify-content: space-between;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.flex-end {
+    display: flex;
+    justify-content: flex-end;
 }

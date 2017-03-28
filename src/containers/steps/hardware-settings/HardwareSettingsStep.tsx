@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 
 import "./hardware-settings-step.css"
 import styles from "./hardware-settings-step.style";
@@ -35,7 +36,6 @@ class HardwareSettingsStep extends React.Component<any, any> {
         const {formDataService} = props;
         formDataService.setData(defaultStepData);
         this.fds = formDataService;
-        // this.fds = new FormDataService(defaultStepData);
     }
 
     handleFormChange = (event) => {
@@ -55,6 +55,18 @@ class HardwareSettingsStep extends React.Component<any, any> {
     };
 
     onCheckHandle = (event, checked) => {
+
+        // const inputBlockElem = ReactDOM
+        //     .findDOMNode(this.refs['paper'])
+        //     .querySelector('[name$="distanceToMaster"]')
+        //     .closest('.flex-column');
+
+        // if (checked) {
+        //     inputBlockElem.classList.add('hidden');
+        // } else {
+        //     inputBlockElem.classList.remove('hidden');
+        // }
+
         event.target.value = checked;
         this.handleFormChange(event);
     };
@@ -68,6 +80,7 @@ class HardwareSettingsStep extends React.Component<any, any> {
 
         console.log('***');
         console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
+        console.log('***');
     };
 
     render() {
@@ -90,7 +103,7 @@ class HardwareSettingsStep extends React.Component<any, any> {
                     onReplicaRemove={ onReplicaRemove }
                 >
                     <div>
-                        <Paper className="hardware-settings-paper">
+                        <Paper className="hardware-settings-paper" ref="paper">
                             <TextField
                                 name="servers.0.name"
                                 floatingLabelText="Введите имя сервера"
@@ -125,13 +138,22 @@ class HardwareSettingsStep extends React.Component<any, any> {
                                 onChange={onSliderUpdate}
                             />
 
+                            <InfoSlider
+                                label="Расстояние до master-сервера"
+                                name="servers.0.distanceToMaster"
+                                shortSyntax='км'
+                                min={0}
+                                max={25000}
+                                step={0.1}
+                                onChange={onSliderUpdate}
+                            />
+
                             <Checkbox
                                 onCheck={onCheckHandle}
                                 label="Master"
                                 name="servers.0.isMaster"
                                 labelStyle={{color: 'rgba(0, 0, 0, 0.298039)'}}
                             />
-
                         </Paper>
                     </div>
                 </DesignReplicator>

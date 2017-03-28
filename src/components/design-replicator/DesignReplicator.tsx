@@ -126,13 +126,13 @@ export class DesignReplicator extends React.Component<DesignReplicatorProps, any
 
         this.setState({
             replics: updateReplics
-        })
+        });
     }
 
     render() {
 
-        const { styles, id } = this.props;
-        const { replics } = this.state;
+        const {styles} = this.props;
+        const {replics} = this.state;
         return (
             <div className="design-replicator" style={styles.replicator}>
                 { replics }

@@ -35,6 +35,7 @@ import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearSt
 import RequestsSettingsStep from "../steps/RequestsSettingsStep";
 import DataStructStep from "../steps/data-struct/DataStructStep";
 import HardwareSettingsStep from "../steps/hardware-settings/HardwareSettingsStep";
+import HardwareStep from "../steps/hardware-settings/HardwareStep";
 import {PartitionsSettingsStep} from "../steps/partitions-settings/PartitionsSettingsStep";
 import FormDataService from "../../services/FormData";
 
@@ -73,7 +74,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
     };
 
     handleRunning = () => {
-debugger
+
         const {fds} = this;
         const {dispatch} = this.props;
 
@@ -127,7 +128,8 @@ debugger
         const { fds } = this;
 
         const steps = [
-            <HardwareSettingsStep formDataService={fds}/>,
+            <HardwareStep formDataService={fds}/>,
+           // <HardwareSettingsStep formDataService={fds}/>,
             <DataStructStep formDataService={fds}/>,
             <PartitionsSettingsStep formDataService={fds}/>,
             <RequestsSettingsStep formDataService={fds} />

@@ -1,0 +1,1 @@
+export const pipe = (...fns) => (...args) => fns.forEach(f => f.apply(null, args));

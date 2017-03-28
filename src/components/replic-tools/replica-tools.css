@@ -1,0 +1,9 @@
+.replica-tools {
+    visibility: hidden;
+    padding: 0 10px;
+    justify-content: flex-end;
+}
+
+.replica-wrap:hover > .replica-tools {
+    visibility: visible;
+}

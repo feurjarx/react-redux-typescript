@@ -16,7 +16,7 @@ export interface InfoSliderProps {
     step?: number;
     defaultValue?:number;
     shortSyntax?:string;
-
+    disabled?: boolean;
     onChange?(v: number, name?: string);
 }
 
@@ -39,28 +39,30 @@ export default class InfoSlider extends React.Component<InfoSliderProps, any> {
 
     handleChangeSlider = (event, value) => {
         const {target} = event;
+        if (target.closest('[value]')) {
 
-        const nameableElem = target
-            .closest('[value]')
-            .querySelector('[name]');
+            const nameableElem = target
+                .closest('[value]')
+                .querySelector('[name]');
 
-        this.setState({value}, () => {
+            this.setState({value}, () => {
 
-            // ovet fragile
-            const {name} = nameableElem;
+                // ovet fragile
+                const {name} = nameableElem;
 
-            const {onChange} = this.props;
-            if (onChange) {
-                onChange(value, name);
-            }
-        });
+                const {onChange} = this.props;
+                if (onChange) {
+                    onChange(value, name);
+                }
+            });
+        }
     };
 
     render() {
 
         const {syntax, name, min, step, max, shortSyntax} = this.props;
 
-        let {label = ''} = this.props;
+        let {label = '', disabled} = this.props;
         if (label) {
             label += ': ';
         }
@@ -88,6 +90,7 @@ export default class InfoSlider extends React.Component<InfoSliderProps, any> {
                     <span>{ value } { info }</span>
                 </p>
                 <Slider
+                    disabled={disabled}
                     name={ name }
                     sliderStyle={{margin: 0}}
                     value={ value }

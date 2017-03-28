@@ -88,16 +88,6 @@ class DataStructStep extends React.Component<any, any> {
         this.handleFormChange(event);
     };
 
-    handleUpdateInput = (value) => {
-        this.setState({
-            pathSource: [
-                value,
-                value + value,
-                value + value + value,
-            ],
-        });
-    };
-
     // onReplicaRemove = (index, hint, path) => {
     //     const {fds} = this;
     //     const {dispatch} = this.props;
@@ -115,8 +105,6 @@ class DataStructStep extends React.Component<any, any> {
             externalCheckHandle,
             primaryCheckHandle,
             // onReplicaRemove,
-            handleUpdateInput,
-
             handleFormChange,
             typesSource,
             fds
@@ -131,19 +119,8 @@ class DataStructStep extends React.Component<any, any> {
                 <DesignReplicator
                     hint="tables"
                     styles={ styles.tables }
-                    onReplicaRemove={ onReplicaRemove }
+                    onReplicaRemove={onReplicaRemove}
                 >
-
-                    {/*
-                    <AutoComplete
-                        hintText="hint"
-                        filter={AutoComplete.noFilter}
-                        openOnFocus={true}
-                        onUpdateInput={handleUpdateInput}
-                        dataSource={this.state.pathSource}
-                    />
-                    */}
-
                     <div>
                         <Paper className="data-struct-table-paper">
                             <TextField

@@ -4,6 +4,7 @@
 
 .design-replica {
     padding: 10px 0;
+    max-width: 350px;
 }
 
 .design-replica:first-child > .replica-content > .replica-actions > .replica-remove {
