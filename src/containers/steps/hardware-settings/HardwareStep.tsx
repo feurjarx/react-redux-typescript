@@ -1,16 +1,12 @@
 import * as React from "react";
+import {prettylog} from "../../../helpers/index";
 
-import "./hardware-settings-step.css"
-import Paper from 'material-ui/Paper';
-import TextField from 'material-ui/TextField';
-import Checkbox from 'material-ui/Checkbox';
-
-import InfoSlider from "../../../components/info-slider/InfoSlider";
 import FormDataService from "../../../services/FormData";
 import {updateOtherStepsData} from "../../../actions/index";
 import {connect} from "react-redux";
-import ReplicaTools from '../../../components/replic-tools/ReplicaTools';
-import {pipe} from './../../../helpers/index';
+import HardwareForm from './HardwareForm'
+
+import "./hardware-settings-step.css"
 
 @connect()
 class HardwareSettingsStep extends React.Component<any, any> {
@@ -85,9 +81,7 @@ class HardwareSettingsStep extends React.Component<any, any> {
             servers: fds.data.servers
         }));
 
-        console.log('***');
-        console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: black; font-weight: bold');
-        console.log('***');
+        prettylog(fds.data);
     };
 
     onCheckHandle = (event, checked) => {
@@ -102,9 +96,7 @@ class HardwareSettingsStep extends React.Component<any, any> {
             fds.setDataByPath(name, v);
         }
 
-        console.log('***');
-        console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
-        console.log('***');
+        prettylog(fds.data);
     };
 
     componentWillMount() {
@@ -121,116 +113,6 @@ class HardwareSettingsStep extends React.Component<any, any> {
                 {replics.map(r => React.cloneElement(r, {total}))}
             </div>
         )
-    }
-}
-
-class HardwareForm extends React.Component<any, any> {
-
-    static defaultProps = {
-        defaultValues: {}
-    };
-
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            sliderDisabled: false
-        }
-    }
-
-    onCheckHandle = (event, checked) => {
-        this.setState({
-            sliderDisabled: checked
-        })
-    };
-
-    render() {
-
-        const {
-            idx,
-            total,
-            onReplicaAdd,
-            onCheckHandle,
-            onSliderUpdate,
-            onReplicaRemove,
-            onTextFieldChange,
-            defaultValues
-        } = this.props;
-
-        const {sliderDisabled} = this.state;
-
-        const addable = idx === total - 1;
-        const removeable = addable && total - 1;
-
-        return (
-            <ReplicaTools
-                onReplicaAdd={onReplicaAdd}
-                onReplicaRemove={onReplicaRemove}
-                removeable={removeable}
-                addable={addable}
-            >
-                <Paper className="hardware-settings-paper">
-                    <TextField
-                        defaultValue={defaultValues.name}
-                        name={`servers.${idx}.name`}
-                        floatingLabelText="Введите имя сервера"
-                        onChange={onTextFieldChange}
-                    />
-
-                    <InfoSlider
-                        label="Доступное пространство"
-                        name={`servers.${idx}.hdd`}
-                        shortSyntax='Гб'
-                        min={2}
-                        max={2000}
-                        step={1}
-                        defaultValue={defaultValues.hdd}
-                        onChange={onSliderUpdate}
-                    />
-
-                    <InfoSlider
-                        defaultValue={defaultValues.replicationNumber}
-                        label="Кол-во репликаций"
-                        name={`servers.${idx}.replicationNumber`}
-                        shortSyntax=""
-                        max={3}
-                        step={1}
-                        onChange={onSliderUpdate}
-                    />
-
-                    <InfoSlider
-                        defaultValue={defaultValues.pDie}
-                        label="Вероятность отказа"
-                        name={`servers.${idx}.pDie`}
-                        shortSyntax="%"
-                        min={0.1}
-                        max={100}
-                        step={0.1}
-                        onChange={onSliderUpdate}
-                    />
-
-                    <InfoSlider
-                        defaultValue={defaultValues.distanceToMaster}
-                        label="Расстояние до master-сервера"
-                        name={`servers.${idx}.distanceToMaster`}
-                        shortSyntax='км'
-                        min={0}
-                        max={25000}
-                        step={0.1}
-                        disabled={sliderDisabled}
-                        onChange={onSliderUpdate}
-                    />
-
-                    <Checkbox
-                        defaultChecked={defaultValues.isMaster}
-                        onCheck={pipe(onCheckHandle, this.onCheckHandle)}
-                        label="Master"
-                        name={`servers.${idx}.isMaster`}
-                        labelStyle={{color: 'rgba(0, 0, 0, 0.3)'}}
-                    />
-                </Paper>
-            </ReplicaTools>
-        );
     }
 }
 
