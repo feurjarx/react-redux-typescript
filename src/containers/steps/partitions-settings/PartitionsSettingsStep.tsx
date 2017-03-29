@@ -105,7 +105,7 @@ class PartitionsSettingsStepConnectable extends React.Component<any, any> {
                     styles={styles}
                 >
                     <div>
-                        <Paper className="partitions-settings-paper">
+                        <Paper className="partitions-settings-paper" zDepth={3}>
 
                             <AutoComplete
                                 openOnFocus={true}

@@ -67,7 +67,7 @@ class HardwareForm extends React.Component<any, any> {
                 removeable={removeable}
                 addable={addable}
             >
-                <Paper className="hardware-settings-paper" style={{width: 400}}>
+                <Paper className="hardware-settings-paper" style={{width: 400}} zDepth={3}>
                     <TextField
                         defaultValue={defaultValues.name}
                         name={`servers.${idx}.name`}

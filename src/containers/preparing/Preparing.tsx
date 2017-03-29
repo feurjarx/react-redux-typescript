@@ -127,10 +127,10 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         const { fds } = this;
 
         const steps = [
+            <RequestsSettingsStep formDataService={fds} />,
             <HardwareStep formDataService={fds}/>,
             <DataStructStep formDataService={fds}/>,
             <PartitionsSettingsStep formDataService={fds}/>,
-            <RequestsSettingsStep formDataService={fds} />
         ];
 
         console.log('* * *');

@@ -88,16 +88,6 @@ class DataStructStep extends React.Component<any, any> {
         this.handleFormChange(event);
     };
 
-    // onReplicaRemove = (index, hint, path) => {
-    //     const {fds} = this;
-    //     const {dispatch} = this.props;
-    //     fds.removeArrayElem(index, hint, path);
-    //
-    //     dispatch(updateOtherStepsData({
-    //         tables: fds.data.tables
-    //     }));
-    // };
-
     render() {
 
         const {
@@ -122,7 +112,7 @@ class DataStructStep extends React.Component<any, any> {
                     onReplicaRemove={onReplicaRemove}
                 >
                     <div>
-                        <Paper className="data-struct-table-paper">
+                        <Paper className="data-struct-table-paper" zDepth={3}>
                             <TextField
                                 name="tables.0.name"
                                 defaultValue="my_table"

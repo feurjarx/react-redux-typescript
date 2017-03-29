@@ -19,6 +19,10 @@
     flex-grow: 1;
 }
 
-#servers-settings-block {
-    flex-grow: 1;
+#sqlbox-block {
+    min-width: 40%;
+}
+
+#json-display-block {
+    min-width: 30%;
 }

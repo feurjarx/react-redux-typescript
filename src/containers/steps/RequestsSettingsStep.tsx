@@ -3,8 +3,39 @@ import lifeConfig from "../../configs/life";
 
 const syntaxConfig = require('../../configs/syntax.json');
 import InfoSlider from '../../components/info-slider/InfoSlider';
-import TextField from 'material-ui/TextField'
+import Paper from 'material-ui/Paper'
 import FormDataService from "../../services/FormData";
+
+const CodeMirror = require('codemirror');
+require('codemirror/mode/sql/sql.js');
+require('codemirror/addon/hint/show-hint.js');
+require('codemirror/addon/hint/sql-hint.js');
+require('codemirror/addon/selection/active-line.js');
+require('codemirror/addon/edit/matchbrackets.js');
+import 'codemirror/lib/codemirror.css'
+import 'codemirror/addon/hint/show-hint.css'
+// import 'codemirror/theme/ambiance.css'
+import 'codemirror/theme/eclipse.css'
+
+const hljs = require('highlight.js');
+
+const codeMirrorConfig = {
+    mode: 'text/x-mariadb',
+    indentWithTabs: true,
+    smartIndent: true,
+    lineNumbers: true,
+    matchBrackets : true,
+    styleActiveLine: true,
+    extraKeys: {"Ctrl-Space": "autocomplete"},
+    hintOptions: {
+        tables: {
+            users: {name: null, score: null, birthDate: null},
+            countries: {name: null, population: null, size: null}
+        }
+    },
+    // theme: 'ambiance'
+    theme: 'eclipse'
+};
 
 export class RequestsSettingsStep extends React.Component<any, any> {
 
@@ -43,6 +74,11 @@ export class RequestsSettingsStep extends React.Component<any, any> {
         });
     };
 
+    componentDidMount() {
+        const {sqlbox} = this.refs;
+        // hljs.highlightBlock(sqlbox);
+        CodeMirror.fromTextArea(sqlbox, codeMirrorConfig);
+    }
 
     render() {
 
@@ -60,63 +96,59 @@ export class RequestsSettingsStep extends React.Component<any, any> {
         return (
 
             <form onChange={ handleFormChange } id="life-data-form">
-                <div id="clients-settings-block" className="v-internal-interval-10">
 
-                    <InfoSlider
-                        name="nClients"
-                        syntax={syntaxConfig['client']}
-                        min={1}
-                        defaultValue={ nClients }
-                        onChange={ handleSlidersChange }
-                    />
+                <Paper style={{padding: 25, minWidth: 300}} zDepth={3}>
 
-                    <InfoSlider
-                        label="Лимит клиента"
-                        name="requestsLimit"
-                        syntax={syntaxConfig['request']}
-                        min={1}
-                        defaultValue={ requestsLimit }
-                        onChange={ handleSlidersChange }
-                    />
+                    <div id="clients-settings-block" className="v-internal-interval-10">
 
-                    <InfoSlider
-                        label="Лимит сложности запроса"
-                        name="requestTimeLimit"
-                        shortSyntax=""
-                        min={1}
-                        max={10000}
-                        defaultValue={ requestTimeLimit }
-                        onChange={ handleSlidersChange }
+                        <InfoSlider
+                            name="nClients"
+                            syntax={syntaxConfig['client']}
+                            min={1}
+                            defaultValue={ nClients }
+                            onChange={ handleSlidersChange }
+                        />
+
+                        <InfoSlider
+                            label="Лимит клиента"
+                            name="requestsLimit"
+                            syntax={syntaxConfig['request']}
+                            min={1}
+                            defaultValue={ requestsLimit }
+                            onChange={ handleSlidersChange }
+                        />
+
+                        <InfoSlider
+                            label="Лимит сложности запроса"
+                            name="requestTimeLimit"
+                            shortSyntax=""
+                            min={1}
+                            max={10000}
+                            defaultValue={ requestTimeLimit }
+                            onChange={ handleSlidersChange }
+                        />
+                    </div>
+                </Paper>
+                <div id="sqlbox-block">
+                    <textarea
+                        ref="sqlbox"
+                        defaultValue="SELECT * FROM user AS u WHERE u.id > 1000"
                     />
                 </div>
-
-                <div id="servers-settings-block">
-
-                    <TextField
-                        multiLine={true}
-                        floatingLabelText="SQL-запросы:"
-                        rows={2}
-                        defaultValue={
-                        `
-                        SELECT * FROM user AS u WHERE u.id > 1000
-                        <br>
-                        SELECT * FROM phone AS p WHERE p.tel like %+7%
-                        `
-                    }
-                    />
-
-                    {/*<InfoSlider
-                     name="nServers"
-                     syntax={syntaxConfig['server']}
-                     min={1}
-                     max={10}
-                     defaultValue={ nServers }
-                     onChange={ handleSlidersChange }
-                     />*/}
-
+                <div id="json-display-block">
+                    <JsonDisplay raw="{a: 2}"/>
                 </div>
             </form>
         )
     }
 }
 export default RequestsSettingsStep;
+
+const JsonDisplay = (props) => {
+
+    const {raw} = props;
+
+    return (
+        <pre><code className="json">{raw}</code></pre>
+    );
+};
