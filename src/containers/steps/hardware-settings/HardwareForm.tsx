@@ -1,5 +1,5 @@
 import * as React from "react";
-import {pipe} from '../../../helpers';
+import {composition} from '../../../helpers';
 
 import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
@@ -32,6 +32,7 @@ class HardwareForm extends React.Component<any, any> {
         const {
             idx,
             total,
+            masterIdx,
             onReplicaAdd,
             onCheckHandle,
             onSliderUpdate,
@@ -45,6 +46,20 @@ class HardwareForm extends React.Component<any, any> {
         const addable = idx === total - 1;
         const removeable = addable && total - 1;
 
+        let checkbox: JSX.Element = null;
+        if ([null, idx].indexOf(masterIdx) >= 0) {
+            checkbox = (
+                <Checkbox
+                    defaultChecked={defaultValues.isMaster}
+                    onCheck={composition(onCheckHandle, this.onCheckHandle)}
+                    label="Master"
+                    value={idx}
+                    name={`servers.${idx}.isMaster`}
+                    labelStyle={{color: 'rgba(0, 0, 0, 0.3)'}}
+                />
+            );
+        }
+
         return (
             <ReplicaTools
                 onReplicaAdd={onReplicaAdd}
@@ -52,7 +67,7 @@ class HardwareForm extends React.Component<any, any> {
                 removeable={removeable}
                 addable={addable}
             >
-                <Paper className="hardware-settings-paper">
+                <Paper className="hardware-settings-paper" style={{width: 400}}>
                     <TextField
                         defaultValue={defaultValues.name}
                         name={`servers.${idx}.name`}
@@ -103,14 +118,7 @@ class HardwareForm extends React.Component<any, any> {
                         disabled={sliderDisabled}
                         onChange={onSliderUpdate}
                     />
-
-                    <Checkbox
-                        defaultChecked={defaultValues.isMaster}
-                        onCheck={pipe(onCheckHandle, this.onCheckHandle)}
-                        label="Master"
-                        name={`servers.${idx}.isMaster`}
-                        labelStyle={{color: 'rgba(0, 0, 0, 0.3)'}}
-                    />
+                    {checkbox}
                 </Paper>
             </ReplicaTools>
         );

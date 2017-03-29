@@ -34,7 +34,8 @@ class HardwareSettingsStep extends React.Component<any, any> {
         this.fds = formDataService;
 
         this.state = {
-            replics: []
+            replics: [],
+            masterIdx: null
         }
     }
 
@@ -62,8 +63,15 @@ class HardwareSettingsStep extends React.Component<any, any> {
 
     onReplicaRemove = () => {
         const {replics} = this.state;
+        let {masterIdx} = this.state;
+        const lastIdx = replics.length - 1;
         replics.pop();
-        this.setState({replics});
+
+        if (lastIdx === masterIdx) {
+            masterIdx = null;
+        }
+
+        this.setState({replics, masterIdx});
 
         const {fds} = this;
         fds.data['servers'].pop();
@@ -85,8 +93,13 @@ class HardwareSettingsStep extends React.Component<any, any> {
     };
 
     onCheckHandle = (event, checked) => {
+
+        const idx = +event.target.value;
+
         event.target.value = checked;
         this.handleFormChange(event);
+
+        this.setState({masterIdx: checked ? idx : null});
     };
 
     onSliderUpdate = (v: number, name: string) => {
@@ -105,12 +118,12 @@ class HardwareSettingsStep extends React.Component<any, any> {
 
     render() {
 
-        const {replics} = this.state;
+        const {replics, masterIdx} = this.state;
         const total = replics.length;
 
         return (
             <div className="flex-row justify-center">
-                {replics.map(r => React.cloneElement(r, {total}))}
+                {replics.map(r => React.cloneElement(r, {total, masterIdx}))}
             </div>
         )
     }

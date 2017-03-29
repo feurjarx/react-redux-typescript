@@ -47,12 +47,14 @@ export default class InfoSlider extends React.Component<InfoSliderProps, any> {
 
             this.setState({value}, () => {
 
-                // ovet fragile
-                const {name} = nameableElem;
+                // over fragile
+                if (nameableElem) {
+                    const {name} = nameableElem;
 
-                const {onChange} = this.props;
-                if (onChange) {
-                    onChange(value, name);
+                    const {onChange} = this.props;
+                    if (onChange) {
+                        onChange(value, name);
+                    }
                 }
             });
         }

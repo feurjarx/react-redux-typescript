@@ -1,4 +1,4 @@
-export const pipe = (...fns) => (...args) => fns.forEach(f => f.apply(null, args));
+export const composition = (...fns) => (...args) => fns.forEach(f => f.apply(null, args));
 
 export const prettylog = (data, color = 'green') => {
     console.log('***');
