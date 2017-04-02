@@ -1,4 +1,5 @@
 import {Observable} from 'rxjs/Observable';
+import {prettylog} from "../helpers/index";
 
 class FormDataService {
 
@@ -58,79 +59,9 @@ class FormDataService {
         });
 
         targetParent[targetKey] = value;
-    }
 
-    getIncrementedPath(path, hint = null) {
 
-        const pathParts = path.split('.');
-        pathParts.forEach((v, i) => {
-
-            if (hint) {
-
-                const prev = pathParts[i - 1];
-
-                if (prev === hint && /^\d+$/.test(v)) {
-                    pathParts[i]++;
-                    return false;
-                }
-
-            } else {
-                if (/^\d+$/.test(v)) {
-                    pathParts[i]++;
-                }
-            }
-        });
-
-        return pathParts.join('.');
-    }
-
-    normalizeElementPath(type, index, targetElem) {
-        [].map.call(targetElem.querySelectorAll('[name]'), elem => {
-            if (elem.name) {
-                elem.name = this.getPathByIndex(elem.name, index, type);
-            }
-        });
-    }
-
-    getPathByIndex(path, index, hint = null) {
-
-        const pathParts = path.split('.');
-        pathParts.forEach((v, i) => {
-
-            if (hint) {
-
-                const prev = pathParts[i - 1];
-
-                if (prev === hint && /^\d+$/.test(v)) {
-                    pathParts[i] = index;
-                    return false;
-                }
-
-            } else {
-                if (/^\d+$/.test(v)) {
-                    pathParts[i] = index;
-                }
-            }
-        });
-
-        return pathParts.join('.');
-    }
-
-    getDecrementedPath(path) {
-
-        const pathParts = path.split('.');
-        pathParts.forEach((v, i) => {
-            if (/^\d+$/.test(v)) {
-                pathParts[i]--;
-            }
-        });
-
-        return pathParts.join('.');
-    }
-
-    private eachPath(path, fn) {
-        const pathParts = path.split('.');
-        pathParts.forEach((v, i) => fn);
+        prettylog(data);
     }
 }
 

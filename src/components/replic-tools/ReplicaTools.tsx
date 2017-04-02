@@ -15,7 +15,11 @@ const ReplicaTools: StatelessComponent<any> = (props) => {
     const actions = [];
     if (removeable) {
         actions.push(
-            <button key={actions.length} className="btn btn-danger btn-xs" onClick={ onReplicaRemove }>
+            <button
+                key={actions.length}
+                className="btn btn-danger btn-xs"
+                onClick={onReplicaRemove}
+            >
                 <i className="fa fa-remove"></i>
             </button>
         )
@@ -23,7 +27,10 @@ const ReplicaTools: StatelessComponent<any> = (props) => {
 
     if (addable) {
         actions.push(
-            <button key={actions.length} className="btn btn-success btn-xs" onClick={onReplicaAdd}>
+            <button
+                key={actions.length}
+                className="btn btn-success btn-xs"
+                onClick={onReplicaAdd}>
                 <i className="fa fa-plus"></i>
             </button>
         )

@@ -33,10 +33,10 @@ class HardwareForm extends React.Component<any, any> {
             idx,
             total,
             masterIdx,
-            onReplicaAdd,
+            onServerAdd,
             onCheckHandle,
             onSliderUpdate,
-            onReplicaRemove,
+            onServerRemove,
             onTextFieldChange,
             defaultValues
         } = this.props;
@@ -62,12 +62,12 @@ class HardwareForm extends React.Component<any, any> {
 
         return (
             <ReplicaTools
-                onReplicaAdd={onReplicaAdd}
-                onReplicaRemove={onReplicaRemove}
+                onReplicaAdd={onServerAdd}
+                onReplicaRemove={onServerRemove}
                 removeable={removeable}
                 addable={addable}
             >
-                <Paper className="hardware-settings-paper" style={{width: 400}} zDepth={3}>
+                <Paper style={{width: 400, padding: 10}} zDepth={3}>
                     <TextField
                         defaultValue={defaultValues.name}
                         name={`servers.${idx}.name`}

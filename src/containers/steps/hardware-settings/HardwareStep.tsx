@@ -1,19 +1,16 @@
 import * as React from "react";
-import {prettylog} from "../../../helpers/index";
 
 import FormDataService from "../../../services/FormData";
 import {updateOtherStepsData} from "../../../actions/index";
 import {connect} from "react-redux";
 import HardwareForm from './HardwareForm'
 
-import "./hardware-settings-step.css"
-
 @connect()
-class HardwareSettingsStep extends React.Component<any, any> {
+class HardwareStep extends React.Component<any, any> {
 
     fds: FormDataService;
 
-    get defaultServerData() {
+    getDefaultServerData() {
         return {
             name: 'my_server',
             hdd: 1000,
@@ -28,9 +25,7 @@ class HardwareSettingsStep extends React.Component<any, any> {
         super(props);
 
         const {formDataService} = props;
-        formDataService.setData({
-            servers: []
-        });
+        formDataService.setData({ servers: [] });
         this.fds = formDataService;
 
         this.state = {
@@ -39,9 +34,11 @@ class HardwareSettingsStep extends React.Component<any, any> {
         }
     }
 
-    onReplicaAdd = () => {
+    onServerAdd = () => {
 
         const {replics} = this.state;
+        const {getDefaultServerData} = this;
+
         replics.push(
             <HardwareForm
                 total={replics.length}
@@ -49,21 +46,24 @@ class HardwareSettingsStep extends React.Component<any, any> {
                 idx={replics.length}
                 onCheckHandle={this.onCheckHandle}
                 onSliderUpdate={this.onSliderUpdate}
-                onTextFieldChange={this.handleFormChange}
-                onReplicaAdd={this.onReplicaAdd}
-                onReplicaRemove={this.onReplicaRemove}
-                defaultValues={this.defaultServerData}
+                onTextFieldChange={this.onTextFieldChange}
+                onServerAdd={this.onServerAdd}
+                onServerRemove={this.onServerRemove}
+                defaultValues={getDefaultServerData()}
             />
         );
 
-        this.setState({replics});
-        const {fds, defaultServerData} = this;
-        fds.data['servers'].push(defaultServerData);
+        this.setState({replics}, () => {
+            const {fds, dispatchServersData} = this;
+            fds.data['servers'].push(getDefaultServerData());
+            dispatchServersData();
+        });
     };
 
-    onReplicaRemove = () => {
+    onServerRemove = () => {
         const {replics} = this.state;
         let {masterIdx} = this.state;
+
         const lastIdx = replics.length - 1;
         replics.pop();
 
@@ -71,49 +71,57 @@ class HardwareSettingsStep extends React.Component<any, any> {
             masterIdx = null;
         }
 
-        this.setState({replics, masterIdx});
-
-        const {fds} = this;
-        fds.data['servers'].pop();
+        this.setState({replics, masterIdx}, () => {
+            const {fds, dispatchServersData} = this;
+            fds.data['servers'].pop();
+            dispatchServersData();
+        });
     };
 
-    handleFormChange = (event) => {
+    onTextFieldChange = (event) => {
         const {target} = event;
-        const {fds} = this;
+        const {fds, dispatchServersData} = this;
 
         if (target.name) {
             fds.setDataByPath(target.name, target.value);
         }
 
+        dispatchServersData();
+    };
+
+    dispatchServersData = () => {
+        const {fds} = this;
         this.props.dispatch(updateOtherStepsData({
             servers: fds.data.servers
         }));
-
-        prettylog(fds.data);
     };
 
     onCheckHandle = (event, checked) => {
 
         const idx = +event.target.value;
+        const checkboxElem = event.currentTarget;
 
-        event.target.value = checked;
-        this.handleFormChange(event);
+        this.setState({masterIdx: checked ? idx : null}, () => {
 
-        this.setState({masterIdx: checked ? idx : null});
+            const {fds, dispatchServersData} = this;
+            fds.setDataByPath(checkboxElem.name, checked);
+
+            dispatchServersData();
+        });
     };
 
     onSliderUpdate = (v: number, name: string) => {
-        const {fds} = this;
+        const {fds, dispatchServersData} = this;
 
         if (name) {
             fds.setDataByPath(name, v);
         }
 
-        prettylog(fds.data);
+        dispatchServersData();
     };
 
     componentWillMount() {
-        this.onReplicaAdd();
+        this.onServerAdd();
     }
 
     render() {
@@ -129,4 +137,4 @@ class HardwareSettingsStep extends React.Component<any, any> {
     }
 }
 
-export default HardwareSettingsStep;
+export default HardwareStep;

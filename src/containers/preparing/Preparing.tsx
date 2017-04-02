@@ -1,16 +1,8 @@
 import * as React from "react";
 const socket = {on: new Function(), emit: new Function()};
 
-import {
-    Step,
-    StepLabel,
-} from 'material-ui/Stepper';
-
-import {
-    Dialog,
-    FlatButton,
-    RaisedButton,
-} from 'material-ui';
+import {Step, StepLabel} from 'material-ui/Stepper';
+import {Dialog, FlatButton, RaisedButton} from 'material-ui';
 
 import styles from './preparing.styles';
 import './preparing.css';
@@ -33,10 +25,11 @@ import {
 
 import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
 import RequestsSettingsStep from "../steps/RequestsSettingsStep";
-import DataStructStep from "../steps/data-struct/DataStructStep";
 import HardwareStep from "../steps/hardware-settings/HardwareStep";
-import {PartitionsSettingsStep} from "../steps/partitions-settings/PartitionsSettingsStep";
 import FormDataService from "../../services/FormData";
+import PartitionsStep from "../steps/partitions-settings/PartitionsStep";
+import {prettylog} from "../../helpers/index";
+import TablesStep from "../steps/data-struct/TablesStep";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -127,14 +120,13 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         const { fds } = this;
 
         const steps = [
-            <RequestsSettingsStep formDataService={fds} />,
             <HardwareStep formDataService={fds}/>,
-            <DataStructStep formDataService={fds}/>,
-            <PartitionsSettingsStep formDataService={fds}/>,
+            <TablesStep formDataService={fds}/>,
+            <PartitionsStep formDataService={fds}/>,
+            <RequestsSettingsStep formDataService={fds} />,
         ];
 
-        console.log('* * *');
-        console.log(`%c${ JSON.stringify(fds.data, null, 2) }`, 'color: green; font-weight: bold');
+        prettylog(fds.data);
 
         return (
 

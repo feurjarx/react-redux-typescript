@@ -8,35 +8,36 @@ export interface MultiCheckboxesFieldProps {
         value: any;
         checked?: boolean;
     }>;
+    segmentIdx?: number;
     labelText: string;
     name?: string;
+    onCheck?(...args);
 }
 
 class MultiCheckboxesField extends React.Component<MultiCheckboxesFieldProps, any> {
-    constructor() {
-        super();
-    }
 
     render() {
 
         const {
+            items,
+            onCheck,
             labelText,
-            name = '',
-            items
         } = this.props;
 
         const checkboxes = items.map((it,i) => (
             <Checkbox
+                onCheck={onCheck}
                 key={i}
                 labelStyle={{color: 'rgba(0, 0, 0, 0.298039)'}}
                 defaultChecked={it.checked}
                 label={it.text}
+                value={it.value}
             />
         ));
 
         return (
             <div>
-                <span className="gray">{ labelText }</span>
+                <span className="gray">{ checkboxes.length ? labelText : ''}</span>
                 { checkboxes }
             </div>
         )

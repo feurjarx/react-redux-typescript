@@ -1,10 +1,12 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import lifeConfig from "../../configs/life";
 
 const syntaxConfig = require('../../configs/syntax.json');
 import InfoSlider from '../../components/info-slider/InfoSlider';
 import Paper from 'material-ui/Paper'
 import FormDataService from "../../services/FormData";
+import SqlParseService from "../../services/SqlParseService";
 
 const CodeMirror = require('codemirror');
 require('codemirror/mode/sql/sql.js');
@@ -12,12 +14,15 @@ require('codemirror/addon/hint/show-hint.js');
 require('codemirror/addon/hint/sql-hint.js');
 require('codemirror/addon/selection/active-line.js');
 require('codemirror/addon/edit/matchbrackets.js');
-import 'codemirror/lib/codemirror.css'
-import 'codemirror/addon/hint/show-hint.css'
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/addon/hint/show-hint.css';
 // import 'codemirror/theme/ambiance.css'
-import 'codemirror/theme/eclipse.css'
+import 'codemirror/theme/eclipse.css';
 
 const hljs = require('highlight.js');
+hljs.initHighlightingOnLoad();
+
+import 'highlight.js/styles/default.css';
 
 const codeMirrorConfig = {
     mode: 'text/x-mariadb',
@@ -41,11 +46,23 @@ export class RequestsSettingsStep extends React.Component<any, any> {
 
     fds: FormDataService;
 
+    defaultSql = (`
+SELECT id,name, tel, contact.id
+FROM user AS u
+JOIN contact AS c ON c.id = user.contact_id 
+WHERE u.id > 1000 AND u.name IN ("Ivan", "Alex")
+GROUP BY u.id,u.name
+OFFSET 5
+LIMIT 10
+    `).trim();
+
     state = {
         nClients: lifeConfig.nClients,
         nServers: lifeConfig.nServers,
         requestsLimit: lifeConfig.requestsLimit,
-        requestTimeLimit: lifeConfig.requestTimeLimit
+        requestTimeLimit: lifeConfig.requestTimeLimit,
+        displayValue: '',
+        cmInited: false
     };
 
     constructor(props) {
@@ -55,6 +72,22 @@ export class RequestsSettingsStep extends React.Component<any, any> {
         formDataService.setData(Object.assign({}, this.state));
         this.fds = formDataService;
     }
+
+    sqlToJson(sql: string) {
+        const sqlItems = sql
+            .split(';')
+            .map(q => SqlParseService.sqlQuery2Json(q));
+
+        return JSON.stringify(sqlItems, null, 2);
+    }
+
+    updateDisplay = (displayValue) => {
+        const jsonDisplayBlock = this.refs['jsonDisplayBlock'] as HTMLElement;
+        const jsonDisplayElem = jsonDisplayBlock.querySelector('.JSON');
+        this.setState({displayValue}, () => (
+            hljs.highlightBlock(ReactDOM.findDOMNode(jsonDisplayElem))
+        ));
+    };
 
     handleFormChange = (event) => {
         const { target } = event;
@@ -74,15 +107,40 @@ export class RequestsSettingsStep extends React.Component<any, any> {
         });
     };
 
-    componentDidMount() {
+    codeMirrorInit = () => {
         const {sqlbox} = this.refs;
-        // hljs.highlightBlock(sqlbox);
-        CodeMirror.fromTextArea(sqlbox, codeMirrorConfig);
+        const {onTextareaKeyUp,fds} = this;
+        const editor = CodeMirror.fromTextArea(sqlbox, codeMirrorConfig);
+        editor.on('change', onTextareaKeyUp);
+
+        const {updateDisplay, sqlToJson, defaultSql} = this;
+
+        const sqlJson = sqlToJson(defaultSql);
+        fds.data.sqlJson = JSON.parse(sqlJson);
+        updateDisplay(sqlJson);
+    };
+
+    onTextareaKeyUp = (editor) => {
+        const {updateDisplay, sqlToJson, fds} = this;
+        const sqlJson = sqlToJson(editor.getValue());
+        fds.data.sqlJson = JSON.parse(sqlJson);
+        updateDisplay(sqlJson);
+    };
+
+    componentWillReceiveProps(props) {
+        let {cmInited} = this.state;
+        if (props.active && !cmInited) {
+            cmInited = true
+            this.codeMirrorInit();
+            this.setState({cmInited});
+        }
     }
 
     render() {
 
         const {
+            defaultSql,
+            onTextareaKeyUp,
             handleFormChange,
             handleSlidersChange
         } = this;
@@ -92,6 +150,8 @@ export class RequestsSettingsStep extends React.Component<any, any> {
             requestsLimit,
             requestTimeLimit,
         } = this.props;
+
+        const {displayValue} = this.state;
 
         return (
 
@@ -130,13 +190,13 @@ export class RequestsSettingsStep extends React.Component<any, any> {
                     </div>
                 </Paper>
                 <div id="sqlbox-block">
-                    <textarea
+                    <textarea onKeyUp={onTextareaKeyUp}
                         ref="sqlbox"
-                        defaultValue="SELECT * FROM user AS u WHERE u.id > 1000"
+                        defaultValue={defaultSql}
                     />
                 </div>
-                <div id="json-display-block">
-                    <JsonDisplay raw="{a: 2}"/>
+                <div id="json-display-block" ref="jsonDisplayBlock">
+                    <JsonDisplay raw={displayValue}/>
                 </div>
             </form>
         )
@@ -149,6 +209,6 @@ const JsonDisplay = (props) => {
     const {raw} = props;
 
     return (
-        <pre><code className="json">{raw}</code></pre>
+        <pre><code className="JSON">{raw}</code></pre>
     );
 };

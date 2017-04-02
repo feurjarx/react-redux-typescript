@@ -67,7 +67,7 @@ class HorizontalLinearStepper extends React.Component<any, any> {
 
             return (
                 <div style={displayStyle} key={i}>
-                    { step }
+                    { stepIndex === i ? React.cloneElement(step, {active: true}) : step }
                 </div>
             )
         });

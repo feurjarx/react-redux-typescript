@@ -33,18 +33,13 @@
     "@types/socket.io": "^1.4.28",
     "@types/socket.io-client": "^1.4.29",
     "amqplib": "^0.5.1",
-    "autobind-decorator": "^1.3.4",
-    "axios": "^0.15.3",
-    "bluebird": "^3.5.0",
     "bootstrap": "^3.3.7",
     "canvasjs": "^1.8.1",
     "codemirror": "^5.25.0",
     "es6-shim": "^0.35.3",
     "express": "^4.14.1",
     "font-awesome": "^4.7.0",
-    "form-serializer": "^2.5.0",
     "highlight.js": "^9.10.0",
-    "jquery": "^3.1.1",
     "keycode": "^2.1.8",
     "lodash": "^4.17.4",
     "material-ui": "^0.17.0",
@@ -58,7 +53,8 @@
     "redux-thunk": "^2.2.0",
     "rxjs": "^5.2.0",
     "socket.io": "^1.7.3",
-    "socket.io-client": "^1.7.3"
+    "socket.io-client": "^1.7.3",
+    "sql-parser": "^0.5.0"
   },
   "devDependencies": {
     "@types/html-webpack-plugin": "^2.11.2",
