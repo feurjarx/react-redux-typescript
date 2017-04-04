@@ -3,13 +3,14 @@ var ioServer = require("socket.io");
 var http = require("http");
 var events_1 = require("./constants/events");
 var socket_io_1 = require("./configs/socket.io");
-var Life_1 = require("./models/Life");
+var QueueSystemLife_1 = require("./models/QueueSystemLife");
 exports.run = function () {
     var httpServer = http.createServer();
     var io = ioServer(httpServer);
     io.on(events_1.EVENT_IO_CONNECTION, function (client) {
         console.log('browser client connected.');
-        var life = new Life_1.Life();
+        // const life = new Life();
+        var life = new QueueSystemLife_1.QueueSystemLife();
         client.on(events_1.EVENT_IO_LIFE, function (data) {
             life.clear();
             life.live(data, function (browserData) {

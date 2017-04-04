@@ -12,6 +12,7 @@ import {
 import ioConfig from './configs/socket.io'
 
 import {Life} from "./models/Life";
+import {QueueSystemLife} from "./models/QueueSystemLife";
 
 export const run = () => {
 
@@ -22,7 +23,8 @@ export const run = () => {
 
         console.log('browser client connected.');
 
-        const life = new Life();
+        // const life = new Life();
+        const life = new QueueSystemLife();
 
         client.on(EVENT_IO_LIFE, data => {
             life.clear();

@@ -57,6 +57,14 @@ export class FieldForm extends React.Component<any, any> {
                             defaultValue={defaultValues.name}
                         />
 
+                        <TextField
+                            style={{width: 175}}
+                            hintText="Макс. размер"
+                            name={`tables.${tableIdx}.fields.${idx}.length`}
+                            onChange={onTextFieldChange}
+                            defaultValue={defaultValues.length}
+                        />
+
                         <AutoComplete
                             style={{width: null}}
                             textFieldStyle={{width: 175}}
@@ -79,7 +87,7 @@ export class FieldForm extends React.Component<any, any> {
                         />
                         <Checkbox
                             disabled={primaryIdx === idx}
-                            name={`tables.${tableIdx}.fields.${idx}.isExternal`}
+                            name={`tables.${tableIdx}.fields.${idx}.indexed`}
                             className="data-struct-external-index-checkbox"
                             onCheck={onCheck.bind(null, {isPrimary: false})}
                             label="внешний"

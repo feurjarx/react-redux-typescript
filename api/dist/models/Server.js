@@ -7,7 +7,6 @@ var Server = (function () {
         this.processingTimeCounter = 0;
         this.lastProcessingTime = 0;
         this.subscriptions = [];
-        this.busy = false;
         this.id = new Date().getTime();
         this.provider = provider;
     }

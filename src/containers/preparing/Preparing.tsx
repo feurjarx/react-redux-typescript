@@ -24,7 +24,7 @@ import {
 } from "../../actions/index";
 
 import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
-import RequestsSettingsStep from "../steps/RequestsSettingsStep";
+import RequestsStep from "../steps/RequestsStep";
 import HardwareStep from "../steps/hardware-settings/HardwareStep";
 import FormDataService from "../../services/FormData";
 import PartitionsStep from "../steps/partitions-settings/PartitionsStep";
@@ -123,7 +123,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
             <HardwareStep formDataService={fds}/>,
             <TablesStep formDataService={fds}/>,
             <PartitionsStep formDataService={fds}/>,
-            <RequestsSettingsStep formDataService={fds} />,
+            <RequestsStep formDataService={fds} />,
         ];
 
         prettylog(fds.data);

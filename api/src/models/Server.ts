@@ -18,8 +18,6 @@ export default class Server {
 
     calculateBehavior: CalculateBehavior;
 
-    busy = false;
-
     constructor(provider) {
         this.id = new Date().getTime();
         this.provider = provider;

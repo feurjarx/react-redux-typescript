@@ -42,7 +42,7 @@ const codeMirrorConfig = {
     theme: 'eclipse'
 };
 
-export class RequestsSettingsStep extends React.Component<any, any> {
+export class RequestsStep extends React.Component<any, any> {
 
     fds: FormDataService;
 
@@ -115,16 +115,16 @@ LIMIT 10
 
         const {updateDisplay, sqlToJson, defaultSql} = this;
 
-        const sqlJson = sqlToJson(defaultSql);
-        fds.data.sqlJson = JSON.parse(sqlJson);
-        updateDisplay(sqlJson);
+        const sqls = sqlToJson(defaultSql);
+        fds.data.sqls = JSON.parse(sqls);
+        updateDisplay(sqls);
     };
 
     onTextareaKeyUp = (editor) => {
         const {updateDisplay, sqlToJson, fds} = this;
-        const sqlJson = sqlToJson(editor.getValue());
-        fds.data.sqlJson = JSON.parse(sqlJson);
-        updateDisplay(sqlJson);
+        const sqls = sqlToJson(editor.getValue());
+        fds.data.sqls = JSON.parse(sqls);
+        updateDisplay(sqls);
     };
 
     componentWillReceiveProps(props) {
@@ -202,7 +202,7 @@ LIMIT 10
         )
     }
 }
-export default RequestsSettingsStep;
+export default RequestsStep;
 
 const JsonDisplay = (props) => {
 
