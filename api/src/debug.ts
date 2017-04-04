@@ -115,7 +115,7 @@ for (let i = 0; i < serversData.length; i++) {
     const serverData = serversData[i];
     if (!serverData.isMaster) {
         const server = new RegionServer(new RabbitMQ(), serverData);
-        server.id = i;
+        server.id = serverData.name;
         masterServer.subordinates.push(server);
     }
 }

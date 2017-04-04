@@ -93,7 +93,7 @@ class MapGenerator {
                 let rowSizesInfo = generator.calcRowSizesInfo(id, fields);
                 const {sizeByFieldNameMap} = rowSizesInfo;
 
-                const rowKey = hash(id);
+                const rowKey = hash(tableName, id);
                 const hRow = new HRow(rowKey);
 
                 // fill one hRow

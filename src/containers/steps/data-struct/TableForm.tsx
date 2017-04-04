@@ -35,7 +35,7 @@ export class TableForm extends React.Component<any, any> {
                 removeable={removeable}
                 addable={addable}
             >
-                <Paper style={{width: 400, padding: 10}} zDepth={3}>
+                <Paper style={{width: 400, height: 260, padding: 10}} zDepth={3}>
                     <TextField
                         name={`tables.${idx}.name`}
                         defaultValue={defaultValues.name}

@@ -6,6 +6,8 @@ import Checkbox from 'material-ui/Checkbox';
 import ReplicaTools from '../../../components/replic-tools/ReplicaTools';
 import AutoComplete from "../../../components/AutoCompleteSyntheticable";
 
+const paperStyle = {padding: 10, marginBottom: 10, marginLeft: 1, marginTop: 1};
+
 export class FieldForm extends React.Component<any, any> {
 
     static defaultProps = {
@@ -20,9 +22,17 @@ export class FieldForm extends React.Component<any, any> {
         value: 'integer'
     }];
 
+    onFamilyAutoCompleteBlur = (event) => {
+        const {value} = event.target;
+        this.props.onUpdateFamiliesSource(value);
+    };
+
     render() {
 
-        const {typesSource} = this;
+        const {
+            onFamilyAutoCompleteBlur,
+            typesSource
+        } = this;
 
         const {
             idx,
@@ -32,6 +42,7 @@ export class FieldForm extends React.Component<any, any> {
             primaryIdx,
             onReplicaAdd,
             defaultValues,
+            familiesSource,
             onReplicaRemove,
             onTextFieldChange,
             onAutoCompleteUpdate
@@ -47,7 +58,7 @@ export class FieldForm extends React.Component<any, any> {
                 removeable={removeable}
                 addable={addable}
             >
-                <Paper className="flex-row" style={{padding: 10, marginBottom: 10, marginLeft: 1}}>
+                <Paper className="flex-row" style={paperStyle}>
                     <div>
                         <TextField
                             style={{width: 175}}
@@ -55,14 +66,6 @@ export class FieldForm extends React.Component<any, any> {
                             name={`tables.${tableIdx}.fields.${idx}.name`}
                             onChange={onTextFieldChange}
                             defaultValue={defaultValues.name}
-                        />
-
-                        <TextField
-                            style={{width: 175}}
-                            hintText="Макс. размер"
-                            name={`tables.${tableIdx}.fields.${idx}.length`}
-                            onChange={onTextFieldChange}
-                            defaultValue={defaultValues.length}
                         />
 
                         <AutoComplete
@@ -75,9 +78,29 @@ export class FieldForm extends React.Component<any, any> {
                             name={`tables.${tableIdx}.fields.${idx}.type`}
                             onUpdateInput={ onAutoCompleteUpdate }
                         />
+
+                        <TextField
+                            style={{width: 175}}
+                            hintText="Макс. размер"
+                            name={`tables.${tableIdx}.fields.${idx}.length`}
+                            onChange={onTextFieldChange}
+                            defaultValue={defaultValues.length}
+                        />
+
+                        <AutoComplete
+                            disabled={primaryIdx === idx}
+                            style={{width: null}}
+                            textFieldStyle={{width: 175}}
+                            openOnFocus={true}
+                            filter={AutoComplete.noFilter}
+                            hintText="Задайте семейство"
+                            dataSource={familiesSource}
+                            name={`tables.${tableIdx}.fields.${idx}.familyName`}
+                            onUpdateInput={ onAutoCompleteUpdate }
+                            onBlur={ onFamilyAutoCompleteBlur }
+                        />
                     </div>
-                    <div className="flex-column" style={{justifyContent: 'flex-end'}}>
-                        <span className="gray">Индексы</span>
+                    <div className="flex-column" style={{marginTop: 15}}>
                         <Checkbox
                             disabled={primaryIdx !== idx && primaryIdx !== null}
                             onCheck={onCheck.bind(null, {isPrimary: true, idx})}
@@ -93,6 +116,7 @@ export class FieldForm extends React.Component<any, any> {
                             label="внешний"
                             labelStyle={{color: 'rgba(0, 0, 0, 0.298039)'}}
                         />
+
                     </div>
                 </Paper>
             </ReplicaTools>

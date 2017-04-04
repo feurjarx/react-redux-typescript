@@ -2,14 +2,15 @@ import * as React from "react";
 
 import {FieldForm} from "./FieldForm";
 
-class FieldsGroup extends React.Component<any, any> {
+export default class FieldsGroup extends React.Component<any, any> {
 
     constructor(props) {
         super(props);
 
         this.state = {
             replics: [],
-            primaryIdx: null
+            primaryIdx: null,
+            familiesSource: []
         }
     }
 
@@ -31,11 +32,21 @@ class FieldsGroup extends React.Component<any, any> {
         this.props.onCheck(event, checked);
     };
 
+    onUpdateFamiliesSource = (familyName) => {
+        let {familiesSource} = this.state;
+        familiesSource.push(familyName);
+        familiesSource = familiesSource
+            .filter((it, i) => familiesSource.indexOf(it) === i && it);
+
+        this.setState({familiesSource})
+    };
+
     onReplicaAdd = () => {
 
         const {
             replics,
-            primaryIdx
+            primaryIdx,
+            familiesSource
         } = this.state;
 
         const {
@@ -46,7 +57,7 @@ class FieldsGroup extends React.Component<any, any> {
             onAutoCompleteUpdate
         } = this.props;
 
-        const {onCheck} = this;
+        const {onCheck, onUpdateFamiliesSource} = this;
 
         replics.push(
             <FieldForm
@@ -57,6 +68,8 @@ class FieldsGroup extends React.Component<any, any> {
                 tableIdx={tableIdx}
                 onTextFieldChange={onTextFieldChange}
                 onAutoCompleteUpdate={onAutoCompleteUpdate}
+                familiesSource={familiesSource}
+                onUpdateFamiliesSource={onUpdateFamiliesSource}
                 onCheck={onCheck}
                 onReplicaAdd={this.onReplicaAdd}
                 onReplicaRemove={this.onReplicaRemove}
@@ -64,7 +77,7 @@ class FieldsGroup extends React.Component<any, any> {
             />
         );
 
-        this.setState({replics});
+        this.setState({replics}, () => this.scrollToBottom());
     };
 
     onReplicaRemove = () => {
@@ -83,22 +96,20 @@ class FieldsGroup extends React.Component<any, any> {
         this.onReplicaAdd();
     }
 
-    componentDidUpdate = () => {
+    scrollToBottom() {
         const fieldsList = this.refs['fieldsList'] as HTMLElement;
         fieldsList.scrollTop = fieldsList.scrollHeight;
     };
 
     render() {
 
-        const {replics, primaryIdx} = this.state;
+        const {replics, primaryIdx, familiesSource} = this.state;
         const total = replics.length;
 
         return (
-            <div ref="fieldsList" style={{overflowY: 'auto', height: 130}}>
-                {replics.map(r => React.cloneElement(r, {total, primaryIdx}))}
+            <div ref="fieldsList" style={{overflowY: 'auto', height: 160}}>
+                {replics.map(r => React.cloneElement(r, {total, primaryIdx, familiesSource}))}
             </div>
         )
     }
 }
-
-export default FieldsGroup;

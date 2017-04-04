@@ -6,7 +6,7 @@ import {CalculateBehavior} from './servers/behaviors/CalculateBehavior';
 
 export default class Server {
 
-    id: number;
+    id: any;
 
     requestCounter = 0;
     processingTimeCounter = 0;

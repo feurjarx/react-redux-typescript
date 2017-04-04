@@ -72,7 +72,7 @@ var MapGenerator = (function () {
                 var id = i + 1;
                 var rowSizesInfo = generator.calcRowSizesInfo(id, fields);
                 var sizeByFieldNameMap = rowSizesInfo.sizeByFieldNameMap;
-                var rowKey = hash(id);
+                var rowKey = hash(tableName, id);
                 var hRow = new HRow_1.default(rowKey);
                 // fill one hRow
                 families.forEach(function (fieldsNames) {

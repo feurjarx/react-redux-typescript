@@ -1,8 +1,7 @@
-import * as React from "react";
 import * as ReactDOM from "react-dom";
 import AutoComplete from 'material-ui/AutoComplete';
 
-export class AutoCompleteSyntheticable extends AutoComplete {
+export default class AutoCompleteSyntheticable extends AutoComplete {
     constructor(props) {
         super(props);
     }
@@ -44,6 +43,20 @@ export class AutoCompleteSyntheticable extends AutoComplete {
             }, this.props.menuCloseDelay);
         });
     };
-}
 
-export default AutoCompleteSyntheticable;
+    handleChange = (event) => {
+        const searchText = event.target.value;
+
+        if (searchText === this.state['searchText']) {
+            return;
+        }
+
+        this.setState({
+            searchText: searchText,
+            open: true,
+            anchorEl: ReactDOM.findDOMNode(this.refs['searchTextField'])
+        }, function () {
+            this.props.onUpdateInput(searchText, this.props.dataSource, this.input);
+        });
+    }
+}

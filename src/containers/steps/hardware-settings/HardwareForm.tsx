@@ -87,14 +87,27 @@ class HardwareForm extends React.Component<any, any> {
                     />
 
                     <InfoSlider
-                        defaultValue={defaultValues.replicationNumber}
-                        label="Кол-во репликаций"
-                        name={`servers.${idx}.replicationNumber`}
+                        defaultValue={defaultValues.maxRegions}
+                        label="Макс. число регионов"
+                        name={`servers.${idx}.maxRegions`}
                         shortSyntax=""
-                        max={3}
+                        max={20}
                         step={1}
                         onChange={onSliderUpdate}
+                        disabled={sliderDisabled}
                     />
+
+                    {/*
+                     <InfoSlider
+                         defaultValue={defaultValues.replicationNumber}
+                         label="Кол-во репликаций"
+                         name={`servers.${idx}.replicationNumber`}
+                         shortSyntax=""
+                         max={3}
+                         step={1}
+                         onChange={onSliderUpdate}
+                     />
+                    */}
 
                     <InfoSlider
                         defaultValue={defaultValues.pDie}
@@ -118,6 +131,7 @@ class HardwareForm extends React.Component<any, any> {
                         disabled={sliderDisabled}
                         onChange={onSliderUpdate}
                     />
+
                     {checkbox}
                 </Paper>
             </ReplicaTools>

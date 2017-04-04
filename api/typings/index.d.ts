@@ -1,11 +1,10 @@
-import HRow from "../src/models/HRow";
 export interface TableField {
     name: string;
     type: string;
     length: number;
     isPrimary: boolean;
     indexed: boolean;
-    familyName: string; // TODO: it new
+    familyName: string;
 }
 
 export interface TableData {
@@ -17,9 +16,8 @@ export interface ServerData {
     name: string;
     hdd: number;
     distanceToMaster: number;
-    // tables?: Array<string>;
     replicationNumber?: number;
-    maxRegions?: number; // TODO: it new
+    maxRegions?: number;
     pDie?: number;
     isMaster?: boolean;
 }
