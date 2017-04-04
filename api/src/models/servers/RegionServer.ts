@@ -1,7 +1,7 @@
 import Server from "../Server";
 import {ServerData} from "../../../typings/index";
 import HRow from "../HRow";
-import HRegion from "./HRegion";
+import HRegion from "../HRegion";
 
 import helpers from '../../helpers/index';
 const {range} = helpers;

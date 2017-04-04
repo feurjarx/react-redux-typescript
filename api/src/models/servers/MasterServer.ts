@@ -3,7 +3,7 @@ import {ServerData} from "../../../typings/index";
 import RegionServer from "./RegionServer";
 import HRow from "../HRow";
 import DistributionBehavior from "../servers/behaviors/DistributionBehavior";
-import HRegion from "./HRegion";
+import HRegion from "../HRegion";
 
 class MasterServer extends Server {
 

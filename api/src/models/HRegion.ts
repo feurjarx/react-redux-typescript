@@ -1,4 +1,4 @@
-import HRow from "../HRow";
+import HRow from "./HRow";
 class HRegion {
     id: number;
 

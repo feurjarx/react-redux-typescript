@@ -5,7 +5,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Server_1 = require("../Server");
-var HRegion_1 = require("./HRegion");
+var HRegion_1 = require("../HRegion");
 var index_1 = require("../../helpers/index");
 var range = index_1.default.range;
 var RegionServer = (function (_super) {
