@@ -1,8 +1,12 @@
 import * as React from "react";
-const socket = {on: new Function(), emit: new Function()};
+// const socket = {on: new Function(), emit: new Function()};
+import * as io from 'socket.io-client';
+const socket = io.connect('http://localhost:3003');
 
 import {Step, StepLabel} from 'material-ui/Stepper';
 import {Dialog, FlatButton, RaisedButton} from 'material-ui';
+
+import initial from './../../configs/default-data'
 
 import styles from './preparing.styles';
 import './preparing.css';
@@ -12,7 +16,7 @@ import {connect} from "react-redux";
 import {
     EVENT_IO_LIFE,
     EVENT_IO_THE_END,
-    EVENT_IO_LOAD_LINE
+    EVENT_IO_LOAD_LINE, EVENT_IO_DISCONNECT, EVENT_IO_PRELIFE
 } from "../../constants/events";
 
 import {
@@ -21,6 +25,7 @@ import {
     updateCpuChart,
     initialLifeData,
     updateMonitorItem,
+    updateRegionsPiesCharts,
 } from "../../actions/index";
 
 import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
@@ -45,14 +50,16 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
         // socket.on('connect', function () {});
         socket.on(EVENT_IO_LIFE, this.receiveLifeResponse);
+        socket.on(EVENT_IO_PRELIFE, this.receivePreLiveResponse);
         socket.on(EVENT_IO_THE_END, this.onCompleteLife);
-        socket.on('disconnect', function () {
+        socket.on(EVENT_IO_DISCONNECT, function () {
             props.dispatch(stopStopwatch());
         });
 
         socket.on(EVENT_IO_LOAD_LINE, this.receiveLoadLineResponse);
 
         this.fds = new FormDataService();
+        // this.fds.setData(initial);
     }
 
     handleOpen = () => {
@@ -80,13 +87,17 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         }
 
         socket.emit(EVENT_IO_LIFE, {
-            ...this.state,
+            ...initial,
             clients
         });
 
         dispatch(startStopwatch());
 
         this.handleClose();
+    };
+
+    receivePreLiveResponse = (data) => {
+        this.props.dispatch(updateRegionsPiesCharts(data));
     };
 
     receiveLoadLineResponse = (data) => {

@@ -3,11 +3,56 @@ import Server from "./Server";
 import RabbitMQ from "../services/RabbitMQ";
 import ExpectantClient from "./clients/Expectant";
 import RandomSleepCalculating from "./servers/RandomSleepCalculating";
+import MasterServer from "./servers/MasterServer";
+import HashDistribution from "./servers/HashDistribution";
+import RegionServer from "./servers/RegionServer";
+import MapGenerator from "./MapGenerator";
+import RandomDistribution from "./servers/RandomDistribution";
 
 export class Life {
 
     servers: Array<Server> = [];
     clients: Array<Client> = [];
+
+    masterServer: MasterServer;
+
+    initServers(serversData) {
+        const masterServer = new MasterServer(
+            new RabbitMQ(),
+            serversData.find(it => it.isMaster)
+        );
+
+        // masterServer.distrubutionBehavior = new HashDistribution();
+        masterServer.distrubutionBehavior = new RandomDistribution();
+
+        for (let i = 0; i < serversData.length; i++) {
+            const serverData = serversData[i];
+            if (!serverData.isMaster) {
+                const server = new RegionServer(serverData);
+                server.id = serverData.name;
+                masterServer.subordinates.push(server);
+            }
+        }
+
+        return masterServer;
+    }
+
+    preLive(data, done = Function()) {
+        console.log(data);
+
+        const {tables, servers} = data;
+        const masterServer = this.initServers(servers);
+        MapGenerator.fillRegions({tables, totalSize: 500000}, masterServer);
+
+        const regionsServersPies = masterServer.subordinates.map(server => ({
+            serverName: server.id,
+            chartData: server.calcRegionsSizes()
+        }));
+
+        done({regionsServersPies});
+
+        this.masterServer = masterServer;
+    };
 
     live(data, callback = null, complete = null) {
         console.log(data);

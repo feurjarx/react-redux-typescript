@@ -26,6 +26,7 @@ class MasterServer extends Server {
     save(hRow: HRow) {
         const {getRegionServerNo} = this.distrubutionBehavior;
         const serverRegionNo = getRegionServerNo(hRow, this.subordinates.length);
+        console.log('Region no' + serverRegionNo);
         this.subordinates[serverRegionNo].save(hRow);
     }
 }

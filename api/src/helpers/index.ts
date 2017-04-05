@@ -1,23 +1,22 @@
 const md5 = require('md5/md5');
 
-export default {
-    random(max: number) {
-        return Math.round(Math.random() * max);
-    },
+export function composition(...fns) {
+    return (...args) => fns.forEach(f => f.apply(null, args))
+}
 
-    randomByRange(min: number, max: number) {
-        // TODO: make it
-    },
+export function random(max: number) {
+    return Math.round(Math.random() * max);
+}
 
-    hash(...args) {
-        return md5(args.join(','));
-    },
+export function hash(...args) {
+    return md5(args.join(','));
+}
 
-    range(min: number, max: number) {
-        const length = max - min;
-        return String(min)
-            .repeat(length)
-            .split('')
-            .map((it,i) => +it + i);
-    }
+export function range(min: number, max: number) {
+    const length = max - min;
+
+    return String(min)
+        .repeat(length)
+        .split('')
+        .map((it,i) => +it + i);
 }

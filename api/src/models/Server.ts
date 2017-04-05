@@ -18,9 +18,12 @@ export default class Server {
 
     calculateBehavior: CalculateBehavior;
 
-    constructor(provider) {
+    constructor(provider = null) {
         this.id = new Date().getTime();
-        this.provider = provider;
+
+        if (provider) {
+            this.provider = provider;
+        }
     }
 
     listen(callback = null) {

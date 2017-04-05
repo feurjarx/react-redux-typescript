@@ -18,6 +18,7 @@ var MasterServer = (function (_super) {
     MasterServer.prototype.save = function (hRow) {
         var getRegionServerNo = this.distrubutionBehavior.getRegionServerNo;
         var serverRegionNo = getRegionServerNo(hRow, this.subordinates.length);
+        console.log('Region no' + serverRegionNo);
         this.subordinates[serverRegionNo].save(hRow);
     };
     return MasterServer;

@@ -3,11 +3,43 @@ var Server_1 = require("./Server");
 var RabbitMQ_1 = require("../services/RabbitMQ");
 var Expectant_1 = require("./clients/Expectant");
 var RandomSleepCalculating_1 = require("./servers/RandomSleepCalculating");
+var MasterServer_1 = require("./servers/MasterServer");
+var RegionServer_1 = require("./servers/RegionServer");
+var MapGenerator_1 = require("./MapGenerator");
+var RandomDistribution_1 = require("./servers/RandomDistribution");
 var Life = (function () {
     function Life() {
         this.servers = [];
         this.clients = [];
     }
+    Life.prototype.initServers = function (serversData) {
+        var masterServer = new MasterServer_1.default(new RabbitMQ_1.default(), serversData.find(function (it) { return it.isMaster; }));
+        // masterServer.distrubutionBehavior = new HashDistribution();
+        masterServer.distrubutionBehavior = new RandomDistribution_1.default();
+        for (var i = 0; i < serversData.length; i++) {
+            var serverData = serversData[i];
+            if (!serverData.isMaster) {
+                var server = new RegionServer_1.default(serverData);
+                server.id = serverData.name;
+                masterServer.subordinates.push(server);
+            }
+        }
+        return masterServer;
+    };
+    Life.prototype.preLive = function (data, done) {
+        if (done === void 0) { done = Function(); }
+        console.log(data);
+        var tables = data.tables, servers = data.servers;
+        var masterServer = this.initServers(servers);
+        MapGenerator_1.default.fillRegions({ tables: tables, totalSize: 500000 }, masterServer);
+        var regionsServersPies = masterServer.subordinates.map(function (server) { return ({
+            serverName: server.id,
+            chartData: server.calcRegionsSizes()
+        }); });
+        done({ regionsServersPies: regionsServersPies });
+        this.masterServer = masterServer;
+    };
+    ;
     Life.prototype.live = function (data, callback, complete) {
         if (callback === void 0) { callback = null; }
         if (complete === void 0) { complete = null; }

@@ -1,7 +1,6 @@
 "use strict";
 var index_1 = require("../helpers/index");
 var HRow_1 = require("./HRow");
-var hash = index_1.default.hash, random = index_1.default.random;
 var MapGenerator = (function () {
     function MapGenerator() {
     }
@@ -24,7 +23,7 @@ var MapGenerator = (function () {
                         maxFieldSize = 11;
                     }
                 }
-                fieldSize = random(maxFieldSize);
+                fieldSize = index_1.random(maxFieldSize);
             }
             sizeByFieldNameMap[f.name] = fieldSize;
             rowSize += fieldSize;
@@ -72,7 +71,7 @@ var MapGenerator = (function () {
                 var id = i + 1;
                 var rowSizesInfo = generator.calcRowSizesInfo(id, fields);
                 var sizeByFieldNameMap = rowSizesInfo.sizeByFieldNameMap;
-                var rowKey = hash(tableName, id);
+                var rowKey = index_1.hash(tableName, id, Date.now());
                 var hRow = new HRow_1.default(rowKey);
                 // fill one hRow
                 families.forEach(function (fieldsNames) {

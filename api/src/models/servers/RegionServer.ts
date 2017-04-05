@@ -3,8 +3,7 @@ import {ServerData} from "../../../typings/index";
 import HRow from "../HRow";
 import HRegion from "../HRegion";
 
-import helpers from '../../helpers/index';
-const {range} = helpers;
+import {range} from '../../helpers';
 
 export default class RegionServer extends Server {
     regions: Array<HRegion>;
@@ -14,8 +13,8 @@ export default class RegionServer extends Server {
 
     regionMaxSize: number;
 
-    constructor(provider, serverData: ServerData) {
-        super(provider);
+    constructor(serverData: ServerData) {
+        super();
 
         this.regions = [];
 
@@ -29,6 +28,13 @@ export default class RegionServer extends Server {
 
         this.regionMaxSize = regionMaxSize;
     };
+
+    calcRegionsSizes() {
+        return this.regions.map(r => ({
+            name: `Регион ${r.id}`,
+            value: r.maxSize - r.freeSpace
+        }))
+    }
 
     save(hRow: HRow) {
 
@@ -64,5 +70,4 @@ export default class RegionServer extends Server {
             }
         }
     }
-
 }

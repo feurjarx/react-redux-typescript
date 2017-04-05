@@ -3,12 +3,15 @@ var Observable_1 = require("rxjs/Observable");
 var rabbitmq_1 = require("./../configs/rabbitmq");
 var Server = (function () {
     function Server(provider) {
+        if (provider === void 0) { provider = null; }
         this.requestCounter = 0;
         this.processingTimeCounter = 0;
         this.lastProcessingTime = 0;
         this.subscriptions = [];
         this.id = new Date().getTime();
-        this.provider = provider;
+        if (provider) {
+            this.provider = provider;
+        }
     }
     Server.prototype.listen = function (callback) {
         var _this = this;

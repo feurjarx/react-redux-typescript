@@ -1,25 +1,36 @@
 "use strict";
 var md5 = require('md5/md5');
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = {
-    random: function (max) {
-        return Math.round(Math.random() * max);
-    },
-    randomByRange: function (min, max) {
-        // TODO: make it
-    },
-    hash: function () {
+function composition() {
+    var fns = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        fns[_i] = arguments[_i];
+    }
+    return function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        return md5(args.join(','));
-    },
-    range: function (min, max) {
-        var length = max - min;
-        return String(min)
-            .repeat(length)
-            .split('')
-            .map(function (it, i) { return +it + i; });
+        return fns.forEach(function (f) { return f.apply(null, args); });
+    };
+}
+exports.composition = composition;
+function random(max) {
+    return Math.round(Math.random() * max);
+}
+exports.random = random;
+function hash() {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
     }
-};
+    return md5(args.join(','));
+}
+exports.hash = hash;
+function range(min, max) {
+    var length = max - min;
+    return String(min)
+        .repeat(length)
+        .split('')
+        .map(function (it, i) { return +it + i; });
+}
+exports.range = range;

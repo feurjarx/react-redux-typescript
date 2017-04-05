@@ -1,7 +1,6 @@
-import helpers from '../helpers/index';
+import {random, hash} from '../helpers/index';
 import HRow from "./HRow";
 import MasterServer from "./servers/MasterServer";
-const {hash, random} = helpers;
 
 class MapGenerator {
 
@@ -93,7 +92,7 @@ class MapGenerator {
                 let rowSizesInfo = generator.calcRowSizesInfo(id, fields);
                 const {sizeByFieldNameMap} = rowSizesInfo;
 
-                const rowKey = hash(tableName, id);
+                const rowKey = hash(tableName, id, Date.now());
                 const hRow = new HRow(rowKey);
 
                 // fill one hRow

@@ -62,5 +62,6 @@ class HRegion {
         this.freeSpace = freeSpace;
     }
 
+
 }
 export default HRegion;

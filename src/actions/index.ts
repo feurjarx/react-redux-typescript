@@ -1,6 +1,7 @@
 import {
 
     UPDATE_MONITOR_ITEM,
+    UPDATE_REGIONS_PIES_CHARTS,
     OTHER_STEPS_DATA,
     INITIAL_LIFE_DATA, INITIAL_LIFE_DATA_COMPLETED,
     STOP_STOPWATCH, START_STOPWATCH,
@@ -18,6 +19,13 @@ export function updateMonitorItem(data) {
 export function updateCpuChart(data) {
     return {
         type: UPDATE_CPU_CHART,
+        data
+    };
+}
+
+export function updateRegionsPiesCharts(data) {
+    return {
+        type: UPDATE_REGIONS_PIES_CHARTS,
         data
     };
 }

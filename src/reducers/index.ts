@@ -5,14 +5,16 @@ import { lifeData } from './lifeData';
 import { stopwatch } from './stopwatch';
 import { cpuChart } from './cpuChart';
 import { otherStepsData } from './otherStepsData';
+import chartsData from './chartsData';
 
 export const app = Redux.combineReducers({
-    monitor,
+    otherStepsData,
     monitorItem,
+    chartsData,
+    stopwatch,
     cpuChart,
     lifeData,
-    stopwatch,
-    otherStepsData
+    monitor
 });
 
 export default app;

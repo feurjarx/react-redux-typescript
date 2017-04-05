@@ -6,23 +6,28 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Server_1 = require("../Server");
 var HRegion_1 = require("../HRegion");
-var index_1 = require("../../helpers/index");
-var range = index_1.default.range;
+var helpers_1 = require("../../helpers");
 var RegionServer = (function (_super) {
     __extends(RegionServer, _super);
-    function RegionServer(provider, serverData) {
-        var _this = _super.call(this, provider) || this;
+    function RegionServer(serverData) {
+        var _this = _super.call(this) || this;
         _this.regions = [];
         var hdd = serverData.hdd, maxRegions = serverData.maxRegions;
         _this.hdd = hdd;
         _this.maxRegions = maxRegions;
         var regionMaxSize = Math.round(hdd / maxRegions);
-        _this.regions = range(0, maxRegions)
+        _this.regions = helpers_1.range(0, maxRegions)
             .map(function (id) { return new HRegion_1.default(id, _this.id, regionMaxSize); });
         _this.regionMaxSize = regionMaxSize;
         return _this;
     }
     ;
+    RegionServer.prototype.calcRegionsSizes = function () {
+        return this.regions.map(function (r) { return ({
+            name: "\u0420\u0435\u0433\u0438\u043E\u043D " + r.id,
+            value: r.maxSize - r.freeSpace
+        }); });
+    };
     RegionServer.prototype.save = function (hRow) {
         var regions = this.regions;
         for (var i = 0; i < regions.length; i++) {
