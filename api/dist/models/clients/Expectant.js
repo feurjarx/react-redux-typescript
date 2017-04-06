@@ -5,53 +5,56 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Client_1 = require("../Client");
-var rabbitmq_1 = require("../../configs/rabbitmq");
+var rabbitmq_1 = require("../../constants/rabbitmq");
 var ExpectantClient = (function (_super) {
     __extends(ExpectantClient, _super);
     function ExpectantClient(provider) {
         if (provider === void 0) { provider = null; }
         return _super.call(this, provider) || this;
     }
-    ExpectantClient.prototype.requestToServer = function (requestsNumber) {
+    ExpectantClient.prototype.requestsToMasterServer = function (nRequests, callback) {
         var _this = this;
-        if (requestsNumber === void 0) { requestsNumber = this.requestsNumber; }
-        var queueName = rabbitmq_1.default.queueName;
+        if (nRequests === void 0) { nRequests = 1; }
+        if (callback === void 0) { callback = Function(); }
         var requestTimeLimit = this.requestTimeLimit;
+        var requestsReverseCounter = nRequests;
         var observable = this.provider
-            .publishAndWait(queueName, {
+            .publishAndWait(rabbitmq_1.RABBITMQ_QUEUE_MASTER_SERVER, {
             clientId: this.id,
-            last: this.requestsNumber <= 1,
+            last: requestsReverseCounter <= 1,
             requestTimeLimit: requestTimeLimit
         });
         this.subscription = observable
             .subscribe(function (response) {
             switch (response.type) {
                 case 'sent':
-                    console.log("Client #" + _this.id + " request done.");
+                    console.log("\u041A\u043B\u0438\u0435\u043D\u0442 #" + _this.id + " \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u043B \u0437\u0430\u043F\u0440\u043E\u0441.");
                     break;
                 case 'received':
-                    console.log("Client #" + _this.id + " received response from server.");
-                    requestsNumber--;
-                    if (requestsNumber > 0) {
+                    console.log("\u041A\u043B\u0438\u0435\u043D\u0442 #" + _this.id + " \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442\u0432\u0435\u0442 \u043E\u0442 \u043C\u0430\u0441\u0442\u0435\u0440\u0430. \u041E\u0431\u0440\u0430\u0431\u0430\u0442\u044B\u0432\u0430\u043B \u0437\u0430\u043F\u0440\u043E\u0441 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440 #" + response.regionServerId);
+                    requestsReverseCounter--;
+                    if (requestsReverseCounter > 0) {
+                        console.log("\u041A\u043B\u0438\u0435\u043D\u0442\u0443 #" + _this.id + " \u043E\u0441\u0442\u0430\u043B\u043E\u0441\u044C " + requestsReverseCounter + " \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432. \u0414\u0430\u043B\u0435\u0435, \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0437\u0430\u043F\u0440\u043E\u0441...");
                         response.repeat({
                             clientId: _this.id,
-                            last: requestsNumber <= 1
+                            last: requestsReverseCounter <= 1
                         });
                     }
                     else {
+                        response.type = 'stopped';
                         _this.stop();
                     }
                     break;
-                //...
                 default:
                     throw new Error("Unexpected response type from server. Type: " + response.type);
             }
+            callback(response);
         });
-        return observable;
     };
     ExpectantClient.prototype.stop = function () {
         this.provider.destroy();
         this.subscription.unsubscribe();
+        console.log("\u041A\u043B\u0438\u0435\u043D\u0442 #" + this.id + " \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D.");
     };
     return ExpectantClient;
 }(Client_1.default));

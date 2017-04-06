@@ -1,4 +1,5 @@
 export default {
     amqpUrl: 'amqp://localhost',
-    queueName: 'test'
+    queueName: 'master_queue',
+    regionsExchange: 'regions_exchange'
 }

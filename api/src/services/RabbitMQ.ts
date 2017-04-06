@@ -7,6 +7,7 @@ import {Observable} from 'rxjs/Observable';
 import {Promise} from 'es6-shim';
 import rabbitmqConfig from './../configs/rabbitmq';
 import AssertQueue = Replies.AssertQueue;
+import Function0 = _.Function0;
 const md5 = require('md5');
 
 export default class RabbitMQ implements IQueue {
@@ -16,21 +17,28 @@ export default class RabbitMQ implements IQueue {
 
     private openConnection(): Promise<Connection> {
 
-        if (this.connection) {
-            this.destroy();
-        }
+        // if (this.connection) {
+        //     this.destroy();
+        // }
 
         const {amqpUrl} = rabbitmqConfig;
 
         return new Promise<Connection>((resolve, reject) => {
-            amqp.connect(amqpUrl, (err, conn) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    this.connection = conn;
-                    resolve(conn);
-                }
-            })
+
+            if (this.connection) {
+                resolve(this.connection)
+
+            } else {
+
+                amqp.connect(amqpUrl, (err, conn) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        this.connection = conn;
+                        resolve(conn);
+                    }
+                })
+            }
         })
     }
 
@@ -58,86 +66,107 @@ export default class RabbitMQ implements IQueue {
         });
     }
 
-    private publishAndWaitSender(queueName: string, tempQueueName: string, data) {
-
-        const { correlationId } = data;
-
-        this.channel.sendToQueue(queueName,
-            new Buffer(JSON.stringify(data)), {
-                correlationId,
-                replyTo: tempQueueName
-            }
-        );
-    }
-
     /**
      * Warning! Need call destroy after use
      */
-    publishAndWait(queueName: string, data = {}): Observable<PublishAndWaitResponse> {
+    publishAndWait(queueName: string, data = {}) {
+        return new Observable(observer => {
+
+            this.connect()
+                .then(ch => {
+
+                    const exclusive = true;
+                    ch.assertQueue('', { exclusive }, function(err, queueTemp) {
+
+                        const correlationId = md5(Date.now());
+                        const sendCall = function(data) {
+                            ch.sendToQueue(queueName,
+                                new Buffer(JSON.stringify(data)), {
+                                    correlationId: data.correlationId,
+                                    replyTo: queueTemp.queue
+                                }
+                            );
+                        };
+
+                        ch.consume(queueTemp.queue, msg => {
+                            if (msg.properties.correlationId === correlationId) {
+                                observer.next({
+                                    type: 'received',
+                                    ...JSON.parse(msg.content.toString()),
+                                    repeat: newData => {
+
+                                        sendCall({
+                                            correlationId,
+                                            ...newData
+                                        });
+
+                                        observer.next({
+                                            type: 'sent'
+                                        });
+                                    }
+                                });
+                            }
+                        }, {noAck: true});
+
+                        sendCall({
+                            correlationId,
+                            ...data
+                        });
+
+                        observer.next({
+                            type: 'sent'
+                        });
+                    })
+                })
+        })
+    }
+
+    publishAndWaitByRouteKeys(exchange: string, routeKeys: Array<string>, data = {}) {
 
         return new Observable(observer => {
+
             this.connect()
                 .then(ch => {
 
                     const exclusive = true;
                     const noAck = true;
+                    ch.assertQueue('', {exclusive}, function(err, queueTemp) {
 
-                    ch.assertQueue('', { exclusive }, (err, queueTemp) => {
+                        const durable = false;
+                        ch.assertExchange(exchange, 'direct', {durable});
 
-                        if (err) {
+                        const correlationId = md5(Date.now());
 
-                            // todo: Observable throw exception ?
+                        ch.consume(queueTemp.queue, (msg) => {
+                            if (msg.properties.correlationId === correlationId) {
+                                observer.next({
+                                    type: 'received',
+                                    ...JSON.parse(msg.content.toString())
+                                });
+                            }
+                        }, {noAck});
 
-                        } else {
-
-                            const correlationId = md5(Date.now());
-
-                            const sendCall = this.publishAndWaitSender.bind(this, queueName, queueTemp.queue);
-
-                            ch.consume(queueTemp.queue, response => {
-
-                                if (response.properties.correlationId === correlationId) {
-
-                                    observer.next({
-                                        type: 'received',
-                                        data: response,
-                                        repeat: newData => {
-
-                                            sendCall({
-                                                correlationId,
-                                                ...newData
-                                            });
-
-                                            observer.next({
-                                                type: 'sent'
-                                            });
-                                        }
-                                    });
-                                }
-                            });
-
-                            sendCall({
+                        routeKeys.forEach(routeKey => {
+                            const buffer = new Buffer(JSON.stringify(data));
+                            ch.publish(exchange, routeKey, buffer, {
                                 correlationId,
-                                ...data
+                                replyTo: queueTemp.queue
                             });
+                        });
 
-                            observer.next({
-                                type: 'sent'
-                            });
-                        }
-
-                    }, { noAck })
+                        observer.next({
+                            type: 'sent'
+                        });
+                    });
                 })
         })
     }
 
-    publish(queueName: string, data = {}): Promise<void> {
+    publish(queueName: string, data = {}): Promise<any> {
 
         return new Promise((resolve, reject) => {
 
-            // this.openConnection()
             this.connect()
-                // .then(c => this.getChannelFromConnection(c))
                 .then(ch => {
                     ch.assertQueue(queueName, {
                         durable: false
@@ -157,38 +186,89 @@ export default class RabbitMQ implements IQueue {
         this.channel.ack(msg);
     }
 
-    consume(queueName: string, { lazy = false }): Observable<Message> {
+    consume(queueName: string, {lazy = false}): Observable<any> {
 
-        return new Observable<Message>(observer => {
+        return new Observable<any>(observer => {
 
             this.connect()
                 .then(ch => {
 
                     const durable = false;
-                    ch.assertQueue(queueName, { durable });
+                    ch.assertQueue(queueName, {durable});
 
-                    let noAck = true;
                     if (lazy) {
-                        noAck = false;
                         ch.prefetch(1);
                     }
 
                     ch.consume(queueName, msg => {
 
+                        const response = {
+                            ...JSON.parse(msg.content.toString()),
+                            onClientReply: Function()
+                        };
+
                         const { replyTo, correlationId } = msg.properties;
                         if (correlationId && replyTo) {
-
-                            ch.sendToQueue(replyTo,
-                                new Buffer('ok'),
-                                {
-                                    correlationId
-                                }
-                            );
+                            response.onClientReply = (replyData) => {
+                                const buffer = new Buffer(JSON.stringify(replyData));
+                                ch.sendToQueue(replyTo, buffer, {correlationId});
+                            };
                         }
 
-                        observer.next(msg);
+                        observer.next(response);
 
-                    }, { noAck });
+                    }, { noAck: !lazy });
+                })
+                .catch(err => {
+                    throw new Error('Connect invalid');
+                });
+        });
+    }
+
+    consumeByRouteKeys(exchange: string, routeKeys: Array<string>, {resolve = Function(), lazy = true} = {}) {
+
+        return new Observable<Message>(observer => {
+
+            this.connect()
+                .then(ch => {
+                    const durable = false;
+                    ch.assertExchange(exchange, 'direct', {durable});
+
+                    const exclusive = true;
+                    ch.assertQueue('', {exclusive}, function (err, queueTemp) {
+
+                        routeKeys.forEach(routeKey => {
+                            ch.bindQueue(queueTemp.queue, exchange, routeKey);
+                        });
+
+                        if (lazy) {
+                            ch.prefetch(1);
+                        }
+
+                        resolve();
+                        ch.consume(queueTemp.queue, msg => {
+                            // from MasterServer (client request redirect)
+
+                            const response = {
+                                ...JSON.parse(msg.content.toString()),
+                                onClientReply: Function()
+                            };
+
+                            const { replyTo, correlationId } = msg.properties;
+                            if (correlationId && replyTo) {
+                                response.onClientReply = (replyData) => {
+                                    const buffer = new Buffer(JSON.stringify(replyData));
+                                    ch.sendToQueue(replyTo, buffer, {correlationId});
+                                    if (lazy) {
+                                        ch.ack(msg);
+                                    }
+                                };
+                            }
+
+                            observer.next(response);
+
+                        }, { noAck: !lazy });
+                    });
                 })
                 .catch(err => {
                     throw new Error('Connect invalid');
@@ -197,6 +277,8 @@ export default class RabbitMQ implements IQueue {
     }
 
     destroy() {
-        return this.connection.close();
+        this.connection.close();
+        this.connection = null;
+        // return this.connection.close();
     }
 }

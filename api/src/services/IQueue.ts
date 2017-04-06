@@ -15,5 +15,7 @@ export interface IQueue {
     destroy();
 
     acknowledge?(msg: string);
-    publishAndWait?(queueName: string, data?: any): Observable<PublishAndWaitResponse>;
+    publishAndWait?(queueName: string, data?: any): Observable<any>;
+    publishAndWaitByRouteKeys?(exchange: string, routeKeys: Array<string>, data?:any): Observable<any>;
+    consumeByRouteKeys?(exchange: string, routeKeys: Array<string>, ...options): Observable<any>;
 }

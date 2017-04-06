@@ -14,19 +14,21 @@ exports.run = function () {
         client.on(events_1.EVENT_IO_LIFE, index_1.composition(function (data) {
             life.preLive(data, function (browserData) { return client.emit(events_1.EVENT_IO_PRELIFE, browserData); });
         }, function (data) {
-            return;
-            life.clear();
-            life.live(data, function (browserData) {
+            life
+                .live(data)
+                .onLifeInfo(function (browserData) {
                 if (browserData.type === 'load_line') {
                     client.emit(events_1.EVENT_IO_LOAD_LINE, browserData);
                 }
                 else {
                     client.emit(events_1.EVENT_IO_LIFE, browserData);
                 }
-            }, function () { return client.emit(events_1.EVENT_IO_THE_END); });
+            })
+                .onLifeComplete(function () {
+                client.emit(events_1.EVENT_IO_THE_END);
+            });
         }));
         client.on(events_1.EVENT_IO_DISCONNECT, function () {
-            life.clear();
             console.log('browser client was disconnected.');
         });
     });

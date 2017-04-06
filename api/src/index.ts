@@ -2,17 +2,17 @@ import * as ioServer from 'socket.io';
 import * as http from 'http';
 
 import {
-
     EVENT_IO_LIFE,
     EVENT_IO_CONNECTION,
-    EVENT_IO_DISCONNECT, EVENT_IO_THE_END, EVENT_IO_LOAD_LINE, EVENT_IO_PRELIFE
-
+    EVENT_IO_DISCONNECT,
+    EVENT_IO_THE_END,
+    EVENT_IO_LOAD_LINE,
+    EVENT_IO_PRELIFE
 } from './constants/events';
 
 import ioConfig from './configs/socket.io'
 
 import {Life} from "./models/Life";
-import {QueueSystemLife} from "./models/QueueSystemLife";
 import {composition} from "./helpers/index";
 
 export const run = () => {
@@ -34,23 +34,23 @@ export const run = () => {
                 );
             },
             (data) => {
-                return
-                life.clear();
-                life.live(data,
-                    browserData => {
+
+                life
+                    .live(data)
+                    .onLifeInfo(browserData => {
                         if (browserData.type === 'load_line') {
                             client.emit(EVENT_IO_LOAD_LINE, browserData);
                         } else {
                             client.emit(EVENT_IO_LIFE, browserData);
                         }
-                    },
-                    () => client.emit(EVENT_IO_THE_END)
-                );
+                    })
+                    .onLifeComplete(() => {
+                        client.emit(EVENT_IO_THE_END);
+                    });
             }
         ));
 
         client.on(EVENT_IO_DISCONNECT, () => {
-            life.clear();
             console.log('browser client was disconnected.');
         });
     });

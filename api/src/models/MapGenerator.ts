@@ -73,14 +73,14 @@ class MapGenerator {
     static fillRegions({tables, totalSize}, masterServer: MasterServer) {
 
         const generator = new MapGenerator();
-        const hTables = {};
+        // const hTables = {};
         const maxTableSize = totalSize / tables.length; // avg
 
         tables.forEach(table => {
 
             const {fields} = table;
             const tableName = table.name;
-            hTables[tableName] = {};
+            // hTables[tableName] = {};
 
             const families = this.getFamilies(fields);
 
@@ -111,14 +111,14 @@ class MapGenerator {
                     hRow.families[familyKey] = fieldsValues;
                 });
 
-                hTables[tableName][rowKey] = hRow;
+                // hTables[tableName][rowKey] = hRow;
                 masterServer.save(hRow);
 
                 tableSize += rowSizesInfo.rowSize;
             }
         });
 
-        return hTables; // logical data struct
+        // return hTables; // logical data struct
     }
 }
 

@@ -59,12 +59,12 @@ var MapGenerator = (function () {
         var _this = this;
         var tables = _a.tables, totalSize = _a.totalSize;
         var generator = new MapGenerator();
-        var hTables = {};
+        // const hTables = {};
         var maxTableSize = totalSize / tables.length; // avg
         tables.forEach(function (table) {
             var fields = table.fields;
             var tableName = table.name;
-            hTables[tableName] = {};
+            // hTables[tableName] = {};
             var families = _this.getFamilies(fields);
             var tableSize = 0;
             var _loop_1 = function (i) {
@@ -88,7 +88,7 @@ var MapGenerator = (function () {
                     });
                     hRow.families[familyKey] = fieldsValues;
                 });
-                hTables[tableName][rowKey] = hRow;
+                // hTables[tableName][rowKey] = hRow;
                 masterServer.save(hRow);
                 tableSize += rowSizesInfo.rowSize;
             };
@@ -96,7 +96,7 @@ var MapGenerator = (function () {
                 _loop_1(i);
             }
         });
-        return hTables; // logical data struct
+        // return hTables; // logical data struct
     };
     return MapGenerator;
 }());

@@ -3,7 +3,7 @@ import {TableData, ServerData} from "../typings/index";
 import RabbitMQ from "./services/RabbitMQ";
 import RegionServer from "./models/servers/RegionServer";
 import MasterServer from "./models/servers/MasterServer";
-import HashDistribution from "./models/servers/HashDistribution";
+import HashDistribution from "./models/servers/behaviors/HashDistribution";
 
 const tables = [{
     name: 'user',

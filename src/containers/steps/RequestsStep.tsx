@@ -187,6 +187,16 @@ LIMIT 10
                             defaultValue={ requestTimeLimit }
                             onChange={ handleSlidersChange }
                         />
+
+                        <InfoSlider
+                            label="Объем генерируемых данных"
+                            name="requiredFilledSize"
+                            shortSyntax="Гб"
+                            min={1}
+                            max={10000}
+                            defaultValue={ 1000 }
+                            onChange={ handleSlidersChange }
+                        />
                     </div>
                 </Paper>
                 <div id="sqlbox-block">

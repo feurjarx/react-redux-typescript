@@ -1,7 +1,6 @@
 import {IQueue} from "../services/IQueue";
 import {Observable} from "rxjs/Observable";
 import {Subscription} from "rxjs";
-import rabbitmqConfig from "./../configs/rabbitmq";
 import {CalculateBehavior} from './servers/behaviors/CalculateBehavior';
 
 export default class Server {
@@ -9,7 +8,6 @@ export default class Server {
     id: any;
 
     requestCounter = 0;
-    processingTimeCounter = 0;
     lastProcessingTime = 0;
 
     provider: IQueue;
@@ -26,13 +24,12 @@ export default class Server {
         }
     }
 
-    listen(callback = null) {
+    /**
+     * @deprecated
+     */
+    listen(queueName, callback = Function(), lazy = true) {
 
         const observable = new Observable(observer => {
-
-            const { queueName } = rabbitmqConfig;
-
-            const lazy = true;
 
             this.provider
                 .consume(queueName, { lazy })
@@ -50,7 +47,6 @@ export default class Server {
                             .then(({ duration }) => {
 
                                 this.requestCounter++;
-                                this.processingTimeCounter += duration;
                                 this.lastProcessingTime = duration;
 
                                 if (lazy) {
@@ -63,14 +59,7 @@ export default class Server {
                 });
         });
 
-        let subscription: Subscription;
-        if (callback instanceof Function) {
-            callback = callback.bind(this);
-            subscription = observable.subscribe(callback);
-        } else {
-            subscription = observable.subscribe();
-        }
-
+        const subscription = observable.subscribe(callback.bind(this));
         this.subscriptions.push(subscription);
     }
 

@@ -5,7 +5,16 @@ import HRow from "../HRow";
 import DistributionBehavior from "../servers/behaviors/DistributionBehavior";
 import HRegion from "../HRegion";
 
-class MasterServer extends Server {
+import {Observable, Subscription} from "rxjs";
+
+import {
+    RABBITMQ_EXCHANGE_REGION_SERVERS,
+    RABBITMQ_QUEUE_MASTER_SERVER
+} from "./../../constants/rabbitmq";
+
+declare type ServerStatus = 'alone'|'pending'|'ready';
+
+export default class MasterServer extends Server {
 
     isMaster: boolean;
 
@@ -14,6 +23,11 @@ class MasterServer extends Server {
     subordinates: Array<RegionServer>;
 
     registry: Array<HRegion>; // ???
+
+    status: ServerStatus = 'alone';
+
+    subscriptionForClients: Subscription;
+    subscriptionsMap: {[key: string]: Subscription} = {};
 
     constructor(provider, serverData: ServerData) {
         super(provider);
@@ -26,9 +40,91 @@ class MasterServer extends Server {
     save(hRow: HRow) {
         const {getRegionServerNo} = this.distrubutionBehavior;
         const serverRegionNo = getRegionServerNo(hRow, this.subordinates.length);
-        console.log('Region no' + serverRegionNo);
         this.subordinates[serverRegionNo].save(hRow);
-    }
-}
 
-export default MasterServer;
+        console.log(`Region no ${serverRegionNo}`);
+    }
+
+    ready(complete = Function()) {
+
+        return new Observable(observer => {
+
+            this.listen(RABBITMQ_QUEUE_MASTER_SERVER, response => observer.next(response));
+
+            const promises = [];
+            this.subordinates.forEach(regionServer => {
+                promises.push(regionServer.listenExchange(RABBITMQ_EXCHANGE_REGION_SERVERS));
+            });
+
+            Promise.all(promises).then(() => {
+                console.log(`Все регион-сервера готовы.`);
+                complete();
+            });
+        });
+    }
+
+    listen(queueName, callback = (...args)=>{}, lazy = false) {
+
+        console.log('Мастер-сервер ожидает запросы...');
+
+        const observable = new Observable(observer => {
+
+            this.provider
+                .consume(queueName, { lazy })
+                .subscribe(response => {
+                    // from Clients
+
+                    const {onClientReply, clientId} = response;
+                    console.log(`Мастер-сервер получил запрос от клиента #${clientId}`);
+
+                    const {getRegionServerNo} = this.distrubutionBehavior;
+                    const serverRegionNo = getRegionServerNo(null, this.subordinates.length);
+                    const regionServer = this.subordinates[serverRegionNo];
+                    console.log(`Мастер-сервер перенаправляет запрос от клиента #${clientId} на регион-сервер #${regionServer.id}`);
+
+                    this
+                        .redirectToRegionServer(regionServer, {clientId})
+                        .then(responseFromRegionServer => {
+                            onClientReply(responseFromRegionServer);
+                            observer.next(responseFromRegionServer);
+                        });
+                });
+        });
+
+        this.subscriptionForClients = observable.subscribe(callback);
+    }
+
+    redirectToRegionServer(regionServer: RegionServer, data) {
+
+        return new Promise((resolve, reject) => {
+
+            const routeKey = regionServer.id;
+            this.subscriptionsMap[routeKey] = this.provider
+                .publishAndWaitByRouteKeys(RABBITMQ_EXCHANGE_REGION_SERVERS, [routeKey], data)
+                .subscribe(response => {
+                    // from RegionServer
+
+                    switch (response.type) {
+                        case 'sent':
+                            break;
+
+                        case 'received':
+
+                            const {regionServerId, clientId} = response;
+                            console.log(`Мастер-сервер получил ответ с регион-сервера ${regionServerId} на запрос от клиента #${clientId}`);
+
+                            resolve(response);
+
+                            this.subscriptionsMap[regionServerId].unsubscribe();
+                            delete this.subscriptionsMap[regionServerId];
+
+                            break;
+                        default:
+                            throw new Error(`Unexpected response type from server. Type: ${ response.type }`);
+                    }
+                });
+        });
+    }
+
+
+}

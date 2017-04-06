@@ -1,4 +1,5 @@
 export default {
+    requiredFilledSize: 10,
     tables: [{
         name: 'user',
         fields: [{

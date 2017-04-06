@@ -2,7 +2,6 @@ import * as React from "react";
 import {connect} from "react-redux";
 import * as Recharts from "recharts/lib";
 import {pallete} from "./../../configs"
-import {prettylog} from "../../helpers/index";
 const { PieChart, Pie, Cell, Tooltip } = Recharts;
 
 function mapStateToProps(state) {
@@ -73,7 +72,7 @@ const PieLabel = ({cx, cy, midAngle, innerRadius, outerRadius, percent}) => {
     const y = cy  + radius * Math.sin(-midAngle * RADIAN);
 
     return (
-        <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} 	dominantBaseline="central">
+        <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
             {`${(percent * 100).toFixed(0)}%`}
         </text>
     );

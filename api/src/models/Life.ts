@@ -1,22 +1,20 @@
-import Client from "./Client";
-import Server from "./Server";
 import RabbitMQ from "../services/RabbitMQ";
 import ExpectantClient from "./clients/Expectant";
-import RandomSleepCalculating from "./servers/RandomSleepCalculating";
 import MasterServer from "./servers/MasterServer";
-import HashDistribution from "./servers/HashDistribution";
 import RegionServer from "./servers/RegionServer";
 import MapGenerator from "./MapGenerator";
-import RandomDistribution from "./servers/RandomDistribution";
+import RandomDistribution from "./servers/behaviors/RandomDistribution";
+import Statistics from "./Statistics";
 
 export class Life {
 
-    servers: Array<Server> = [];
-    clients: Array<Client> = [];
+    private masterServer: MasterServer;
+    private statistics: Statistics;
 
-    masterServer: MasterServer;
+    private lifeCompleteCallback = Function();
+    private lifeInfoCallback = Function();
 
-    initServers(serversData) {
+    private initServers(serversData) {
         const masterServer = new MasterServer(
             new RabbitMQ(),
             serversData.find(it => it.isMaster)
@@ -28,7 +26,7 @@ export class Life {
         for (let i = 0; i < serversData.length; i++) {
             const serverData = serversData[i];
             if (!serverData.isMaster) {
-                const server = new RegionServer(serverData);
+                const server = new RegionServer(new RabbitMQ(), serverData);
                 server.id = serverData.name;
                 masterServer.subordinates.push(server);
             }
@@ -37,12 +35,26 @@ export class Life {
         return masterServer;
     }
 
+    onLifeComplete(callback = Function()) {
+        this.lifeCompleteCallback = callback;
+
+        return this;
+    };
+
+    onLifeInfo(callback = Function()) {
+        this.lifeInfoCallback = callback;
+
+        return this;
+    };
+
     preLive(data, done = Function()) {
         console.log(data);
 
-        const {tables, servers} = data;
+        const {tables, servers, requiredFilledSize} = data;
+
         const masterServer = this.initServers(servers);
-        MapGenerator.fillRegions({tables, totalSize: 500000}, masterServer);
+        const totalSize = requiredFilledSize * 1000;
+        MapGenerator.fillRegions({tables, totalSize}, masterServer);
 
         const regionsServersPies = masterServer.subordinates.map(server => ({
             serverName: server.id,
@@ -54,103 +66,79 @@ export class Life {
         this.masterServer = masterServer;
     };
 
-    live(data, callback = null, complete = null) {
-        console.log(data);
+    live(lifeData) {
+        console.log(lifeData);
 
-        const { nClients, nServers, requestTimeLimit } = data;
+        const {masterServer} = this;
 
-        const { servers, clients } = this;
+        const nServers = masterServer.subordinates.length;
+        const statistics = new Statistics({nServers});
 
-        let timerId;
-        let completedClientsCounter = 0;
-        let requestsCounter = 0;
+        const {
+            startClientsRequests,
+            onMasterServerResponse
+        } = this;
 
-        let totalProcessingTimeCounter = 0;
+        masterServer
+            .ready(startClientsRequests.bind(this, lifeData)) // start
+            .subscribe(onMasterServerResponse); // final
 
-        for (let i = 0; i < nServers; i++) {
-            const server = new Server(new RabbitMQ());
+        statistics.subscribeToAbsBandwidth(absBandwidth => this.lifeInfoCallback({
+            type: 'load_line',
+            absBandwidth
+        }));
 
-            server.calculateBehavior = new RandomSleepCalculating(5000);
-            server.id = i;
-            server.listen(function(data) {
+        this.statistics = statistics;
 
-                if (callback instanceof Function) {
-                    const {
-
-                        id,
-                        requestCounter,
-                        processingTimeCounter,
-                        lastProcessingTime
-
-                    } = this as Server; // server
-
-                    console.log({id, requestCounter, processingTimeCounter});
-
-                    callback({
-                        id,
-                        requestCounter
-                    });
-
-                    totalProcessingTimeCounter += lastProcessingTime;
-                }
-
-                if (data.last) {
-                    completedClientsCounter++;
-
-                    if (completedClientsCounter === nClients) {
-                        clearInterval(timerId);
-                        if (complete instanceof Function) {
-                            complete();
-                        }
-                    }
-                }
-            });
-
-            servers.push(server);
-        }
-
-        data.clients.forEach(clientData => {
-
-            const client = new ExpectantClient(new RabbitMQ());
-            client.requestsNumber = +clientData['requestsNumber'];
-            client.requestTimeLimit = requestTimeLimit;
-            client
-                .requestToServer()
-                .subscribe(response => {
-                    if (response.type === 'sent') {
-                        requestsCounter++;
-                    }
-                });
-
-            clients.push(client);
-        });
-
-        let time = 0;
-        const interval = 300;
-        timerId = setInterval(() => {
-
-            time += interval;
-
-            // const absThroughput = requestsCounter / nServers / time;
-            const absThroughput = totalProcessingTimeCounter / nServers / time;
-            callback({
-                type: 'load_line',
-                absThroughput
-            });
-
-            console.log(`**** AbsThroughput = ${ absThroughput }`);
-
-        }, interval);
+        return this;
     };
 
-    clear() {
+    startClientsRequests = (lifeData) => {
+        const {clients, requestTimeLimit} = lifeData;
+        const {statistics} = this;
+        const nClients = clients.length;
 
-        const { servers } = this;
-        if (servers.length) {
-            servers.forEach(s => s.close());
-        }
+        clients.forEach(clientData => {
+        // [clients[0]].forEach(clientData => {
 
-        this.servers = [];
-        this.clients = [];
-    }
+            const nRequests = +clientData['nRequests'];
+            const client = new ExpectantClient(new RabbitMQ());
+            client.requestTimeLimit = requestTimeLimit;
+
+            console.log(`Создан новый клиент #${client.id}`);
+
+            client
+                .requestsToMasterServer(nRequests, (response) => {
+                    switch (response.type) {
+
+                        case 'sent':
+                            statistics.upRequests();
+                            break;
+
+                        case 'stopped':
+                            statistics.upCompletedClients();
+                            if (statistics.isEqualCompletedClients(nClients)) {
+                                statistics.unsubscribeFromAbsBandwidth();
+                                this.lifeCompleteCallback();
+                            }
+
+                            break;
+                    }
+                });
+        });
+    };
+
+    onMasterServerResponse = (response) => {
+
+        const {
+            lastProcessingTime,
+            requestCounter,
+            id
+        } = response;
+
+        this.lifeInfoCallback({id, requestCounter});
+        this.statistics.totalProcessingTime += lastProcessingTime;
+    };
+
+
 }

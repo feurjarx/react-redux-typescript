@@ -1,11 +1,9 @@
 "use strict";
 var Observable_1 = require("rxjs/Observable");
-var rabbitmq_1 = require("./../configs/rabbitmq");
 var Server = (function () {
     function Server(provider) {
         if (provider === void 0) { provider = null; }
         this.requestCounter = 0;
-        this.processingTimeCounter = 0;
         this.lastProcessingTime = 0;
         this.subscriptions = [];
         this.id = new Date().getTime();
@@ -13,12 +11,14 @@ var Server = (function () {
             this.provider = provider;
         }
     }
-    Server.prototype.listen = function (callback) {
+    /**
+     * @deprecated
+     */
+    Server.prototype.listen = function (queueName, callback, lazy) {
         var _this = this;
-        if (callback === void 0) { callback = null; }
+        if (callback === void 0) { callback = Function(); }
+        if (lazy === void 0) { lazy = true; }
         var observable = new Observable_1.Observable(function (observer) {
-            var queueName = rabbitmq_1.default.queueName;
-            var lazy = true;
             _this.provider
                 .consume(queueName, { lazy: lazy })
                 .subscribe(function (response) {
@@ -31,7 +31,6 @@ var Server = (function () {
                         .then(function (_a) {
                         var duration = _a.duration;
                         _this.requestCounter++;
-                        _this.processingTimeCounter += duration;
                         _this.lastProcessingTime = duration;
                         if (lazy) {
                             _this.provider.acknowledge(response);
@@ -41,14 +40,7 @@ var Server = (function () {
                 }
             });
         });
-        var subscription;
-        if (callback instanceof Function) {
-            callback = callback.bind(this);
-            subscription = observable.subscribe(callback);
-        }
-        else {
-            subscription = observable.subscribe();
-        }
+        var subscription = observable.subscribe(callback.bind(this));
         this.subscriptions.push(subscription);
     };
     Server.prototype.close = function () {

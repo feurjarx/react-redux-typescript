@@ -2,8 +2,9 @@ import Server from "../Server";
 import {ServerData} from "../../../typings/index";
 import HRow from "../HRow";
 import HRegion from "../HRegion";
-
 import {range} from '../../helpers';
+import {Subscription} from "rxjs";
+import {IQueue} from "../../services/IQueue";
 
 export default class RegionServer extends Server {
     regions: Array<HRegion>;
@@ -13,8 +14,10 @@ export default class RegionServer extends Server {
 
     regionMaxSize: number;
 
-    constructor(serverData: ServerData) {
-        super();
+    subscription: Subscription;
+
+    constructor(provider: IQueue, serverData: ServerData) {
+        super(provider);
 
         this.regions = [];
 
@@ -31,7 +34,7 @@ export default class RegionServer extends Server {
 
     calcRegionsSizes() {
         return this.regions.map(r => ({
-            name: `Регион ${r.id}`,
+            name: `Регион ${r.id} сервера ${this.id}`,
             value: r.maxSize - r.freeSpace
         }))
     }
@@ -70,4 +73,32 @@ export default class RegionServer extends Server {
             }
         }
     }
+
+    listenExchange(exchange: string) {
+
+        return new Promise(resolve => {
+            this.subscription = this.provider
+                .consumeByRouteKeys(exchange, [this.id], {resolve})
+                .subscribe(this.onRequestFromMasterServer);
+        });
+    }
+
+    onRequestFromMasterServer = (data) => {
+        const {onClientReply, clientId} = data;
+        console.log(`Регион сервер #${this.id} получил от мастера запрос клиента #${clientId}`);
+        this.requestCounter++;
+
+        // TODO: read or write regions
+
+        console.log(`Регион сервер #${this.id} отправил мастеру ответ на запрос клиента #${clientId}`);
+        onClientReply({
+            clientId,
+            regionServerId: this.id,
+            lastProcessingTime: 0,
+            requestCounter: this.requestCounter
+            // see to Life onMasterServerResponse
+        });
+    };
+
+
 }

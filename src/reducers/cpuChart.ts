@@ -6,7 +6,7 @@ import {
 
 
 const initial = {
-    absThroughput: 0
+    absBandwidth: 0
 };
 
 export const cpuChart = (state = initial, action) => {
@@ -16,9 +16,9 @@ export const cpuChart = (state = initial, action) => {
     switch (action.type) {
         case UPDATE_CPU_CHART:
 
-            const { absThroughput } = action.data;
+            const { absBandwidth } = action.data;
             nextState = {
-                absThroughput,
+                absBandwidth,
                 actual: true
             };
 

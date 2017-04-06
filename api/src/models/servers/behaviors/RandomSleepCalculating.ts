@@ -1,4 +1,4 @@
-import {CalculateBehavior} from './behaviors/CalculateBehavior';
+import {CalculateBehavior} from './CalculateBehavior';
 import {Promise} from 'es6-shim';
 
 export default class RandomSleepCalculating implements CalculateBehavior {

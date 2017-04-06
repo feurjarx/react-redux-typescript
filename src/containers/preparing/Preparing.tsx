@@ -82,8 +82,8 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         const {nClients, requestsLimit} = fds.data;
         const clients = [];
         for (let i = 0; i < nClients; i++) {
-            const requestsNumber = Math.round(Math.random() * +requestsLimit) || 1;
-            clients.push({ requestsNumber });
+            const nRequests = Math.round(Math.random() * +requestsLimit) || 1;
+            clients.push({nRequests});
         }
 
         socket.emit(EVENT_IO_LIFE, {

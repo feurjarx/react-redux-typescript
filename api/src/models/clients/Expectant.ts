@@ -1,63 +1,68 @@
 import Client from "../Client";
-import rabbitmqConfig from "../../configs/rabbitmq";
 import {Subscription} from "rxjs";
+import {RABBITMQ_QUEUE_MASTER_SERVER} from  "../../constants/rabbitmq";
 
 export default class ExpectantClient extends Client {
 
-    requestsNumber: number;
     private subscription: Subscription;
 
     constructor(provider = null) {
         super(provider);
     }
 
-    requestToServer(requestsNumber = this.requestsNumber) {
+    requestsToMasterServer(nRequests = 1, callback = Function()) {
 
-        const { queueName } = rabbitmqConfig;
-
-        const { requestTimeLimit } = this;
+        const {requestTimeLimit} = this;
+        let requestsReverseCounter = nRequests;
 
         const observable = this.provider
-            .publishAndWait(queueName, {
+            .publishAndWait(RABBITMQ_QUEUE_MASTER_SERVER, {
                 clientId: this.id,
-                last: this.requestsNumber <= 1,
+                last: requestsReverseCounter <= 1,
                 requestTimeLimit
             });
 
         this.subscription = observable
             .subscribe(response => {
-
                 switch (response.type) {
                     case 'sent':
-                        console.log(`Client #${ this.id } request done.`);
+                        console.log(`Клиент #${ this.id } выполнил запрос.`);
                         break;
+
                     case 'received':
 
-                        console.log(`Client #${ this.id } received response from server.`);
+                        console.log(`Клиент #${ this.id } получил ответ от мастера. Обрабатывал запрос регион-сервер #${response.regionServerId}`);
 
-                        requestsNumber--;
+                        requestsReverseCounter--;
+                        if (requestsReverseCounter > 0) {
 
-                        if (requestsNumber > 0) {
+                            console.log(`Клиенту #${ this.id } осталось ${requestsReverseCounter} запросов. Далее, следующий запрос...`);
+
                             response.repeat({
                                 clientId: this.id,
-                                last: requestsNumber <= 1
+                                last: requestsReverseCounter <= 1
                             });
+
                         } else {
+                            response.type = 'stopped';
                             this.stop();
                         }
 
                         break;
-                    //...
+
                     default:
                         throw new Error(`Unexpected response type from server. Type: ${ response.type }`);
                 }
-            });
 
-        return observable;
+                callback(response);
+            });
     }
 
     stop() {
         this.provider.destroy();
         this.subscription.unsubscribe();
+        console.log(`Клиент #${ this.id } отключен.`);
     }
+
+
 }

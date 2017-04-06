@@ -50,12 +50,12 @@ class CpuChartConnectable extends React.Component<any, React.ComponentState> {
 
         if (cpuChart.actual) {
 
-            const { absThroughput } = cpuChart;
+            const { absBandwidth } = cpuChart;
             const { chart, dataPoints, offset } = this;
 
             dataPoints.push({
                 x: dataPoints.length,
-                y: absThroughput
+                y: absBandwidth
             });
 
             // if (dataPoints.length > offset) {
