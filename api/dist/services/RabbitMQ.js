@@ -16,9 +16,6 @@ var RabbitMQ = (function () {
     function RabbitMQ() {
     }
     RabbitMQ.prototype.openConnection = function () {
-        // if (this.connection) {
-        //     this.destroy();
-        // }
         var _this = this;
         var amqpUrl = rabbitmq_1.default.amqpUrl;
         return new es6_shim_1.Promise(function (resolve, reject) {
@@ -61,9 +58,6 @@ var RabbitMQ = (function () {
                 .catch(function (err) { return reject(err); });
         });
     };
-    /**
-     * Warning! Need call destroy after use
-     */
     RabbitMQ.prototype.publishAndWait = function (queueName, data) {
         var _this = this;
         if (data === void 0) { data = {}; }

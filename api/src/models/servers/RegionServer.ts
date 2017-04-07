@@ -32,7 +32,7 @@ export default class RegionServer extends Server {
         this.regionMaxSize = regionMaxSize;
     };
 
-    calcRegionsSizes() {
+    getRegionalStatistics() {
         return this.regions.map(r => ({
             name: `Регион ${r.id} сервера ${this.id}`,
             value: r.maxSize - r.freeSpace
@@ -84,20 +84,25 @@ export default class RegionServer extends Server {
     }
 
     onRequestFromMasterServer = (data) => {
-        const {onClientReply, clientId} = data;
+        const {onClientReply, clientId, subKey} = data;
         console.log(`Регион сервер #${this.id} получил от мастера запрос клиента #${clientId}`);
         this.requestCounter++;
 
         // TODO: read or write regions
 
-        console.log(`Регион сервер #${this.id} отправил мастеру ответ на запрос клиента #${clientId}`);
-        onClientReply({
-            clientId,
-            regionServerId: this.id,
-            lastProcessingTime: 0,
-            requestCounter: this.requestCounter
-            // see to Life onMasterServerResponse
-        });
+        this.calculateBehavior
+            .calculate()
+            .then(() => {
+                console.log(`Регион сервер #${this.id} отправил мастеру ответ на запрос клиента #${clientId}`);
+                onClientReply({
+                    subKey,
+                    clientId,
+                    regionServerId: this.id,
+                    lastProcessingTime: 0,
+                    requestCounter: this.requestCounter
+                    // see to Life onMasterServerResponse
+                });
+            });
     };
 
 

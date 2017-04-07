@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import FormDataService from "../../../services/FormData";
+import FormDataService from "../../../services/FormDataService";
 
 import {PartitionForm} from './PartitionForm';
 import {connect} from "react-redux";

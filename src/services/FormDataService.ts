@@ -20,6 +20,7 @@ class FormDataService {
 
         Object.defineProperty(this, 'data', {
             get() {
+                // return {...insideData} // not uncomment!
                 return insideData;
             },
             configurable: false

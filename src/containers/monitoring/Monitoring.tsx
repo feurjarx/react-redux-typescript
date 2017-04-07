@@ -2,52 +2,46 @@ import * as React from "react";
 
 import "./monitoring.css";
 import {connect} from "react-redux";
-import {Monitor, Life} from "../../../typings/todo";
 import ChartOptions = CanvasJS.ChartOptions;
 import ChartDataPoint = CanvasJS.ChartDataPoint;
-import {initialLifeDataCompleted} from "../../actions/index";
 
 const CanvasJS = require('canvasjs/dist/canvasjs.js');
 
-interface MonitoringProps {
-    monitor: any;
-    monitorItem: Monitor.Item;
-    lifeData: Life.Params;
-    dispatch(...args);
+function mapStateToProps(state) {
+    const {requestsDiagram} = state.chartsData;
+    return {
+        requestsDiagram
+    };
 }
 
-function mapStateToProps(state, props) {
-    return state;
-}
-
-class MonitoringConnectable extends React.Component<MonitoringProps, React.ComponentState> {
+class Monitoring extends React.Component<any, React.ComponentState> {
 
     chartId = 'life-rt-chart';
-
     chart: CanvasJS.Chart;
 
     dataPoints: Array<CanvasJS.ChartDataPoint> = [];
+    idxPointByServerIdMap = {};
 
     constructor() {
         super();
     }
 
-    initChart(initialLifeData:Life.Params) {
+    initChart(initialChartData) {
 
-        this.clearMonitor();
+        this.clear();
 
-        const { dataPoints } = this;
-        let { nClients, nServers, requestsLimit } = initialLifeData;
+        const {dataPoints, idxPointByServerIdMap} = this;
+        let {maxValue, serversIds} = initialChartData;
 
-        for (let i = 0; i < nServers; i++) {
+        serversIds.forEach((id,i) => {
             dataPoints.push({
                 x: i,
                 y: 0,
-                label: `Server ${ i + 1 }`
-            })
-        }
+                label: `Регион сервер ${id}`
+            });
 
-        const maximum = requestsLimit * nClients + 5;
+            idxPointByServerIdMap[id] = i;
+        });
 
         this.chart = new CanvasJS.Chart(this.chartId, {
             title :{
@@ -56,7 +50,7 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
             axisY: {
                 gridThickness: 0,
                 minimum: 0,
-                maximum
+                maximum: maxValue
             },
             data: [{
                 type: "column",
@@ -67,35 +61,38 @@ class MonitoringConnectable extends React.Component<MonitoringProps, React.Compo
         });
     }
 
-    clearMonitor() {
+    clear() {
         // Warning! Can not dataPoints = []
         while (this.dataPoints.pop()) {}
+        this.idxPointByServerIdMap = {};
     }
 
-    componentWillReceiveProps(props: MonitoringProps) {
+    componentWillReceiveProps(props) {
 
-        const {monitorItem, lifeData, dispatch} = props;
-        if (lifeData && lifeData.actual) {
-            this.initChart(lifeData);
-            dispatch(initialLifeDataCompleted());
-        }
+        const {requestsDiagram} = props;
+        if (requestsDiagram) {
 
-        if (monitorItem && this.dataPoints[monitorItem.id]) {
-            this.dataPoints[monitorItem.id].y = monitorItem.requestCounter;
-        }
+            if (requestsDiagram.newItem) {
 
-        const {chart} = this;
-        if (chart) {
-            chart.render();
+                const {regionServerId, requestCounter} = requestsDiagram.newItem;
+                const idx = this.idxPointByServerIdMap[regionServerId];
+                this.dataPoints[idx].y = requestCounter;
+
+            } else {
+
+                this.initChart(requestsDiagram.initial);
+            }
+
+            this.chart.render();
         }
     }
 
     render() {
 
         return (
-            <div id={ this.chartId }></div>
+            <div style={{width: '100%'}} id={this.chartId}></div>
         );
     }
 }
 
-export const Monitoring = connect(mapStateToProps)(MonitoringConnectable);
+export default connect(mapStateToProps)(Monitoring);

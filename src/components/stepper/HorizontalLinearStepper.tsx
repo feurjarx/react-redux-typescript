@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Stepper } from 'material-ui/Stepper';
 import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
-import styles from './horizontal-linear-stepper.style';
 
 class HorizontalLinearStepper extends React.Component<any, any> {
 
@@ -62,7 +61,8 @@ class HorizontalLinearStepper extends React.Component<any, any> {
         const stepsContents = steps.map((step, i) => {
 
             const displayStyle = {
-                display: stepIndex === i ? 'block' : 'none'
+                display: stepIndex === i ? 'block' : 'none',
+                height: 280
             };
 
             return (
@@ -73,12 +73,12 @@ class HorizontalLinearStepper extends React.Component<any, any> {
         });
 
         return (
-            <div style={ styles.main }>
+            <div style={{width: '100%'}}>
                 <Stepper activeStep={stepIndex}>
                     { children }
                 </Stepper>
 
-                <div style={styles.content} className="stepper-content">
+                <div className="stepper-content">
                     <div>
                         { stepsContents }
                         <ButtonsPanel {...buttonsPanelProps} />
@@ -108,13 +108,13 @@ const ButtonsPanel = (props) => {
                 label="Сначала"
                 disabled={stepIndex === 0}
                 onTouchTap={handleReset}
-                style={styles.buttons.prev}
+                style={{marginRight: 10}}
             />
             <FlatButton
                 label="Назад"
                 disabled={stepIndex === 0}
                 onTouchTap={handlePrev}
-                style={styles.buttons.prev}
+                style={{marginRight: 10}}
             />
             <RaisedButton
                 className={ finished ? 'hidden' : ''}

@@ -46,7 +46,9 @@ export default class Statistics {
     }
 
     unsubscribeFromAbsBandwidth() {
-        clearInterval(this.absBandwidthTimerId);
+        if (this.absBandwidthTimerId) {
+            clearInterval(this.absBandwidthTimerId);
+        }
     }
 
 

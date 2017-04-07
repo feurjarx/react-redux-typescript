@@ -12,16 +12,21 @@ var RegionServer = (function (_super) {
     function RegionServer(provider, serverData) {
         var _this = _super.call(this, provider) || this;
         _this.onRequestFromMasterServer = function (data) {
-            var onClientReply = data.onClientReply, clientId = data.clientId;
+            var onClientReply = data.onClientReply, clientId = data.clientId, subKey = data.subKey;
             console.log("\u0420\u0435\u0433\u0438\u043E\u043D \u0441\u0435\u0440\u0432\u0435\u0440 #" + _this.id + " \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442 \u043C\u0430\u0441\u0442\u0435\u0440\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
             _this.requestCounter++;
             // TODO: read or write regions
-            console.log("\u0420\u0435\u0433\u0438\u043E\u043D \u0441\u0435\u0440\u0432\u0435\u0440 #" + _this.id + " \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u043B \u043C\u0430\u0441\u0442\u0435\u0440\u0443 \u043E\u0442\u0432\u0435\u0442 \u043D\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
-            onClientReply({
-                clientId: clientId,
-                regionServerId: _this.id,
-                lastProcessingTime: 0,
-                requestCounter: _this.requestCounter
+            _this.calculateBehavior
+                .calculate()
+                .then(function () {
+                console.log("\u0420\u0435\u0433\u0438\u043E\u043D \u0441\u0435\u0440\u0432\u0435\u0440 #" + _this.id + " \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u043B \u043C\u0430\u0441\u0442\u0435\u0440\u0443 \u043E\u0442\u0432\u0435\u0442 \u043D\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
+                onClientReply({
+                    subKey: subKey,
+                    clientId: clientId,
+                    regionServerId: _this.id,
+                    lastProcessingTime: 0,
+                    requestCounter: _this.requestCounter
+                });
             });
         };
         _this.regions = [];
@@ -35,7 +40,7 @@ var RegionServer = (function (_super) {
         return _this;
     }
     ;
-    RegionServer.prototype.calcRegionsSizes = function () {
+    RegionServer.prototype.getRegionalStatistics = function () {
         var _this = this;
         return this.regions.map(function (r) { return ({
             name: "\u0420\u0435\u0433\u0438\u043E\u043D " + r.id + " \u0441\u0435\u0440\u0432\u0435\u0440\u0430 " + _this.id,

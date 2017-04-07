@@ -8,7 +8,6 @@ import {Dialog, FlatButton, RaisedButton} from 'material-ui';
 
 import initial from './../../configs/default-data'
 
-import styles from './preparing.styles';
 import './preparing.css';
 
 import {connect} from "react-redux";
@@ -20,21 +19,22 @@ import {
 } from "../../constants/events";
 
 import {
-    stopStopwatch,
+    pushNewItemToRequestsDiagram,
+    updateRegionsPiesCharts,
+    initRequestsDiagram,
     startStopwatch,
     updateCpuChart,
-    initialLifeData,
-    updateMonitorItem,
-    updateRegionsPiesCharts,
+    stopStopwatch
 } from "../../actions/index";
 
 import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
 import RequestsStep from "../steps/RequestsStep";
 import HardwareStep from "../steps/hardware-settings/HardwareStep";
-import FormDataService from "../../services/FormData";
+import FormDataService from "../../services/FormDataService";
 import PartitionsStep from "../steps/partitions-settings/PartitionsStep";
 import {prettylog} from "../../helpers/index";
 import TablesStep from "../steps/data-struct/TablesStep";
+import {inherits} from "util";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -49,17 +49,16 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         super();
 
         // socket.on('connect', function () {});
-        socket.on(EVENT_IO_LIFE, this.receiveLifeResponse);
-        socket.on(EVENT_IO_PRELIFE, this.receivePreLiveResponse);
-        socket.on(EVENT_IO_THE_END, this.onCompleteLife);
+        socket.on(EVENT_IO_LIFE, this.onLifeUpdate);
+        socket.on(EVENT_IO_PRELIFE, this.onBigDataResponse);
+        socket.on(EVENT_IO_THE_END, this.onLifeComplete);
         socket.on(EVENT_IO_DISCONNECT, function () {
             props.dispatch(stopStopwatch());
         });
 
-        socket.on(EVENT_IO_LOAD_LINE, this.receiveLoadLineResponse);
+        socket.on(EVENT_IO_LOAD_LINE, this.onLoadLineUpdate);
 
         this.fds = new FormDataService();
-        // this.fds.setData(initial);
     }
 
     handleOpen = () => {
@@ -76,10 +75,18 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
         const {fds} = this;
         const {dispatch} = this.props;
+        const fdsData = fds.data;
 
-        dispatch(initialLifeData(this.state));
+        // const {nClients, servers, requestsLimit} = fdsData;
+        const {nClients, requestsLimit} = fdsData;
+        const servers = initial.servers.filter(s => !s['isMaster']);
 
-        const {nClients, requestsLimit} = fds.data;
+        dispatch(initRequestsDiagram({
+            nServers: servers.length,
+            serversIds: servers.map(s => s.name),
+            maxValue: +requestsLimit * +nClients + 5
+        }));
+
         const clients = [];
         for (let i = 0; i < nClients; i++) {
             const nRequests = Math.round(Math.random() * +requestsLimit) || 1;
@@ -96,19 +103,20 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         this.handleClose();
     };
 
-    receivePreLiveResponse = (data) => {
+    onBigDataResponse = (data) => {
         this.props.dispatch(updateRegionsPiesCharts(data));
     };
 
-    receiveLoadLineResponse = (data) => {
+    onLoadLineUpdate = (data) => {
         this.props.dispatch(updateCpuChart(data));
     };
 
-    receiveLifeResponse = (data) => {
-        this.props.dispatch(updateMonitorItem(data));
+    onLifeUpdate = (data) => {
+        // console.count(`onLifeUpdate ${Date.now() / 1000}`);
+        this.props.dispatch(pushNewItemToRequestsDiagram(data));
     };
 
-    onCompleteLife = () => {
+    onLifeComplete = () => {
         const { dispatch } =  this.props;
         dispatch(stopStopwatch());
     };
@@ -142,6 +150,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         return (
 
             <div>
+
                 <RaisedButton label="Запустить модель" primary={true} onTouchTap={this.handleOpen} />
                 <Dialog
                     title="Подготовка запуска"
@@ -149,10 +158,9 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                     modal={ false }
                     open={ this.state.open }
                     onRequestClose={ this.handleClose }
-                    contentStyle={styles.dialog.content}
-                    bodyStyle={styles.dialog.body}
+                    contentStyle={dialogStyles.content}
                     bodyClassName="preparing-modal-body"
-                    titleStyle={styles.dialog.title}
+                    titleStyle={dialogStyles.title}
                 >
                     <HorizontalLinearStepper steps={steps}>
                         <Step>
@@ -173,3 +181,13 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         )
     }
 }
+
+const dialogStyles = {
+    content: {
+        width: '100%',
+        maxWidth: 'none'
+    },
+    title: {
+        textAlign: 'center'
+    }
+};

@@ -1,42 +1,25 @@
 import * as React from "react";
-import reactCSS from "reactcss"
 import {Preparing} from "./preparing/Preparing";
-import RegionsPiesCharts from "./regions-pies-charts/RegionsPiesCharts";
-import {Monitoring} from "./monitoring/Monitoring";
-import {Stopwatch} from "./stopwatch/Stopwatch";
-import {CpuChart} from "./cpu-chart/CpuChart";
+import ChartsTabs from "./tabs/ChartsTabs";
 
-export class Content extends React.Component<any, React.ComponentState> {
-
-    constructor() {
-        super();
-    }
-
-
+export class Content extends React.Component<any, any> {
 
     render() {
 
         return (
-            <div style={ styles.base }>
-                <Preparing />
-                <Stopwatch />
-                <RegionsPiesCharts />
-                <Monitoring />
-                <CpuChart />
+            <div style={ baseStyles }>
+                <div style={{padding: 10}}>
+                    <Preparing />
+                </div>
+                <ChartsTabs />
             </div>
         )
     }
 }
 
-const styles = reactCSS({
-    default: {
-        base: {
-            padding: 20,
-            display: 'flex',
-            flexDirection: 'column',
-            flexGrow: 1,
-            alignItems: 'center',
-            justifyContent: 'space-around'
-        }
-    }
-});
+const baseStyles = {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    alignItems: 'center'
+};

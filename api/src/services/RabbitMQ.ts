@@ -17,10 +17,6 @@ export default class RabbitMQ implements IQueue {
 
     private openConnection(): Promise<Connection> {
 
-        // if (this.connection) {
-        //     this.destroy();
-        // }
-
         const {amqpUrl} = rabbitmqConfig;
 
         return new Promise<Connection>((resolve, reject) => {
@@ -66,9 +62,6 @@ export default class RabbitMQ implements IQueue {
         });
     }
 
-    /**
-     * Warning! Need call destroy after use
-     */
     publishAndWait(queueName: string, data = {}) {
         return new Observable(observer => {
 

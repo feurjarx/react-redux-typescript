@@ -2,16 +2,16 @@ import * as React from "react";
 import {connect} from "react-redux";
 import * as Recharts from "recharts/lib";
 import {pallete} from "./../../configs"
-const { PieChart, Pie, Cell, Tooltip } = Recharts;
+const {PieChart, Pie, Cell, Tooltip} = Recharts;
 
 function mapStateToProps(state) {
-    const {regionsServersPies} = state.chartsData;
+    const {regionsPiesCharts} = state.chartsData;
     return {
-        pies: regionsServersPies
+        pies: regionsPiesCharts,
     };
 }
 
-class RegionsPiesChartConnectable extends React.Component<any, any> {
+class RegionsPiesChart extends React.Component<any, any> {
 
     constructor() {
         super();
@@ -22,8 +22,8 @@ class RegionsPiesChartConnectable extends React.Component<any, any> {
     }
 
     componentWillReceiveProps(props) {
-        const {pies} = props;
-        this.setState({pies})
+        const {pies = []} = props;
+        this.setState({pies});
     }
 
     render() {
@@ -32,24 +32,54 @@ class RegionsPiesChartConnectable extends React.Component<any, any> {
 
         let pieChart: JSX.Element = null;
         if (pies.length) {
+
+            const height = document.getElementById('tabs-content').clientHeight - 120;
+            const radius = 1/2 * height - 70;
+            const diameter = 2 * radius;
+            const interval = 20;
+            const width = pies.length * (diameter + interval) + interval;
+
             pieChart = (
-                <PieChart width={pies.length * 300} height={200}>
+                <PieChart width={width} height={height}>
                     {
                         pies.map(({chartData}, i) => {
-                            return (
-                                <Pie
-                                    key={i}
-                                    data={chartData}
-                                    cx={250 * (i + 1)}
-                                    cy={100}
-                                    labelLine={false}
-                                    label={PieLabel}
-                                    outerRadius={100}
-                                    fill="#8884d8"
-                                >
-                                    {chartData.map((entry, j) => <Cell key={j} fill={pallete[j % pallete.length]}/>)}
-                                </Pie>
-                            )})
+
+                            let pie: JSX.Element;
+                            if (chartData.every(it => !it.value)) {
+                                pie = (
+                                    <Pie
+                                        key={i}
+                                        data={[{name: 'Сервер не заполнен', value: 100}]}
+                                        cx={(diameter + interval) * i + radius + interval}
+                                        cy={radius}
+                                        labelLine={false}
+                                        outerRadius={radius}
+                                        fill="#8884d8"
+                                    >
+                                        <Cell key={0} fill="#8a7f7f"/>
+                                    </Pie>
+                                );
+
+                            } else {
+
+                                pie = (
+                                    <Pie
+                                        key={i}
+                                        data={chartData}
+                                        cx={(diameter + 20) * i + radius + 20}
+                                        cy={radius}
+                                        labelLine={false}
+                                        label={PieLabel}
+                                        outerRadius={radius}
+                                        fill="#8884d8"
+                                    >
+                                        {chartData.map((entry, j) => <Cell key={j} fill={pallete[j % pallete.length]}/>)}
+                                    </Pie>
+                                );
+                            }
+
+                            return pie;
+                        })
                     }
                     <Tooltip />
                 </PieChart>
@@ -78,5 +108,4 @@ const PieLabel = ({cx, cy, midAngle, innerRadius, outerRadius, percent}) => {
     );
 };
 
-const RegionsPiesChart = connect(mapStateToProps)(RegionsPiesChartConnectable);
-export default RegionsPiesChart;
+export default connect(mapStateToProps)(RegionsPiesChart);

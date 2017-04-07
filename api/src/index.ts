@@ -13,7 +13,6 @@ import {
 import ioConfig from './configs/socket.io'
 
 import {Life} from "./models/Life";
-import {composition} from "./helpers/index";
 
 export const run = () => {
 
@@ -24,19 +23,15 @@ export const run = () => {
 
         console.log('browser client connected.');
 
-        const life = new Life();
-
-        client.on(EVENT_IO_LIFE, composition(
+        let life: Life;
+        client.on(EVENT_IO_LIFE,
             (data) => {
-                life.preLive(
-                    data,
-                    browserData => client.emit(EVENT_IO_PRELIFE, browserData)
-                );
-            },
-            (data) => {
+                if (life) {
+                    life.destroy();
+                }
 
+                life = new Life();
                 life
-                    .live(data)
                     .onLifeInfo(browserData => {
                         if (browserData.type === 'load_line') {
                             client.emit(EVENT_IO_LOAD_LINE, browserData);
@@ -46,9 +41,13 @@ export const run = () => {
                     })
                     .onLifeComplete(() => {
                         client.emit(EVENT_IO_THE_END);
-                    });
+                    })
+                    .onBigDataInfo(browserData => (
+                        client.emit(EVENT_IO_PRELIFE, browserData)
+                    ))
+                    .live(data);
             }
-        ));
+        );
 
         client.on(EVENT_IO_DISCONNECT, () => {
             console.log('browser client was disconnected.');

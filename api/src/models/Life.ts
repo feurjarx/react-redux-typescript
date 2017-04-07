@@ -5,6 +5,8 @@ import RegionServer from "./servers/RegionServer";
 import MapGenerator from "./MapGenerator";
 import RandomDistribution from "./servers/behaviors/RandomDistribution";
 import Statistics from "./Statistics";
+import {Subscription} from "rxjs";
+import RandomSleepCalculating from "./servers/behaviors/RandomSleepCalculating";
 
 export class Life {
 
@@ -13,6 +15,27 @@ export class Life {
 
     private lifeCompleteCallback = Function();
     private lifeInfoCallback = Function();
+    private bigDataInfoCallback = Function();
+
+    subscribtion: Subscription;
+
+    onLifeComplete(callback = Function()) {
+        this.lifeCompleteCallback = callback;
+
+        return this;
+    };
+
+    onLifeInfo(callback = Function()) {
+        this.lifeInfoCallback = callback;
+
+        return this;
+    };
+
+    onBigDataInfo(callback = Function()) {
+        this.bigDataInfoCallback = callback;
+
+        return this;
+    }
 
     private initServers(serversData) {
         const masterServer = new MasterServer(
@@ -27,6 +50,7 @@ export class Life {
             const serverData = serversData[i];
             if (!serverData.isMaster) {
                 const server = new RegionServer(new RabbitMQ(), serverData);
+                server.calculateBehavior = new RandomSleepCalculating(200);
                 server.id = serverData.name;
                 masterServer.subordinates.push(server);
             }
@@ -35,41 +59,31 @@ export class Life {
         return masterServer;
     }
 
-    onLifeComplete(callback = Function()) {
-        this.lifeCompleteCallback = callback;
+    private createBigData(data) {
 
-        return this;
-    };
+        const {tables, requiredFilledSize} = data;
 
-    onLifeInfo(callback = Function()) {
-        this.lifeInfoCallback = callback;
-
-        return this;
-    };
-
-    preLive(data, done = Function()) {
-        console.log(data);
-
-        const {tables, servers, requiredFilledSize} = data;
-
-        const masterServer = this.initServers(servers);
+        const {masterServer} = this;
         const totalSize = requiredFilledSize * 1000;
         MapGenerator.fillRegions({tables, totalSize}, masterServer);
 
-        const regionsServersPies = masterServer.subordinates.map(server => ({
+        const regionsPiesCharts = masterServer.subordinates.map(server => ({
             serverName: server.id,
-            chartData: server.calcRegionsSizes()
+            chartData: server.getRegionalStatistics()
         }));
 
-        done({regionsServersPies});
+        this.bigDataInfoCallback({regionsPiesCharts});
 
         this.masterServer = masterServer;
     };
 
     live(lifeData) {
-        console.log(lifeData);
 
-        const {masterServer} = this;
+        const {servers} = lifeData;
+
+        const masterServer = this.masterServer = this.initServers(servers);
+
+        this.createBigData(lifeData);
 
         const nServers = masterServer.subordinates.length;
         const statistics = new Statistics({nServers});
@@ -79,14 +93,14 @@ export class Life {
             onMasterServerResponse
         } = this;
 
-        masterServer
+        this.subscribtion = masterServer
             .ready(startClientsRequests.bind(this, lifeData)) // start
             .subscribe(onMasterServerResponse); // final
 
-        statistics.subscribeToAbsBandwidth(absBandwidth => this.lifeInfoCallback({
-            type: 'load_line',
-            absBandwidth
-        }));
+        // statistics.subscribeToAbsBandwidth(absBandwidth => this.lifeInfoCallback({
+        //     type: 'load_line',
+        //     absBandwidth
+        // }));
 
         this.statistics = statistics;
 
@@ -133,12 +147,17 @@ export class Life {
         const {
             lastProcessingTime,
             requestCounter,
-            id
+            regionServerId
         } = response;
 
-        this.lifeInfoCallback({id, requestCounter});
+        this.lifeInfoCallback({regionServerId, requestCounter});
         this.statistics.totalProcessingTime += lastProcessingTime;
     };
 
+
+    destroy() {
+        this.subscribtion.unsubscribe();
+        this.masterServer.close();
+    }
 
 }

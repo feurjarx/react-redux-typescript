@@ -1,11 +1,10 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import lifeConfig from "../../configs/life";
 
 const syntaxConfig = require('../../configs/syntax.json');
 import InfoSlider from '../../components/info-slider/InfoSlider';
 import Paper from 'material-ui/Paper'
-import FormDataService from "../../services/FormData";
+import FormDataService from "../../services/FormDataService";
 import SqlParseService from "../../services/SqlParseService";
 
 const CodeMirror = require('codemirror');
@@ -56,20 +55,34 @@ OFFSET 5
 LIMIT 10
     `).trim();
 
-    state = {
-        nClients: lifeConfig.nClients,
-        nServers: lifeConfig.nServers,
-        requestsLimit: lifeConfig.requestsLimit,
-        requestTimeLimit: lifeConfig.requestTimeLimit,
-        displayValue: '',
-        cmInited: false
+    getDefaultRequestsData() {
+        return {
+            nClients: 50,
+            requestsLimit: 60,
+            requestTimeLimit: 10,
+        }
     };
 
     constructor(props) {
         super();
 
         const {formDataService} = props;
-        formDataService.setData(Object.assign({}, this.state));
+
+        const defaultData = this.getDefaultRequestsData();
+
+        this.state = {
+            ...defaultData,
+            displayValue: '',
+            cmInited: false
+        };
+
+        const fdsData = formDataService.data;
+
+        formDataService.setData({
+            ...fdsData,
+            ...defaultData
+        });
+
         this.fds = formDataService;
     }
 
@@ -109,7 +122,7 @@ LIMIT 10
 
     codeMirrorInit = () => {
         const {sqlbox} = this.refs;
-        const {onTextareaKeyUp,fds} = this;
+        const {onTextareaKeyUp, fds} = this;
         const editor = CodeMirror.fromTextArea(sqlbox, codeMirrorConfig);
         editor.on('change', onTextareaKeyUp);
 
@@ -130,7 +143,7 @@ LIMIT 10
     componentWillReceiveProps(props) {
         let {cmInited} = this.state;
         if (props.active && !cmInited) {
-            cmInited = true
+            cmInited = true;
             this.codeMirrorInit();
             this.setState({cmInited});
         }
@@ -149,7 +162,7 @@ LIMIT 10
             nClients,
             requestsLimit,
             requestTimeLimit,
-        } = this.props;
+        } = this.getDefaultRequestsData();
 
         const {displayValue} = this.state;
 
@@ -179,7 +192,7 @@ LIMIT 10
                         />
 
                         <InfoSlider
-                            label="Лимит сложности запроса"
+                            label="Timeout"
                             name="requestTimeLimit"
                             shortSyntax=""
                             min={1}
@@ -189,7 +202,7 @@ LIMIT 10
                         />
 
                         <InfoSlider
-                            label="Объем генерируемых данных"
+                            label="Объем данных"
                             name="requiredFilledSize"
                             shortSyntax="Гб"
                             min={1}

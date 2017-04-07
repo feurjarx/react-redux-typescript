@@ -104,5 +104,9 @@ export default {
         name: 'server_F',
         maxRegions: 10,
         hdd: 100
+    }, {
+        name: 'server_G',
+        maxRegions: 6,
+        hdd: 1000
     }]
 }

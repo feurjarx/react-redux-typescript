@@ -2,7 +2,7 @@ import * as React from "react";
 import {connect} from "react-redux";
 
 import {updateOtherStepsData} from "../../../actions/index";
-import FormDataService from "../../../services/FormData";
+import FormDataService from "../../../services/FormDataService";
 import {TableForm} from "./TableForm";
 
 @connect()

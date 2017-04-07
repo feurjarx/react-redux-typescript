@@ -16,7 +16,7 @@ export class App extends React.Component<AppProperties, AppState> {
     render() {
         return (
             <div className="app-container">
-                {/*<Header />*/}
+                <Header />
                 <Content />
                 <Footer />
             </div>

@@ -6,11 +6,13 @@ var RegionServer_1 = require("./servers/RegionServer");
 var MapGenerator_1 = require("./MapGenerator");
 var RandomDistribution_1 = require("./servers/behaviors/RandomDistribution");
 var Statistics_1 = require("./Statistics");
+var RandomSleepCalculating_1 = require("./servers/behaviors/RandomSleepCalculating");
 var Life = (function () {
     function Life() {
         var _this = this;
         this.lifeCompleteCallback = Function();
         this.lifeInfoCallback = Function();
+        this.bigDataInfoCallback = Function();
         this.startClientsRequests = function (lifeData) {
             var clients = lifeData.clients, requestTimeLimit = lifeData.requestTimeLimit;
             var statistics = _this.statistics;
@@ -39,25 +41,11 @@ var Life = (function () {
             });
         };
         this.onMasterServerResponse = function (response) {
-            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, id = response.id;
-            _this.lifeInfoCallback({ id: id, requestCounter: requestCounter });
+            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, regionServerId = response.regionServerId;
+            _this.lifeInfoCallback({ regionServerId: regionServerId, requestCounter: requestCounter });
             _this.statistics.totalProcessingTime += lastProcessingTime;
         };
     }
-    Life.prototype.initServers = function (serversData) {
-        var masterServer = new MasterServer_1.default(new RabbitMQ_1.default(), serversData.find(function (it) { return it.isMaster; }));
-        // masterServer.distrubutionBehavior = new HashDistribution();
-        masterServer.distrubutionBehavior = new RandomDistribution_1.default();
-        for (var i = 0; i < serversData.length; i++) {
-            var serverData = serversData[i];
-            if (!serverData.isMaster) {
-                var server = new RegionServer_1.default(new RabbitMQ_1.default(), serverData);
-                server.id = serverData.name;
-                masterServer.subordinates.push(server);
-            }
-        }
-        return masterServer;
-    };
     Life.prototype.onLifeComplete = function (callback) {
         if (callback === void 0) { callback = Function(); }
         this.lifeCompleteCallback = callback;
@@ -70,39 +58,61 @@ var Life = (function () {
         return this;
     };
     ;
-    Life.prototype.preLive = function (data, done) {
-        if (done === void 0) { done = Function(); }
-        console.log(data);
-        var tables = data.tables, servers = data.servers, requiredFilledSize = data.requiredFilledSize;
-        var masterServer = this.initServers(servers);
+    Life.prototype.onBigDataInfo = function (callback) {
+        if (callback === void 0) { callback = Function(); }
+        this.bigDataInfoCallback = callback;
+        return this;
+    };
+    Life.prototype.initServers = function (serversData) {
+        var masterServer = new MasterServer_1.default(new RabbitMQ_1.default(), serversData.find(function (it) { return it.isMaster; }));
+        // masterServer.distrubutionBehavior = new HashDistribution();
+        masterServer.distrubutionBehavior = new RandomDistribution_1.default();
+        for (var i = 0; i < serversData.length; i++) {
+            var serverData = serversData[i];
+            if (!serverData.isMaster) {
+                var server = new RegionServer_1.default(new RabbitMQ_1.default(), serverData);
+                server.calculateBehavior = new RandomSleepCalculating_1.default(200);
+                server.id = serverData.name;
+                masterServer.subordinates.push(server);
+            }
+        }
+        return masterServer;
+    };
+    Life.prototype.createBigData = function (data) {
+        var tables = data.tables, requiredFilledSize = data.requiredFilledSize;
+        var masterServer = this.masterServer;
         var totalSize = requiredFilledSize * 1000;
         MapGenerator_1.default.fillRegions({ tables: tables, totalSize: totalSize }, masterServer);
-        var regionsServersPies = masterServer.subordinates.map(function (server) { return ({
+        var regionsPiesCharts = masterServer.subordinates.map(function (server) { return ({
             serverName: server.id,
-            chartData: server.calcRegionsSizes()
+            chartData: server.getRegionalStatistics()
         }); });
-        done({ regionsServersPies: regionsServersPies });
+        this.bigDataInfoCallback({ regionsPiesCharts: regionsPiesCharts });
         this.masterServer = masterServer;
     };
     ;
     Life.prototype.live = function (lifeData) {
-        var _this = this;
-        console.log(lifeData);
-        var masterServer = this.masterServer;
+        var servers = lifeData.servers;
+        var masterServer = this.masterServer = this.initServers(servers);
+        this.createBigData(lifeData);
         var nServers = masterServer.subordinates.length;
         var statistics = new Statistics_1.default({ nServers: nServers });
         var _a = this, startClientsRequests = _a.startClientsRequests, onMasterServerResponse = _a.onMasterServerResponse;
-        masterServer
+        this.subscribtion = masterServer
             .ready(startClientsRequests.bind(this, lifeData)) // start
             .subscribe(onMasterServerResponse); // final
-        statistics.subscribeToAbsBandwidth(function (absBandwidth) { return _this.lifeInfoCallback({
-            type: 'load_line',
-            absBandwidth: absBandwidth
-        }); });
+        // statistics.subscribeToAbsBandwidth(absBandwidth => this.lifeInfoCallback({
+        //     type: 'load_line',
+        //     absBandwidth
+        // }));
         this.statistics = statistics;
         return this;
     };
     ;
+    Life.prototype.destroy = function () {
+        this.subscribtion.unsubscribe();
+        this.masterServer.close();
+    };
     return Life;
 }());
 exports.Life = Life;

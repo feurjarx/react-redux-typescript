@@ -6,7 +6,7 @@ function mapStateToProps(state, props) {
     return state;
 }
 
-class StopwatchConnectable extends React.Component<any, any> {
+class Stopwatch extends React.Component<any, any> {
 
     state = {
         stopped: true,
@@ -80,4 +80,4 @@ class StopwatchConnectable extends React.Component<any, any> {
     }
 }
 
-export const Stopwatch = connect(mapStateToProps)(StopwatchConnectable);
+export default connect(mapStateToProps)(Stopwatch);

@@ -11,8 +11,7 @@ import {
     RABBITMQ_EXCHANGE_REGION_SERVERS,
     RABBITMQ_QUEUE_MASTER_SERVER
 } from "./../../constants/rabbitmq";
-
-declare type ServerStatus = 'alone'|'pending'|'ready';
+import {hash} from "../../helpers/index";
 
 export default class MasterServer extends Server {
 
@@ -23,8 +22,6 @@ export default class MasterServer extends Server {
     subordinates: Array<RegionServer>;
 
     registry: Array<HRegion>; // ???
-
-    status: ServerStatus = 'alone';
 
     subscriptionForClients: Subscription;
     subscriptionsMap: {[key: string]: Subscription} = {};
@@ -99,8 +96,9 @@ export default class MasterServer extends Server {
         return new Promise((resolve, reject) => {
 
             const routeKey = regionServer.id;
-            this.subscriptionsMap[routeKey] = this.provider
-                .publishAndWaitByRouteKeys(RABBITMQ_EXCHANGE_REGION_SERVERS, [routeKey], data)
+            const subKey = hash(routeKey, Date.now());
+            this.subscriptionsMap[subKey] = this.provider
+                .publishAndWaitByRouteKeys(RABBITMQ_EXCHANGE_REGION_SERVERS, [routeKey], {...data, subKey})
                 .subscribe(response => {
                     // from RegionServer
 
@@ -110,13 +108,12 @@ export default class MasterServer extends Server {
 
                         case 'received':
 
-                            const {regionServerId, clientId} = response;
+                            const {regionServerId, clientId, subKey} = response;
                             console.log(`Мастер-сервер получил ответ с регион-сервера ${regionServerId} на запрос от клиента #${clientId}`);
 
                             resolve(response);
 
-                            this.subscriptionsMap[regionServerId].unsubscribe();
-                            delete this.subscriptionsMap[regionServerId];
+                            this.subscriptionsMap[subKey].unsubscribe();
 
                             break;
                         default:
@@ -124,6 +121,11 @@ export default class MasterServer extends Server {
                     }
                 });
         });
+    }
+
+    close() {
+        super.close();
+        this.subordinates.forEach(s => s.close());
     }
 
 

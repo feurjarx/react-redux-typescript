@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import FormDataService from "../../../services/FormData";
+import FormDataService from "../../../services/FormDataService";
 import {updateOtherStepsData} from "../../../actions/index";
 import {connect} from "react-redux";
 import HardwareForm from './HardwareForm'

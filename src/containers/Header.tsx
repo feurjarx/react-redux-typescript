@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Toolbar, ToolbarGroup } from 'material-ui'
+import Stopwatch from "./../containers/stopwatch/Stopwatch";
 
 export class Header extends React.Component<any, React.ComponentState> {
     constructor() {
@@ -10,7 +10,7 @@ export class Header extends React.Component<any, React.ComponentState> {
 
         return (
             <header>
-                <h1 className="text-center margin-none">Моделирование</h1>
+                {/*<Stopwatch/>*/}
             </header>
         )
     }

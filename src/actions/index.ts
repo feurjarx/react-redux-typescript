@@ -5,16 +5,9 @@ import {
     OTHER_STEPS_DATA,
     INITIAL_LIFE_DATA, INITIAL_LIFE_DATA_COMPLETED,
     STOP_STOPWATCH, START_STOPWATCH,
-    UPDATE_CPU_CHART, UPDATE_CPU_CHART_COMPLETED
+    UPDATE_CPU_CHART, UPDATE_CPU_CHART_COMPLETED, INIT_REQUESTS_DIAGRAM, PUSH_NEW_ITEM_TO_REQUESTS_DIAGRAM
 
 } from '../constants/actions'
-
-export function updateMonitorItem(data) {
-    return {
-        type: UPDATE_MONITOR_ITEM,
-        data
-    };
-}
 
 export function updateCpuChart(data) {
     return {
@@ -36,23 +29,25 @@ export function updateCpuChartCompleted() {
     };
 }
 
-export function initialLifeData(data) {
+export function initRequestsDiagram(data) {
     return {
-        type: INITIAL_LIFE_DATA,
+        type: INIT_REQUESTS_DIAGRAM,
         data
     };
 }
+
+export function pushNewItemToRequestsDiagram(data) {
+    return {
+        type: PUSH_NEW_ITEM_TO_REQUESTS_DIAGRAM,
+        data
+    };
+}
+
 
 export function updateOtherStepsData(data) {
     return {
         type: OTHER_STEPS_DATA,
         data
-    };
-}
-
-export function initialLifeDataCompleted() {
-    return {
-        type: INITIAL_LIFE_DATA_COMPLETED
     };
 }
 
