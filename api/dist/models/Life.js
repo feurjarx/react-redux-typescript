@@ -29,6 +29,11 @@ var Life = (function () {
                         case 'sent':
                             statistics.upRequests();
                             break;
+                        case 'received':
+                            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, regionServerId = response.regionServerId;
+                            _this.lifeInfoCallback({ regionServerId: regionServerId, requestCounter: requestCounter });
+                            _this.statistics.totalProcessingTime += lastProcessingTime;
+                            break;
                         case 'stopped':
                             statistics.upCompletedClients();
                             if (statistics.isEqualCompletedClients(nClients)) {
@@ -40,6 +45,7 @@ var Life = (function () {
                 });
             });
         };
+        // вызов, когда приходит ответ от регион-сервера
         this.onMasterServerResponse = function (response) {
             var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, regionServerId = response.regionServerId;
             _this.lifeInfoCallback({ regionServerId: regionServerId, requestCounter: requestCounter });
@@ -91,26 +97,28 @@ var Life = (function () {
         this.masterServer = masterServer;
     };
     ;
+    Life.prototype.simulateWorkWithBigData = function (lifeData) {
+        var _this = this;
+        this.masterServer.prepare().then(function () {
+            console.log("\u0412\u0441\u0435 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u0433\u043E\u0442\u043E\u0432\u044B.");
+            _this.startClientsRequests(lifeData);
+        });
+    };
     Life.prototype.live = function (lifeData) {
         var servers = lifeData.servers;
-        var masterServer = this.masterServer = this.initServers(servers);
+        this.masterServer = this.initServers(servers);
         this.createBigData(lifeData);
-        var nServers = masterServer.subordinates.length;
-        var statistics = new Statistics_1.default({ nServers: nServers });
-        var _a = this, startClientsRequests = _a.startClientsRequests, onMasterServerResponse = _a.onMasterServerResponse;
-        this.subscribtion = masterServer
-            .ready(startClientsRequests.bind(this, lifeData)) // start
-            .subscribe(onMasterServerResponse); // final
+        this.statistics = new Statistics_1.default({ nServers: servers.length });
+        this.simulateWorkWithBigData(lifeData);
         // statistics.subscribeToAbsBandwidth(absBandwidth => this.lifeInfoCallback({
         //     type: 'load_line',
         //     absBandwidth
         // }));
-        this.statistics = statistics;
         return this;
     };
     ;
     Life.prototype.destroy = function () {
-        this.subscribtion.unsubscribe();
+        // this.subscribtion.unsubscribe();
         this.masterServer.close();
     };
     return Life;

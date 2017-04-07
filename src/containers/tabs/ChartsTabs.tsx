@@ -1,6 +1,6 @@
 import * as React from "react";
 import RegionsPiesCharts from "./../regions-pies-charts/RegionsPiesCharts";
-import Monitoring from "./../monitoring/Monitoring";
+import RequestsDiagram from "./../monitoring/RequestsDiagram";
 import {CpuChart} from "./../cpu-chart/CpuChart";
 import {Tabs, Tab} from 'material-ui/Tabs';
 import SwipeableViews from 'react-swipeable-views';
@@ -23,7 +23,7 @@ export default class ChartsTabs extends React.Component<any, any> {
         const {slideIndex} = this.state;
         const tabs = [
             <RegionsPiesCharts key={0}/>,
-            <Monitoring key={1}/>,
+            <RequestsDiagram key={1}/>,
             //<CpuChart key={2}/>
         ];
 

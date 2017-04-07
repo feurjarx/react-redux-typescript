@@ -33,20 +33,16 @@ var MasterServer = (function (_super) {
         this.subordinates[serverRegionNo].save(hRow);
         console.log("Region no " + serverRegionNo);
     };
-    MasterServer.prototype.ready = function (complete) {
-        var _this = this;
-        if (complete === void 0) { complete = Function(); }
-        return new rxjs_1.Observable(function (observer) {
-            _this.listen(rabbitmq_1.RABBITMQ_QUEUE_MASTER_SERVER, function (response) { return observer.next(response); });
-            var promises = [];
-            _this.subordinates.forEach(function (regionServer) {
-                promises.push(regionServer.listenExchange(rabbitmq_1.RABBITMQ_EXCHANGE_REGION_SERVERS));
-            });
-            Promise.all(promises).then(function () {
-                console.log("\u0412\u0441\u0435 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u0433\u043E\u0442\u043E\u0432\u044B.");
-                complete();
-            });
+    MasterServer.prototype.getSlaveServersNumber = function () {
+        return this.subordinates.length;
+    };
+    MasterServer.prototype.prepare = function () {
+        this.listen(rabbitmq_1.RABBITMQ_QUEUE_MASTER_SERVER);
+        var promises = [];
+        this.subordinates.forEach(function (regionServer) {
+            promises.push(regionServer.listenExchange(rabbitmq_1.RABBITMQ_EXCHANGE_REGION_SERVERS));
         });
+        return Promise.all(promises);
     };
     MasterServer.prototype.listen = function (queueName, callback, lazy) {
         var _this = this;

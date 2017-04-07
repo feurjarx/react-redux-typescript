@@ -42,22 +42,20 @@ export default class MasterServer extends Server {
         console.log(`Region no ${serverRegionNo}`);
     }
 
-    ready(complete = Function()) {
+    getSlaveServersNumber() {
+        return this.subordinates.length;
+    }
 
-        return new Observable(observer => {
+    prepare() {
 
-            this.listen(RABBITMQ_QUEUE_MASTER_SERVER, response => observer.next(response));
+        this.listen(RABBITMQ_QUEUE_MASTER_SERVER);
 
-            const promises = [];
-            this.subordinates.forEach(regionServer => {
-                promises.push(regionServer.listenExchange(RABBITMQ_EXCHANGE_REGION_SERVERS));
-            });
-
-            Promise.all(promises).then(() => {
-                console.log(`Все регион-сервера готовы.`);
-                complete();
-            });
+        const promises = [];
+        this.subordinates.forEach(regionServer => {
+            promises.push(regionServer.listenExchange(RABBITMQ_EXCHANGE_REGION_SERVERS));
         });
+
+        return Promise.all(promises);
     }
 
     listen(queueName, callback = (...args)=>{}, lazy = false) {

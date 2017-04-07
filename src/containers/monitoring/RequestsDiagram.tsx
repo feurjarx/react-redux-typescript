@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import "./monitoring.css";
 import {connect} from "react-redux";
 import ChartOptions = CanvasJS.ChartOptions;
 import ChartDataPoint = CanvasJS.ChartDataPoint;
@@ -14,7 +13,7 @@ function mapStateToProps(state) {
     };
 }
 
-class Monitoring extends React.Component<any, React.ComponentState> {
+class RequestsDiagram extends React.Component<any, React.ComponentState> {
 
     chartId = 'life-rt-chart';
     chart: CanvasJS.Chart;
@@ -95,4 +94,4 @@ class Monitoring extends React.Component<any, React.ComponentState> {
     }
 }
 
-export default connect(mapStateToProps)(Monitoring);
+export default connect(mapStateToProps)(RequestsDiagram);

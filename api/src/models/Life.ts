@@ -77,32 +77,29 @@ export class Life {
         this.masterServer = masterServer;
     };
 
+    simulateWorkWithBigData(lifeData) {
+        this.masterServer.prepare().then(() => {
+            console.log(`Все регион-сервера готовы.`);
+            this.startClientsRequests(lifeData);
+        });
+    }
+
     live(lifeData) {
 
         const {servers} = lifeData;
 
-        const masterServer = this.masterServer = this.initServers(servers);
+        this.masterServer = this.initServers(servers);
 
         this.createBigData(lifeData);
 
-        const nServers = masterServer.subordinates.length;
-        const statistics = new Statistics({nServers});
+        this.statistics = new Statistics({nServers: servers.length});
 
-        const {
-            startClientsRequests,
-            onMasterServerResponse
-        } = this;
-
-        this.subscribtion = masterServer
-            .ready(startClientsRequests.bind(this, lifeData)) // start
-            .subscribe(onMasterServerResponse); // final
+        this.simulateWorkWithBigData(lifeData);
 
         // statistics.subscribeToAbsBandwidth(absBandwidth => this.lifeInfoCallback({
         //     type: 'load_line',
         //     absBandwidth
         // }));
-
-        this.statistics = statistics;
 
         return this;
     };
@@ -129,6 +126,19 @@ export class Life {
                             statistics.upRequests();
                             break;
 
+                        case 'received':
+
+                            const {
+                                lastProcessingTime,
+                                requestCounter,
+                                regionServerId
+                            } = response;
+
+                            this.lifeInfoCallback({regionServerId, requestCounter});
+                            this.statistics.totalProcessingTime += lastProcessingTime;
+
+                            break;
+
                         case 'stopped':
                             statistics.upCompletedClients();
                             if (statistics.isEqualCompletedClients(nClients)) {
@@ -142,6 +152,7 @@ export class Life {
         });
     };
 
+    // вызов, когда приходит ответ от регион-сервера
     onMasterServerResponse = (response) => {
 
         const {
@@ -156,7 +167,7 @@ export class Life {
 
 
     destroy() {
-        this.subscribtion.unsubscribe();
+        // this.subscribtion.unsubscribe();
         this.masterServer.close();
     }
 
