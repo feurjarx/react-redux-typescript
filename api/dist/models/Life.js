@@ -2,7 +2,7 @@
 var RabbitMQ_1 = require("../services/RabbitMQ");
 var Expectant_1 = require("./clients/Expectant");
 var MasterServer_1 = require("./servers/MasterServer");
-var RegionServer_1 = require("./servers/RegionServer");
+var SlaveServer_1 = require("./servers/SlaveServer");
 var MapGenerator_1 = require("./MapGenerator");
 var RandomDistribution_1 = require("./servers/behaviors/RandomDistribution");
 var Statistics_1 = require("./Statistics");
@@ -32,8 +32,8 @@ var Life = (function () {
                             statistics.upRequests();
                             break;
                         case 'received':
-                            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, regionServerId = response.regionServerId;
-                            _this.lifeInfoCallback({ regionServerId: regionServerId, requestCounter: requestCounter });
+                            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, slaveServerId = response.slaveServerId;
+                            _this.lifeInfoCallback({ slaveServerId: slaveServerId, requestCounter: requestCounter });
                             _this.statistics.totalProcessingTime += lastProcessingTime;
                             break;
                         case 'stopped':
@@ -49,11 +49,26 @@ var Life = (function () {
         };
         // вызов, когда приходит ответ от регион-сервера
         this.onMasterServerResponse = function (response) {
-            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, regionServerId = response.regionServerId;
-            _this.lifeInfoCallback({ regionServerId: regionServerId, requestCounter: requestCounter });
+            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, slaveServerId = response.slaveServerId;
+            _this.lifeInfoCallback({ slaveServerId: slaveServerId, requestCounter: requestCounter });
             _this.statistics.totalProcessingTime += lastProcessingTime;
         };
     }
+    Life.initServers = function (serversData) {
+        var masterServer = new MasterServer_1.default(new RabbitMQ_1.default(), serversData.find(function (it) { return it.isMaster; }));
+        // masterServer.distrubutionBehavior = new HashDistribution();
+        masterServer.distrubutionBehavior = new RandomDistribution_1.default();
+        for (var i = 0; i < serversData.length; i++) {
+            var serverData = serversData[i];
+            if (!serverData.isMaster) {
+                var server = new SlaveServer_1.default(new RabbitMQ_1.default(), serverData);
+                server.calculateBehavior = new RandomSleepCalculating_1.default(200);
+                server.id = serverData.name;
+                masterServer.subordinates.push(server);
+            }
+        }
+        return masterServer;
+    };
     Life.prototype.onLifeComplete = function (callback) {
         if (callback === void 0) { callback = Function(); }
         this.lifeCompleteCallback = callback;
@@ -70,21 +85,6 @@ var Life = (function () {
         if (callback === void 0) { callback = Function(); }
         this.bigDataInfoCallback = callback;
         return this;
-    };
-    Life.prototype.initServers = function (serversData) {
-        var masterServer = new MasterServer_1.default(new RabbitMQ_1.default(), serversData.find(function (it) { return it.isMaster; }));
-        // masterServer.distrubutionBehavior = new HashDistribution();
-        masterServer.distrubutionBehavior = new RandomDistribution_1.default();
-        for (var i = 0; i < serversData.length; i++) {
-            var serverData = serversData[i];
-            if (!serverData.isMaster) {
-                var server = new RegionServer_1.default(new RabbitMQ_1.default(), serverData);
-                server.calculateBehavior = new RandomSleepCalculating_1.default(200);
-                server.id = serverData.name;
-                masterServer.subordinates.push(server);
-            }
-        }
-        return masterServer;
     };
     Life.prototype.createBigData = function (data) {
         var tables = data.tables, requiredFilledSize = data.requiredFilledSize;
@@ -108,7 +108,7 @@ var Life = (function () {
     };
     Life.prototype.live = function (lifeData) {
         var servers = lifeData.servers;
-        this.masterServer = this.initServers(servers);
+        this.masterServer = Life.initServers(servers);
         this.createBigData(lifeData);
         this.statistics = new Statistics_1.default({ nServers: servers.length });
         this.simulateWorkWithBigData(lifeData);

@@ -31,7 +31,7 @@ export default class ExpectantClient extends Client {
 
                     case 'received':
 
-                        console.log(`Клиент #${ this.id } получил ответ от мастера. Обрабатывал запрос регион-сервер #${response.regionServerId}`);
+                        console.log(`Клиент #${ this.id } получил ответ от мастера. Обрабатывал запрос регион-сервер #${response.slaveServerId}`);
 
                         requestsReverseCounter--;
                         if (requestsReverseCounter > 0) {

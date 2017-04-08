@@ -1,5 +1,5 @@
 interface DistributionBehavior {
-    getRegionServerNo(...args): number;
+    getSlaveServerNo(...args): number;
 }
 
 export default DistributionBehavior;

@@ -1,7 +1,7 @@
 import MapGenerator from './models/MapGenerator';
 import {TableData, ServerData} from "../typings/index";
 import RabbitMQ from "./services/RabbitMQ";
-import RegionServer from "./models/servers/RegionServer";
+import SlaveServer from "./models/servers/SlaveServer";
 import MasterServer from "./models/servers/MasterServer";
 import HashDistribution from "./models/servers/behaviors/HashDistribution";
 
@@ -113,7 +113,7 @@ masterServer.distrubutionBehavior = new HashDistribution();
 for (let i = 0; i < serversData.length; i++) {
     const serverData = serversData[i];
     if (!serverData.isMaster) {
-        const server = new RegionServer(serverData);
+        const server = new SlaveServer(serverData);
         server.id = serverData.name;
         masterServer.subordinates.push(server);
     }

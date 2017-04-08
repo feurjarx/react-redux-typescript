@@ -1,7 +1,7 @@
 import DistributionBehavior from "./DistributionBehavior";
 import {random} from '../../../helpers/index'
 export default class RandomDistribution implements DistributionBehavior {
-    getRegionServerNo(_, totalRegionServersNumbers: number) {
-        return random(totalRegionServersNumbers - 1);
+    getSlaveServerNo(_, totalSlavesNumber: number) {
+        return random(totalSlavesNumber - 1);
     }
 }

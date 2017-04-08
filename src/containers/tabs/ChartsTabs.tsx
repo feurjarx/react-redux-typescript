@@ -4,13 +4,23 @@ import RequestsDiagram from "./../monitoring/RequestsDiagram";
 import {CpuChart} from "./../cpu-chart/CpuChart";
 import {Tabs, Tab} from 'material-ui/Tabs';
 import SwipeableViews from 'react-swipeable-views';
+import {connect} from "react-redux";
 
-export default class ChartsTabs extends React.Component<any, any> {
+function mapStateToProps(state) {
+    const {stopwatch} = state;
+
+    return {
+        stopwatch
+    };
+}
+
+class ChartsTabs extends React.Component<any, any> {
     constructor() {
         super();
 
         this.state = {
             slideIndex: 0,
+            visibility: 'hidden',
         };
     }
 
@@ -18,9 +28,15 @@ export default class ChartsTabs extends React.Component<any, any> {
         this.setState({slideIndex});
     };
 
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.stopwatch === 'start') {
+            this.setState({visibility: 'visible'});
+        }
+    }
+
     render() {
         const {handleChange} = this;
-        const {slideIndex} = this.state;
+        const {slideIndex, visibility} = this.state;
         const tabs = [
             <RegionsPiesCharts key={0}/>,
             <RequestsDiagram key={1}/>,
@@ -28,7 +44,7 @@ export default class ChartsTabs extends React.Component<any, any> {
         ];
 
         return (
-            <div style={{alignSelf: 'stretch', height: 'calc(100% - 55px)'}} id="tabs-content">
+            <div style={{...tabsBlockStyle, ...{visibility}}} id="tabs-content">
                 <Tabs onChange={handleChange} value={slideIndex}>
                     <Tab label="Регионы" value={0} />
                     <Tab label="Запросы" value={1} />
@@ -47,3 +63,10 @@ export default class ChartsTabs extends React.Component<any, any> {
         )
     }
 }
+
+const tabsBlockStyle = {
+    alignSelf: 'stretch',
+    height: 'calc(100% - 55px)'
+};
+
+export default connect(mapStateToProps)(ChartsTabs);

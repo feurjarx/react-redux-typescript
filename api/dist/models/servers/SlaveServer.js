@@ -7,9 +7,9 @@ var __extends = (this && this.__extends) || function (d, b) {
 var Server_1 = require("../Server");
 var HRegion_1 = require("../HRegion");
 var helpers_1 = require("../../helpers");
-var RegionServer = (function (_super) {
-    __extends(RegionServer, _super);
-    function RegionServer(provider, serverData) {
+var SlaveServer = (function (_super) {
+    __extends(SlaveServer, _super);
+    function SlaveServer(provider, serverData) {
         var _this = _super.call(this, provider) || this;
         _this.onRequestFromMasterServer = function (data) {
             var onClientReply = data.onClientReply, clientId = data.clientId, subKey = data.subKey;
@@ -23,7 +23,7 @@ var RegionServer = (function (_super) {
                 onClientReply({
                     subKey: subKey,
                     clientId: clientId,
-                    regionServerId: _this.id,
+                    slaveServerId: _this.id,
                     lastProcessingTime: 0,
                     requestCounter: _this.requestCounter
                 });
@@ -40,27 +40,30 @@ var RegionServer = (function (_super) {
         return _this;
     }
     ;
-    RegionServer.prototype.getRegionalStatistics = function () {
+    SlaveServer.prototype.getRegionalStatistics = function () {
         var _this = this;
         return this.regions.map(function (r) { return ({
             name: "\u0420\u0435\u0433\u0438\u043E\u043D " + r.id + " \u0441\u0435\u0440\u0432\u0435\u0440\u0430 " + _this.id,
             value: r.maxSize - r.freeSpace
         }); });
     };
-    RegionServer.prototype.save = function (hRow) {
+    SlaveServer.prototype.save = function (hRow) {
         var regions = this.regions;
+        var completed = false;
         for (var i = 0; i < regions.length; i++) {
             var region = regions[i];
             if (region.isFitIn(hRow.getSize())) {
                 region.add(hRow);
+                completed = true;
                 break;
             }
             else {
                 this.split(region);
             }
         }
+        return completed;
     };
-    RegionServer.prototype.split = function (hRegion) {
+    SlaveServer.prototype.split = function (hRegion) {
         if (Object.keys(hRegion.rows).length) {
             var rowsList = hRegion.popHalf();
             var regions = this.regions;
@@ -73,7 +76,7 @@ var RegionServer = (function (_super) {
             }
         }
     };
-    RegionServer.prototype.listenExchange = function (exchange) {
+    SlaveServer.prototype.listenExchange = function (exchange) {
         var _this = this;
         return new Promise(function (resolve) {
             _this.subscription = _this.provider
@@ -81,7 +84,7 @@ var RegionServer = (function (_super) {
                 .subscribe(_this.onRequestFromMasterServer);
         });
     };
-    return RegionServer;
+    return SlaveServer;
 }(Server_1.default));
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = RegionServer;
+exports.default = SlaveServer;

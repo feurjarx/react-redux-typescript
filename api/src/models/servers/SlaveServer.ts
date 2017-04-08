@@ -6,7 +6,7 @@ import {range} from '../../helpers';
 import {Subscription} from "rxjs";
 import {IQueue} from "../../services/IQueue";
 
-export default class RegionServer extends Server {
+export default class SlaveServer extends Server {
     regions: Array<HRegion>;
 
     hdd: number;
@@ -42,11 +42,13 @@ export default class RegionServer extends Server {
     save(hRow: HRow) {
 
         const {regions} = this;
+        let completed = false;
 
         for (let i = 0; i < regions.length; i++) {
             const region = regions[i];
             if (region.isFitIn(hRow.getSize())) {
                 region.add(hRow);
+                completed = true;
                 break;
 
             } else {
@@ -54,6 +56,8 @@ export default class RegionServer extends Server {
                 this.split(region);
             }
         }
+
+        return completed;
     }
 
     split(hRegion: HRegion) {
@@ -97,7 +101,7 @@ export default class RegionServer extends Server {
                 onClientReply({
                     subKey,
                     clientId,
-                    regionServerId: this.id,
+                    slaveServerId: this.id,
                     lastProcessingTime: 0,
                     requestCounter: this.requestCounter
                     // see to Life onMasterServerResponse

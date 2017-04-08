@@ -13,7 +13,6 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     return t;
 };
 var Server_1 = require("../Server");
-var rxjs_1 = require("rxjs");
 var rabbitmq_1 = require("./../../constants/rabbitmq");
 var index_1 = require("../../helpers/index");
 var MasterServer = (function (_super) {
@@ -28,10 +27,20 @@ var MasterServer = (function (_super) {
     }
     ;
     MasterServer.prototype.save = function (hRow) {
-        var getRegionServerNo = this.distrubutionBehavior.getRegionServerNo;
-        var serverRegionNo = getRegionServerNo(hRow, this.subordinates.length);
-        this.subordinates[serverRegionNo].save(hRow);
-        console.log(false, "Region no " + serverRegionNo);
+        var getSlaveServerNo = this.distrubutionBehavior.getSlaveServerNo;
+        var attemptCounter = 0;
+        var idx;
+        var completed;
+        var safeLimit = Math.pow(this.getSlaveServersNumber(), 2);
+        do {
+            attemptCounter++;
+            idx = getSlaveServerNo(hRow, this.subordinates.length);
+            completed = this.subordinates[idx].save(hRow);
+        } while (!completed && attemptCounter < safeLimit);
+        if (!completed) {
+            throw new Error("\u0417\u0430\u043F\u0438\u0441\u044C \u0440\u0430\u0437\u043C\u0435\u0440\u043E\u043C " + hRow.getSize() + " \u043D\u0435 \u0431\u044B\u043B\u0430 \u0437\u0430\u043F\u0438\u0441\u0430\u043D\u0430 \u043D\u0438 \u0432 \u043E\u0434\u0438\u043D \u0440\u0435\u0433\u0438\u043E\u043D");
+        }
+        console.log(false, "Region no " + idx);
     };
     MasterServer.prototype.getSlaveServersNumber = function () {
         return this.subordinates.length;
@@ -39,57 +48,45 @@ var MasterServer = (function (_super) {
     MasterServer.prototype.prepare = function () {
         this.listen(rabbitmq_1.RABBITMQ_QUEUE_MASTER_SERVER);
         var promises = [];
-        this.subordinates.forEach(function (regionServer) {
-            promises.push(regionServer.listenExchange(rabbitmq_1.RABBITMQ_EXCHANGE_REGION_SERVERS));
+        this.subordinates.forEach(function (slaveServer) {
+            promises.push(slaveServer.listenExchange(rabbitmq_1.RABBITMQ_EXCHANGE_SLAVE_SERVERS));
         });
         return Promise.all(promises);
     };
-    MasterServer.prototype.listen = function (queueName, callback, lazy) {
+    MasterServer.prototype.listen = function (queueName, lazy) {
         var _this = this;
-        if (callback === void 0) { callback = function () {
-            var args = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                args[_i] = arguments[_i];
-            }
-        }; }
         if (lazy === void 0) { lazy = false; }
         console.log('Мастер-сервер ожидает запросы...');
-        var observable = new rxjs_1.Observable(function (observer) {
-            _this.provider
-                .consume(queueName, { lazy: lazy })
-                .subscribe(function (response) {
-                // from Clients
-                var onClientReply = response.onClientReply, clientId = response.clientId;
-                console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
-                var getRegionServerNo = _this.distrubutionBehavior.getRegionServerNo;
-                var serverRegionNo = getRegionServerNo(null, _this.subordinates.length);
-                var regionServer = _this.subordinates[serverRegionNo];
-                console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u0435\u0440\u0435\u043D\u0430\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u0442 \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId + " \u043D\u0430 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440 #" + regionServer.id);
-                _this
-                    .redirectToRegionServer(regionServer, { clientId: clientId })
-                    .then(function (responseFromRegionServer) {
-                    onClientReply(responseFromRegionServer);
-                    observer.next(responseFromRegionServer);
-                });
-            });
+        this.clientsSubscription = this.provider
+            .consume(queueName, { lazy: lazy })
+            .subscribe(function (clientRequest) {
+            // from Clients
+            var onClientReply = clientRequest.onClientReply, clientId = clientRequest.clientId;
+            console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
+            var getSlaveServerNo = _this.distrubutionBehavior.getSlaveServerNo;
+            var idx = getSlaveServerNo(null, _this.subordinates.length);
+            var slaveServer = _this.subordinates[idx];
+            console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u0435\u0440\u0435\u043D\u0430\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u0442 \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId + " \u043D\u0430 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440 #" + slaveServer.id);
+            _this
+                .redirectToSlaveServer(slaveServer, { clientId: clientId })
+                .then(onClientReply);
         });
-        this.subscriptionForClients = observable.subscribe(callback);
     };
-    MasterServer.prototype.redirectToRegionServer = function (regionServer, data) {
+    MasterServer.prototype.redirectToSlaveServer = function (slaveServer, data) {
         var _this = this;
         return new Promise(function (resolve, reject) {
-            var routeKey = regionServer.id;
+            var routeKey = slaveServer.id;
             var subKey = index_1.hash(routeKey, Date.now());
             _this.subscriptionsMap[subKey] = _this.provider
-                .publishAndWaitByRouteKeys(rabbitmq_1.RABBITMQ_EXCHANGE_REGION_SERVERS, [routeKey], __assign({}, data, { subKey: subKey }))
+                .publishAndWaitByRouteKeys(rabbitmq_1.RABBITMQ_EXCHANGE_SLAVE_SERVERS, [routeKey], __assign({}, data, { subKey: subKey }))
                 .subscribe(function (response) {
-                // from RegionServer
+                // from SlaveServer
                 switch (response.type) {
                     case 'sent':
                         break;
                     case 'received':
-                        var regionServerId = response.regionServerId, clientId = response.clientId, subKey_1 = response.subKey;
-                        console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442\u0432\u0435\u0442 \u0441 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440\u0430 " + regionServerId + " \u043D\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
+                        var slaveServerId = response.slaveServerId, clientId = response.clientId, subKey_1 = response.subKey;
+                        console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442\u0432\u0435\u0442 \u0441 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440\u0430 " + slaveServerId + " \u043D\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
                         resolve(response);
                         _this.subscriptionsMap[subKey_1].unsubscribe();
                         break;
@@ -102,6 +99,7 @@ var MasterServer = (function (_super) {
     MasterServer.prototype.close = function () {
         _super.prototype.close.call(this);
         this.subordinates.forEach(function (s) { return s.close(); });
+        this.clientsSubscription.unsubscribe();
     };
     return MasterServer;
 }(Server_1.default));

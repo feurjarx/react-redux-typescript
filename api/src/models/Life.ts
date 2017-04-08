@@ -1,14 +1,37 @@
 import RabbitMQ from "../services/RabbitMQ";
 import ExpectantClient from "./clients/Expectant";
 import MasterServer from "./servers/MasterServer";
-import RegionServer from "./servers/RegionServer";
+import SlaveServer from "./servers/SlaveServer";
 import MapGenerator from "./MapGenerator";
 import RandomDistribution from "./servers/behaviors/RandomDistribution";
 import Statistics from "./Statistics";
 import RandomSleepCalculating from "./servers/behaviors/RandomSleepCalculating";
 import SocketLogEmitter from "../services/SocketLogEmitter";
+import HashDistribution from "./servers/behaviors/HashDistribution";
 
 export class Life {
+
+    private static initServers(serversData) {
+        const masterServer = new MasterServer(
+            new RabbitMQ(),
+            serversData.find(it => it.isMaster)
+        );
+
+        // masterServer.distrubutionBehavior = new HashDistribution();
+        masterServer.distrubutionBehavior = new RandomDistribution();
+
+        for (let i = 0; i < serversData.length; i++) {
+            const serverData = serversData[i];
+            if (!serverData.isMaster) {
+                const server = new SlaveServer(new RabbitMQ(), serverData);
+                server.calculateBehavior = new RandomSleepCalculating(200);
+                server.id = serverData.name;
+                masterServer.subordinates.push(server);
+            }
+        }
+
+        return masterServer;
+    }
 
     private masterServer: MasterServer;
     private statistics: Statistics;
@@ -33,28 +56,6 @@ export class Life {
         this.bigDataInfoCallback = callback;
 
         return this;
-    }
-
-    private initServers(serversData) {
-        const masterServer = new MasterServer(
-            new RabbitMQ(),
-            serversData.find(it => it.isMaster)
-        );
-
-        // masterServer.distrubutionBehavior = new HashDistribution();
-        masterServer.distrubutionBehavior = new RandomDistribution();
-
-        for (let i = 0; i < serversData.length; i++) {
-            const serverData = serversData[i];
-            if (!serverData.isMaster) {
-                const server = new RegionServer(new RabbitMQ(), serverData);
-                server.calculateBehavior = new RandomSleepCalculating(200);
-                server.id = serverData.name;
-                masterServer.subordinates.push(server);
-            }
-        }
-
-        return masterServer;
     }
 
     private createBigData(data) {
@@ -86,7 +87,7 @@ export class Life {
 
         const {servers} = lifeData;
 
-        this.masterServer = this.initServers(servers);
+        this.masterServer = Life.initServers(servers);
 
         this.createBigData(lifeData);
 
@@ -130,10 +131,10 @@ export class Life {
                             const {
                                 lastProcessingTime,
                                 requestCounter,
-                                regionServerId
+                                slaveServerId
                             } = response;
 
-                            this.lifeInfoCallback({regionServerId, requestCounter});
+                            this.lifeInfoCallback({slaveServerId, requestCounter});
                             this.statistics.totalProcessingTime += lastProcessingTime;
 
                             break;
@@ -157,10 +158,10 @@ export class Life {
         const {
             lastProcessingTime,
             requestCounter,
-            regionServerId
+            slaveServerId
         } = response;
 
-        this.lifeInfoCallback({regionServerId, requestCounter});
+        this.lifeInfoCallback({slaveServerId, requestCounter});
         this.statistics.totalProcessingTime += lastProcessingTime;
     };
 

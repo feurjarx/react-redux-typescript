@@ -113,7 +113,6 @@ class MapGenerator {
 
                 // hTables[tableName][rowKey] = hRow;
                 masterServer.save(hRow);
-
                 tableSize += rowSizesInfo.rowSize;
             }
         });

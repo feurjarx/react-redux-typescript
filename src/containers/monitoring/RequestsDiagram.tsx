@@ -73,8 +73,8 @@ class RequestsDiagram extends React.Component<any, React.ComponentState> {
 
             if (requestsDiagram.newItem) {
 
-                const {regionServerId, requestCounter} = requestsDiagram.newItem;
-                const idx = this.idxPointByServerIdMap[regionServerId];
+                const {slaveServerId, requestCounter} = requestsDiagram.newItem;
+                const idx = this.idxPointByServerIdMap[slaveServerId];
                 this.dataPoints[idx].y = requestCounter;
 
             } else {

@@ -1,6 +1,6 @@
 import Server from "../Server";
 import {ServerData} from "../../../typings/index";
-import RegionServer from "./RegionServer";
+import SlaveServer from "./SlaveServer";
 import HRow from "../HRow";
 import DistributionBehavior from "../servers/behaviors/DistributionBehavior";
 import HRegion from "../HRegion";
@@ -8,7 +8,7 @@ import HRegion from "../HRegion";
 import {Observable, Subscription} from "rxjs";
 
 import {
-    RABBITMQ_EXCHANGE_REGION_SERVERS,
+    RABBITMQ_EXCHANGE_SLAVE_SERVERS,
     RABBITMQ_QUEUE_MASTER_SERVER
 } from "./../../constants/rabbitmq";
 import {hash} from "../../helpers/index";
@@ -19,11 +19,11 @@ export default class MasterServer extends Server {
 
     distrubutionBehavior: DistributionBehavior;
 
-    subordinates: Array<RegionServer>;
+    subordinates: Array<SlaveServer>;
 
     registry: Array<HRegion>; // ???
 
-    subscriptionForClients: Subscription;
+    clientsSubscription: Subscription;
     subscriptionsMap: {[key: string]: Subscription} = {};
 
     constructor(provider, serverData: ServerData) {
@@ -35,11 +35,24 @@ export default class MasterServer extends Server {
     };
 
     save(hRow: HRow) {
-        const {getRegionServerNo} = this.distrubutionBehavior;
-        const serverRegionNo = getRegionServerNo(hRow, this.subordinates.length);
-        this.subordinates[serverRegionNo].save(hRow);
+        const {getSlaveServerNo} = this.distrubutionBehavior;
 
-        console.log(false, `Region no ${serverRegionNo}`);
+        let attemptCounter = 0;
+        let idx: number;
+        let completed: boolean;
+        const safeLimit = this.getSlaveServersNumber() ** 2;
+
+        do {
+            attemptCounter++;
+            idx = getSlaveServerNo(hRow, this.subordinates.length);
+            completed = this.subordinates[idx].save(hRow);
+        } while (!completed && attemptCounter < safeLimit);
+
+        if (!completed) {
+            throw new Error(`Запись размером ${hRow.getSize()} не была записана ни в один регион`);
+        }
+
+        console.log(false, `Region no ${idx}`);
     }
 
     getSlaveServersNumber() {
@@ -51,54 +64,47 @@ export default class MasterServer extends Server {
         this.listen(RABBITMQ_QUEUE_MASTER_SERVER);
 
         const promises = [];
-        this.subordinates.forEach(regionServer => {
-            promises.push(regionServer.listenExchange(RABBITMQ_EXCHANGE_REGION_SERVERS));
+        this.subordinates.forEach(slaveServer => {
+            promises.push(slaveServer.listenExchange(RABBITMQ_EXCHANGE_SLAVE_SERVERS));
         });
 
         return Promise.all(promises);
     }
 
-    listen(queueName, callback = (...args)=>{}, lazy = false) {
+    listen(queueName, lazy = false) {
 
         console.log('Мастер-сервер ожидает запросы...');
 
-        const observable = new Observable(observer => {
+        this.clientsSubscription = this.provider
+            .consume(queueName, { lazy })
+            .subscribe(clientRequest => {
+                // from Clients
 
-            this.provider
-                .consume(queueName, { lazy })
-                .subscribe(response => {
-                    // from Clients
+                const {onClientReply, clientId} = clientRequest;
+                console.log(`Мастер-сервер получил запрос от клиента #${clientId}`);
 
-                    const {onClientReply, clientId} = response;
-                    console.log(`Мастер-сервер получил запрос от клиента #${clientId}`);
+                const {getSlaveServerNo} = this.distrubutionBehavior;
+                const idx = getSlaveServerNo(null, this.subordinates.length);
+                const slaveServer = this.subordinates[idx];
+                console.log(`Мастер-сервер перенаправляет запрос от клиента #${clientId} на регион-сервер #${slaveServer.id}`);
 
-                    const {getRegionServerNo} = this.distrubutionBehavior;
-                    const serverRegionNo = getRegionServerNo(null, this.subordinates.length);
-                    const regionServer = this.subordinates[serverRegionNo];
-                    console.log(`Мастер-сервер перенаправляет запрос от клиента #${clientId} на регион-сервер #${regionServer.id}`);
+                this
+                    .redirectToSlaveServer(slaveServer, {clientId})
+                    .then(onClientReply);
+            });
 
-                    this
-                        .redirectToRegionServer(regionServer, {clientId})
-                        .then(responseFromRegionServer => {
-                            onClientReply(responseFromRegionServer);
-                            observer.next(responseFromRegionServer);
-                        });
-                });
-        });
-
-        this.subscriptionForClients = observable.subscribe(callback);
     }
 
-    redirectToRegionServer(regionServer: RegionServer, data) {
+    redirectToSlaveServer(slaveServer: SlaveServer, data) {
 
         return new Promise((resolve, reject) => {
 
-            const routeKey = regionServer.id;
+            const routeKey = slaveServer.id;
             const subKey = hash(routeKey, Date.now());
             this.subscriptionsMap[subKey] = this.provider
-                .publishAndWaitByRouteKeys(RABBITMQ_EXCHANGE_REGION_SERVERS, [routeKey], {...data, subKey})
+                .publishAndWaitByRouteKeys(RABBITMQ_EXCHANGE_SLAVE_SERVERS, [routeKey], {...data, subKey})
                 .subscribe(response => {
-                    // from RegionServer
+                    // from SlaveServer
 
                     switch (response.type) {
                         case 'sent':
@@ -106,8 +112,8 @@ export default class MasterServer extends Server {
 
                         case 'received':
 
-                            const {regionServerId, clientId, subKey} = response;
-                            console.log(`Мастер-сервер получил ответ с регион-сервера ${regionServerId} на запрос от клиента #${clientId}`);
+                            const {slaveServerId, clientId, subKey} = response;
+                            console.log(`Мастер-сервер получил ответ с регион-сервера ${slaveServerId} на запрос от клиента #${clientId}`);
 
                             resolve(response);
 
@@ -124,6 +130,7 @@ export default class MasterServer extends Server {
     close() {
         super.close();
         this.subordinates.forEach(s => s.close());
+        this.clientsSubscription.unsubscribe();
     }
 
 

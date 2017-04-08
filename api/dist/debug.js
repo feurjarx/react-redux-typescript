@@ -1,9 +1,9 @@
 "use strict";
 var MapGenerator_1 = require("./models/MapGenerator");
 var RabbitMQ_1 = require("./services/RabbitMQ");
-var RegionServer_1 = require("./models/servers/RegionServer");
+var SlaveServer_1 = require("./models/servers/SlaveServer");
 var MasterServer_1 = require("./models/servers/MasterServer");
-var HashDistribution_1 = require("./models/servers/HashDistribution");
+var HashDistribution_1 = require("./models/servers/behaviors/HashDistribution");
 var tables = [{
         name: 'user',
         fields: [{
@@ -104,7 +104,7 @@ masterServer.distrubutionBehavior = new HashDistribution_1.default();
 for (var i = 0; i < serversData.length; i++) {
     var serverData = serversData[i];
     if (!serverData.isMaster) {
-        var server = new RegionServer_1.default(serverData);
+        var server = new SlaveServer_1.default(serverData);
         server.id = serverData.name;
         masterServer.subordinates.push(server);
     }
