@@ -5,8 +5,8 @@ import RegionServer from "./servers/RegionServer";
 import MapGenerator from "./MapGenerator";
 import RandomDistribution from "./servers/behaviors/RandomDistribution";
 import Statistics from "./Statistics";
-import {Subscription} from "rxjs";
 import RandomSleepCalculating from "./servers/behaviors/RandomSleepCalculating";
+import SocketLogEmitter from "../services/SocketLogEmitter";
 
 export class Life {
 
@@ -16,8 +16,6 @@ export class Life {
     private lifeCompleteCallback = Function();
     private lifeInfoCallback = Function();
     private bigDataInfoCallback = Function();
-
-    subscribtion: Subscription;
 
     onLifeComplete(callback = Function()) {
         this.lifeCompleteCallback = callback;
@@ -105,9 +103,10 @@ export class Life {
     };
 
     startClientsRequests = (lifeData) => {
-        const {clients, requestTimeLimit} = lifeData;
+        const {clients, requestTimeLimit, requestsLimit} = lifeData;
         const {statistics} = this;
         const nClients = clients.length;
+        SocketLogEmitter.instance.setBatchSize(requestsLimit * nClients);
 
         clients.forEach(clientData => {
         // [clients[0]].forEach(clientData => {
@@ -144,6 +143,7 @@ export class Life {
                             if (statistics.isEqualCompletedClients(nClients)) {
                                 statistics.unsubscribeFromAbsBandwidth();
                                 this.lifeCompleteCallback();
+                                SocketLogEmitter.instance.emitForce();
                             }
 
                             break;
@@ -167,7 +167,6 @@ export class Life {
 
 
     destroy() {
-        // this.subscribtion.unsubscribe();
         this.masterServer.close();
     }
 

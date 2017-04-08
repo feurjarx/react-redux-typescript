@@ -1,12 +1,13 @@
 import {
-
-    UPDATE_MONITOR_ITEM,
+    PUSH_NEW_ITEM_TO_REQUESTS_DIAGRAM,
+    PUSH_LOGS_BATCH_TO_CONSOLE_DRAWER,
     UPDATE_REGIONS_PIES_CHARTS,
+    UPDATE_CPU_CHART_COMPLETED,
+    INIT_REQUESTS_DIAGRAM,
     OTHER_STEPS_DATA,
-    INITIAL_LIFE_DATA, INITIAL_LIFE_DATA_COMPLETED,
-    STOP_STOPWATCH, START_STOPWATCH,
-    UPDATE_CPU_CHART, UPDATE_CPU_CHART_COMPLETED, INIT_REQUESTS_DIAGRAM, PUSH_NEW_ITEM_TO_REQUESTS_DIAGRAM
-
+    UPDATE_CPU_CHART,
+    START_STOPWATCH,
+    STOP_STOPWATCH
 } from '../constants/actions'
 
 export function updateCpuChart(data) {
@@ -43,6 +44,12 @@ export function pushNewItemToRequestsDiagram(data) {
     };
 }
 
+export function pushLogsBatchToConsoleDrawer(logsJson) {
+    return {
+        type: PUSH_LOGS_BATCH_TO_CONSOLE_DRAWER,
+        logsJson
+    };
+}
 
 export function updateOtherStepsData(data) {
     return {

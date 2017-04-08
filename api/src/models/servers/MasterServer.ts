@@ -39,7 +39,7 @@ export default class MasterServer extends Server {
         const serverRegionNo = getRegionServerNo(hRow, this.subordinates.length);
         this.subordinates[serverRegionNo].save(hRow);
 
-        console.log(`Region no ${serverRegionNo}`);
+        console.log(false, `Region no ${serverRegionNo}`);
     }
 
     getSlaveServersNumber() {

@@ -57,8 +57,8 @@ LIMIT 10
 
     getDefaultRequestsData() {
         return {
-            nClients: 50,
-            requestsLimit: 60,
+            nClients: 5,
+            requestsLimit: 3,
             requestTimeLimit: 10,
         }
     };

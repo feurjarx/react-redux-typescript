@@ -1,3 +1,4 @@
+import {count} from "rxjs/operator/count";
 const md5 = require('md5/md5');
 
 export function composition(...fns) {
@@ -20,3 +21,44 @@ export function range(min: number, max: number) {
         .split('')
         .map((it,i) => +it + i);
 }
+
+export const SocketLogger = (function () {
+
+    const consoleLog = console.log;
+    let counter = 0;
+    const batch = [];
+
+    function batchClear() {
+        while (batch.length) {
+            batch.pop();
+        }
+    }
+
+    function enable(client, eventName: string, batchSize = 10, delimiter = '<br>') {
+        console.log = (...args) => {
+            consoleLog.apply(console, args);
+            if (args[0] !== false) {
+
+                const log = args.join(',');
+                batch.push(log);
+                counter++;
+
+                if (counter % batchSize === 0) {
+                    client.emit(eventName, batch.join(delimiter));
+                    batchClear();
+                }
+            }
+        };
+    }
+
+    function disable() {
+        console.log = consoleLog;
+        counter = 0;
+        batchClear();
+    }
+
+    return {
+        disable,
+        enable
+    }
+}());

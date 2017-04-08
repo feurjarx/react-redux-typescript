@@ -31,7 +31,7 @@ var MasterServer = (function (_super) {
         var getRegionServerNo = this.distrubutionBehavior.getRegionServerNo;
         var serverRegionNo = getRegionServerNo(hRow, this.subordinates.length);
         this.subordinates[serverRegionNo].save(hRow);
-        console.log("Region no " + serverRegionNo);
+        console.log(false, "Region no " + serverRegionNo);
     };
     MasterServer.prototype.getSlaveServersNumber = function () {
         return this.subordinates.length;

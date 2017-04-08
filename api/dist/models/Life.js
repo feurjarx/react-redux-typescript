@@ -7,6 +7,7 @@ var MapGenerator_1 = require("./MapGenerator");
 var RandomDistribution_1 = require("./servers/behaviors/RandomDistribution");
 var Statistics_1 = require("./Statistics");
 var RandomSleepCalculating_1 = require("./servers/behaviors/RandomSleepCalculating");
+var SocketLogEmitter_1 = require("../services/SocketLogEmitter");
 var Life = (function () {
     function Life() {
         var _this = this;
@@ -14,9 +15,10 @@ var Life = (function () {
         this.lifeInfoCallback = Function();
         this.bigDataInfoCallback = Function();
         this.startClientsRequests = function (lifeData) {
-            var clients = lifeData.clients, requestTimeLimit = lifeData.requestTimeLimit;
+            var clients = lifeData.clients, requestTimeLimit = lifeData.requestTimeLimit, requestsLimit = lifeData.requestsLimit;
             var statistics = _this.statistics;
             var nClients = clients.length;
+            SocketLogEmitter_1.default.instance.setBatchSize(requestsLimit * nClients);
             clients.forEach(function (clientData) {
                 // [clients[0]].forEach(clientData => {
                 var nRequests = +clientData['nRequests'];
@@ -39,6 +41,7 @@ var Life = (function () {
                             if (statistics.isEqualCompletedClients(nClients)) {
                                 statistics.unsubscribeFromAbsBandwidth();
                                 _this.lifeCompleteCallback();
+                                SocketLogEmitter_1.default.instance.emitForce();
                             }
                             break;
                     }
@@ -118,7 +121,6 @@ var Life = (function () {
     };
     ;
     Life.prototype.destroy = function () {
-        // this.subscribtion.unsubscribe();
         this.masterServer.close();
     };
     return Life;

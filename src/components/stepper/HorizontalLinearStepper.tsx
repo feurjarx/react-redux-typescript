@@ -62,7 +62,7 @@ class HorizontalLinearStepper extends React.Component<any, any> {
 
             const displayStyle = {
                 display: stepIndex === i ? 'block' : 'none',
-                height: 280
+                height: 285
             };
 
             return (

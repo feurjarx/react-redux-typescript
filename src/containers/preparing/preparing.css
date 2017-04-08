@@ -2,7 +2,7 @@
     max-height: inherit !important;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 0 10px;
+    padding: 0 10px !important;
 }
 
 #life-data-form {

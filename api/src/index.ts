@@ -7,12 +7,13 @@ import {
     EVENT_IO_DISCONNECT,
     EVENT_IO_THE_END,
     EVENT_IO_LOAD_LINE,
-    EVENT_IO_PRELIFE
+    EVENT_IO_PRELIFE, EVENT_IO_LOGS
 } from './constants/events';
 
 import ioConfig from './configs/socket.io'
 
 import {Life} from "./models/Life";
+import SocketLogEmitter from "./services/SocketLogEmitter";
 
 export const run = () => {
 
@@ -21,7 +22,11 @@ export const run = () => {
 
     io.on(EVENT_IO_CONNECTION, client => {
 
-        console.log('browser client connected.');
+        SocketLogEmitter.instance
+            .init(client, EVENT_IO_LOGS)
+            .enable();
+
+        console.log(false, 'browser client connected.');
 
         let life: Life;
         client.on(EVENT_IO_LIFE,

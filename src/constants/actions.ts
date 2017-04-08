@@ -1,6 +1,7 @@
 export const UPDATE_REGIONS_PIES_CHARTS = 'update_regions_pies_charts';
 export const INIT_REQUESTS_DIAGRAM = 'init_requests_diagram';
 export const PUSH_NEW_ITEM_TO_REQUESTS_DIAGRAM = 'push_new_item_to_requests_diagram';
+export const PUSH_LOGS_BATCH_TO_CONSOLE_DRAWER = 'push_logs_batch_to_console_drawer';
 
 
 export const UPDATE_MONITOR_ITEM = 'update_monitor_item';

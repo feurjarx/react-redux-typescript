@@ -73,9 +73,11 @@ class Stopwatch extends React.Component<any, any> {
     render() {
 
         const {time, stopped} = this.state;
+        const {style} = this.props;
 
         return (
-            <h1 className={ stopped && !time ? 'hidden' : ''}>{ Math.round(time / 1000) }.{ time % 1000} сек.</h1>
+            // className={ stopped && !time ? 'hidden' : ''}
+            <h1 style={style}>{ Math.round(time / 1000) }.{ time % 1000} сек.</h1>
         )
     }
 }

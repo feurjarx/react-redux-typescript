@@ -14,17 +14,21 @@ import {connect} from "react-redux";
 
 import {
     EVENT_IO_LIFE,
+    EVENT_IO_LOGS,
+    EVENT_IO_PRELIFE,
     EVENT_IO_THE_END,
-    EVENT_IO_LOAD_LINE, EVENT_IO_DISCONNECT, EVENT_IO_PRELIFE
+    EVENT_IO_LOAD_LINE,
+    EVENT_IO_DISCONNECT
 } from "../../constants/events";
 
 import {
     pushNewItemToRequestsDiagram,
+    pushLogsBatchToConsoleDrawer,
     updateRegionsPiesCharts,
     initRequestsDiagram,
     startStopwatch,
     updateCpuChart,
-    stopStopwatch
+    stopStopwatch,
 } from "../../actions/index";
 
 import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
@@ -34,7 +38,6 @@ import FormDataService from "../../services/FormDataService";
 import PartitionsStep from "../steps/partitions-settings/PartitionsStep";
 import {prettylog} from "../../helpers/index";
 import TablesStep from "../steps/data-struct/TablesStep";
-import {inherits} from "util";
 
 @connect()
 export class Preparing extends React.Component<any, React.ComponentState> {
@@ -51,6 +54,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         // socket.on('connect', function () {});
         socket.on(EVENT_IO_LIFE, this.onLifeUpdate);
         socket.on(EVENT_IO_PRELIFE, this.onBigDataResponse);
+        socket.on(EVENT_IO_LOGS, this.onConsoleDrawerUpdate);
         socket.on(EVENT_IO_THE_END, this.onLifeComplete);
         socket.on(EVENT_IO_DISCONNECT, function () {
             props.dispatch(stopStopwatch());
@@ -95,7 +99,8 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
         socket.emit(EVENT_IO_LIFE, {
             ...initial,
-            clients
+            clients,
+            requestsLimit
         });
 
         dispatch(startStopwatch());
@@ -112,8 +117,11 @@ export class Preparing extends React.Component<any, React.ComponentState> {
     };
 
     onLifeUpdate = (data) => {
-        // console.count(`onLifeUpdate ${Date.now() / 1000}`);
         this.props.dispatch(pushNewItemToRequestsDiagram(data));
+    };
+
+    onConsoleDrawerUpdate = (logsJson) => {
+        this.props.dispatch(pushLogsBatchToConsoleDrawer(logsJson));
     };
 
     onLifeComplete = () => {
