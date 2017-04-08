@@ -45,6 +45,7 @@ export const run = () => {
                         }
                     })
                     .onLifeComplete(() => {
+                        SocketLogEmitter.instance.emitForce(); // остаток логов на выпуск
                         client.emit(EVENT_IO_THE_END);
                     })
                     .onBigDataInfo(browserData => (

@@ -29,6 +29,7 @@ exports.run = function () {
                 }
             })
                 .onLifeComplete(function () {
+                SocketLogEmitter_1.default.instance.emitForce(); // остаток логов на выпуск
                 client.emit(events_1.EVENT_IO_THE_END);
             })
                 .onBigDataInfo(function (browserData) { return (client.emit(events_1.EVENT_IO_PRELIFE, browserData)); })

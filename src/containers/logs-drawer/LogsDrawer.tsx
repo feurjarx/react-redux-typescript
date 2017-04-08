@@ -15,7 +15,6 @@ function mapStateToProps(state) {
 
 class LogsDrawer extends React.Component<any, any> {
 
-    logs = [];
     showLimit = 50;
 
     constructor() {
@@ -23,6 +22,7 @@ class LogsDrawer extends React.Component<any, any> {
 
         this.state = {
             open: false,
+            logs: [],
             showLogs: [],
             scrollLocked: false,
             connected: false
@@ -40,30 +40,35 @@ class LogsDrawer extends React.Component<any, any> {
     componentWillReceiveProps(props) {
         const {logsJson, stopwatch} = props;
 
+        let {connected, showLogs, logs} = this.state;
+
         if (stopwatch === 'start' && !this.state.connected) {
-            this.logs = [];
-            this.setState({connected: true});
+            logs = [];
+            connected = true;
         }
 
         if (stopwatch === 'stop' && this.state.connected) {
-            this.setState({connected: false});
+            connected = false;
         }
 
         if (logsJson) {
-
             const newLogs = JSON.parse(logsJson);
-            this.logs = this.logs.concat(newLogs);
-
-            this.setState({
-                showLogs: this.getShowLogs()
-            });
+            logs = logs.concat(newLogs);
+            showLogs = this.getShowLogs();
         }
+
+        this.setState({
+            connected,
+            showLogs,
+            logs
+        })
     }
 
     getShowLogs() {
-        const {showLimit, logs} = this;
+        const {showLimit} = this;
+        const {logs} = this.state;
         let showLogs = logs;
-        if (this.logs.length > showLimit) {
+        if (logs.length > showLimit) {
             showLogs = logs.slice((-1) * showLimit);
         }
 
@@ -77,13 +82,17 @@ class LogsDrawer extends React.Component<any, any> {
 
     onLogsScroll = () => {
 
-        const {open, scrollLocked, connected} = this.state;
+        const {
+            scrollLocked,
+            connected,
+            logs,
+            open
+        } = this.state;
+
         if (open && !connected && !scrollLocked) {
 
-            const scrollerElem = this.refs['logsScroller'] as HTMLElement;
-
-            const {logs} = this;
             let {showLogs} = this.state;
+            const scrollerElem = this.refs['logsScroller'] as HTMLElement;
 
             const logsLength = logs.length;
             const showLogsLength = showLogs.length;
@@ -102,13 +111,12 @@ class LogsDrawer extends React.Component<any, any> {
 
     render() {
 
-        const {open, showLogs} = this.state;
+        const {open, showLogs, logs} = this.state;
 
         const {
             onRequestChange,
             handleToggle,
-            onLogsScroll,
-            logs
+            onLogsScroll
         } = this;
 
         let content;
@@ -137,13 +145,10 @@ class LogsDrawer extends React.Component<any, any> {
                     open={open}
                     onRequestChange={onRequestChange}
                 >
-                    {/*
-                     onScroll={onLogsScroll}
-                    */}
-                    <div style={contentStyle}
-                         ref="logsScroller"
-                         onScroll={onLogsScroll}
-
+                    <div
+                        style={contentStyle}
+                        ref="logsScroller"
+                        onScroll={onLogsScroll}
                     >
                         {content}
                     </div>

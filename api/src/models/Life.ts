@@ -143,7 +143,6 @@ export class Life {
                             if (statistics.isEqualCompletedClients(nClients)) {
                                 statistics.unsubscribeFromAbsBandwidth();
                                 this.lifeCompleteCallback();
-                                SocketLogEmitter.instance.emitForce();
                             }
 
                             break;

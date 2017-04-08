@@ -41,7 +41,6 @@ var Life = (function () {
                             if (statistics.isEqualCompletedClients(nClients)) {
                                 statistics.unsubscribeFromAbsBandwidth();
                                 _this.lifeCompleteCallback();
-                                SocketLogEmitter_1.default.instance.emitForce();
                             }
                             break;
                     }
