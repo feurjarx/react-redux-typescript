@@ -2,6 +2,7 @@
 var index_1 = require("../../../helpers/index");
 var RandomDistribution = (function () {
     function RandomDistribution() {
+        this.repeatable = true;
     }
     RandomDistribution.prototype.getSlaveServerNo = function (_, totalSlavesNumber) {
         return index_1.random(totalSlavesNumber - 1);

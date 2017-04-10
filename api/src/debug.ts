@@ -3,7 +3,7 @@ import {TableData, ServerData} from "../typings/index";
 import RabbitMQ from "./services/RabbitMQ";
 import SlaveServer from "./models/servers/SlaveServer";
 import MasterServer from "./models/servers/MasterServer";
-import HashDistribution from "./models/servers/behaviors/HashDistribution";
+import {HashSharding} from "./models/servers/behaviors/sharding";
 
 const tables = [{
     name: 'user',
@@ -108,7 +108,7 @@ const masterServer = new MasterServer(
     serversData.find(it => it.isMaster)
 );
 
-masterServer.distrubutionBehavior = new HashDistribution();
+// masterServer.shardingBehavior = new HashSharding();
 
 for (let i = 0; i < serversData.length; i++) {
     const serverData = serversData[i];

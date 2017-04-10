@@ -13,6 +13,7 @@ class TablesStep extends React.Component<any, any> {
     getDefaultTableData() {
         return {
             name: 'user',
+            tableSize: null,
             fields: [{
                 name: null,
                 type: null

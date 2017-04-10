@@ -272,6 +272,5 @@ export default class RabbitMQ implements IQueue {
     destroy() {
         this.connection.close();
         this.connection = null;
-        // return this.connection.close();
     }
 }

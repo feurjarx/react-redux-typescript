@@ -203,12 +203,12 @@ LIMIT 10
 
                         <InfoSlider
                             label="Объем данных"
-                            name="requiredFilledSize"
+                            name="dbSize"
                             shortSyntax="Гб"
                             min={1}
                             max={10000}
                             defaultValue={ 1000 }
-                            onChange={ handleSlidersChange }
+                            onChange={handleSlidersChange}
                         />
                     </div>
                 </Paper>

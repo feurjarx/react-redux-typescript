@@ -4,10 +4,10 @@ var Expectant_1 = require("./clients/Expectant");
 var MasterServer_1 = require("./servers/MasterServer");
 var SlaveServer_1 = require("./servers/SlaveServer");
 var MapGenerator_1 = require("./MapGenerator");
-var RandomDistribution_1 = require("./servers/behaviors/RandomDistribution");
 var Statistics_1 = require("./Statistics");
-var RandomSleepCalculating_1 = require("./servers/behaviors/RandomSleepCalculating");
+var calculate_1 = require("./servers/behaviors/calculate");
 var SocketLogEmitter_1 = require("../services/SocketLogEmitter");
+var index_1 = require("./servers/behaviors/slave-selecting/index");
 var Life = (function () {
     function Life() {
         var _this = this;
@@ -56,13 +56,12 @@ var Life = (function () {
     }
     Life.initServers = function (serversData) {
         var masterServer = new MasterServer_1.default(new RabbitMQ_1.default(), serversData.find(function (it) { return it.isMaster; }));
-        // masterServer.distrubutionBehavior = new HashDistribution();
-        masterServer.distrubutionBehavior = new RandomDistribution_1.default();
+        masterServer.slaveSelectingBehavior = index_1.RandomSlaveSelecting.instance;
         for (var i = 0; i < serversData.length; i++) {
             var serverData = serversData[i];
             if (!serverData.isMaster) {
                 var server = new SlaveServer_1.default(new RabbitMQ_1.default(), serverData);
-                server.calculateBehavior = new RandomSleepCalculating_1.default(200);
+                server.calculateBehavior = new calculate_1.RandomSleepCalculating(200);
                 server.id = serverData.name;
                 masterServer.subordinates.push(server);
             }
@@ -86,11 +85,11 @@ var Life = (function () {
         this.bigDataInfoCallback = callback;
         return this;
     };
-    Life.prototype.createBigData = function (data) {
-        var tables = data.tables, requiredFilledSize = data.requiredFilledSize;
+    Life.prototype.createCluster = function (data) {
+        var tables = data.tables, dbSize = data.dbSize;
         var masterServer = this.masterServer;
-        var totalSize = requiredFilledSize * 1000;
-        MapGenerator_1.default.fillRegions({ tables: tables, totalSize: totalSize }, masterServer);
+        // const totalSize = dbSize * 1000;
+        MapGenerator_1.default.fillRegions({ tables: tables }, masterServer);
         var regionsPiesCharts = masterServer.subordinates.map(function (server) { return ({
             serverName: server.id,
             chartData: server.getRegionalStatistics()
@@ -109,7 +108,7 @@ var Life = (function () {
     Life.prototype.live = function (lifeData) {
         var servers = lifeData.servers;
         this.masterServer = Life.initServers(servers);
-        this.createBigData(lifeData);
+        this.createCluster(lifeData);
         this.statistics = new Statistics_1.default({ nServers: servers.length });
         this.simulateWorkWithBigData(lifeData);
         // statistics.subscribeToAbsBandwidth(absBandwidth => this.lifeInfoCallback({

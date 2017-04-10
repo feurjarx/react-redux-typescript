@@ -1,6 +1,7 @@
 "use strict";
 var index_1 = require("../helpers/index");
 var HRow_1 = require("./HRow");
+var index_2 = require("../constants/index");
 var MapGenerator = (function () {
     function MapGenerator() {
     }
@@ -41,7 +42,6 @@ var MapGenerator = (function () {
     MapGenerator.getFamilies = function (fields) {
         var result = [];
         var familiesNames = fields
-            .filter(function (f) { return f.familyName && !f.isPrimary; })
             .map(function (f) { return f.familyName; })
             .filter(function (f, i, list) { return list.indexOf(f) === i; });
         familiesNames.forEach(function (familyName) {
@@ -55,44 +55,62 @@ var MapGenerator = (function () {
     MapGenerator.getFieldsFamilyKey = function (fieldsNames) {
         return fieldsNames.join('=').toUpperCase();
     };
+    MapGenerator.getFieldTypeByNameMap = function (fields) {
+        var map = {};
+        fields.forEach(function (f) { return map[f.name] = f.type; });
+        return map;
+    };
     MapGenerator.fillRegions = function (_a, masterServer) {
         var _this = this;
-        var tables = _a.tables, totalSize = _a.totalSize;
+        var tables = _a.tables;
         var generator = new MapGenerator();
         // const hTables = {};
-        var maxTableSize = totalSize / tables.length; // avg
+        // const maxTableSize = dbSize / tables.length; // avg
         tables.forEach(function (table) {
-            var fields = table.fields;
+            var fields = table.fields, sharding = table.sharding;
+            var tableSize = index_2.HDD_ASPECT_RATIO * table.tableSize;
             var tableName = table.name;
             // hTables[tableName] = {};
             var families = _this.getFamilies(fields);
-            var tableSize = 0;
+            var fieldTypeByNameMap = _this.getFieldTypeByNameMap(fields);
+            var tableSizeCounter = 0;
             var _loop_1 = function (i) {
                 var id = i + 1;
                 var rowSizesInfo = generator.calcRowSizesInfo(id, fields);
                 var sizeByFieldNameMap = rowSizesInfo.sizeByFieldNameMap;
                 var rowKey = index_1.hash(tableName, id, Date.now());
-                var hRow = new HRow_1.default(rowKey);
+                var hRow = new HRow_1.default(rowKey, tableName);
                 // fill one hRow
                 families.forEach(function (fieldsNames) {
                     var familyKey = _this.getFieldsFamilyKey(fieldsNames);
                     var fieldsValues = {};
                     fieldsNames.forEach(function (fieldName) {
+                        var fieldValue = null;
+                        switch (fieldTypeByNameMap[fieldName]) {
+                            case index_2.FIELD_TYPE_NUMBER:
+                                fieldValue = index_1.random(100);
+                                break;
+                            case index_2.FIELD_TYPE_STRING:
+                                fieldValue = index_1.generateWord(4);
+                                break;
+                        }
                         var fieldSize = sizeByFieldNameMap[fieldName];
-                        fieldsValues[fieldName] = (_a = {
-                                fieldSize: fieldSize
-                            },
-                            _a[Date.now()] = { fieldSize: fieldSize },
-                            _a);
+                        fieldsValues[fieldName] = {
+                            fieldSize: fieldSize,
+                            versions: (_a = {},
+                                _a[Date.now()] = fieldValue,
+                                _a)
+                        };
                         var _a;
                     });
                     hRow.families[familyKey] = fieldsValues;
                 });
                 // hTables[tableName][rowKey] = hRow;
-                masterServer.save(hRow);
-                tableSize += rowSizesInfo.rowSize;
+                masterServer.setSharding(sharding);
+                masterServer.save(hRow, sharding);
+                tableSizeCounter += rowSizesInfo.rowSize;
             };
-            for (var i = 0; tableSize < maxTableSize; i++) {
+            for (var i = 0; tableSizeCounter < tableSize; i++) {
                 _loop_1(i);
             }
         });

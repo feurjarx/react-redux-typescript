@@ -211,7 +211,6 @@ var RabbitMQ = (function () {
     RabbitMQ.prototype.destroy = function () {
         this.connection.close();
         this.connection = null;
-        // return this.connection.close();
     };
     return RabbitMQ;
 }());

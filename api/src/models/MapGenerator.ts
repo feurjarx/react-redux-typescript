@@ -1,8 +1,11 @@
-import {random, hash} from '../helpers/index';
+import {random, hash, range, generateWord} from "../helpers/index";
 import HRow from "./HRow";
 import MasterServer from "./servers/MasterServer";
+import {RandomSharding} from "./servers/behaviors/sharding";
+import {TableField} from "../../typings/index";
+import {FIELD_TYPE_NUMBER, FIELD_TYPE_STRING, HDD_ASPECT_RATIO} from "../constants/index";
 
-class MapGenerator {
+export default class MapGenerator {
 
     calcRowSizesInfo(rowId, fields, ) {
 
@@ -15,6 +18,7 @@ class MapGenerator {
             let fieldSize;
             if (isPrimary) {
                 fieldSize = String(rowId).length;
+
             } else {
 
                 let maxFieldSize = f.length;
@@ -51,7 +55,7 @@ class MapGenerator {
         const result = [];
 
         const familiesNames = fields
-            .filter(f => f.familyName && !f.isPrimary)
+            // .filter(f => f.familyName && !f.isPrimary)
             .map(f => f.familyName)
             .filter((f, i, list) => list.indexOf(f) === i);
 
@@ -70,22 +74,30 @@ class MapGenerator {
         return fieldsNames.join('=').toUpperCase();
     }
 
-    static fillRegions({tables, totalSize}, masterServer: MasterServer) {
+    static getFieldTypeByNameMap(fields: Array<TableField>) {
+        let map = {};
+        fields.forEach(f => map[f.name] = f.type)
+        return map;
+    }
+
+    static fillRegions({tables}, masterServer: MasterServer) {
 
         const generator = new MapGenerator();
         // const hTables = {};
-        const maxTableSize = totalSize / tables.length; // avg
+        // const maxTableSize = dbSize / tables.length; // avg
 
         tables.forEach(table => {
 
-            const {fields} = table;
+            const {fields, sharding} = table;
+            const tableSize = HDD_ASPECT_RATIO * table.tableSize;
             const tableName = table.name;
             // hTables[tableName] = {};
 
             const families = this.getFamilies(fields);
+            const fieldTypeByNameMap = this.getFieldTypeByNameMap(fields);
 
-            let tableSize = 0;
-            for (let i = 0; tableSize < maxTableSize; i++) {
+            let tableSizeCounter = 0;
+            for (let i = 0; tableSizeCounter < tableSize; i++) {
 
                 const id = i + 1;
 
@@ -93,7 +105,7 @@ class MapGenerator {
                 const {sizeByFieldNameMap} = rowSizesInfo;
 
                 const rowKey = hash(tableName, id, Date.now());
-                const hRow = new HRow(rowKey);
+                const hRow = new HRow(rowKey, tableName);
 
                 // fill one hRow
                 families.forEach(fieldsNames => {
@@ -101,10 +113,22 @@ class MapGenerator {
                     const familyKey = this.getFieldsFamilyKey(fieldsNames);
                     const fieldsValues = {};
                     fieldsNames.forEach(fieldName => {
+                        let fieldValue = null;
+                        switch (fieldTypeByNameMap[fieldName]) {
+                            case FIELD_TYPE_NUMBER:
+                                fieldValue = random(100);
+                                break;
+                            case FIELD_TYPE_STRING:
+                                fieldValue = generateWord(4);
+                                break;
+                        }
+
                         const fieldSize = sizeByFieldNameMap[fieldName];
                         fieldsValues[fieldName] = {
                             fieldSize,
-                            [Date.now()]: { fieldSize }
+                            versions: {
+                                [Date.now()]: fieldValue
+                            }
                         };
                     });
 
@@ -112,13 +136,12 @@ class MapGenerator {
                 });
 
                 // hTables[tableName][rowKey] = hRow;
-                masterServer.save(hRow);
-                tableSize += rowSizesInfo.rowSize;
+                masterServer.setSharding(sharding);
+                masterServer.save(hRow, sharding);
+                tableSizeCounter += rowSizesInfo.rowSize;
             }
         });
 
         // return hTables; // logical data struct
     }
 }
-
-export default MapGenerator;

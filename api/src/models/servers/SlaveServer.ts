@@ -5,6 +5,7 @@ import HRegion from "../HRegion";
 import {range} from '../../helpers';
 import {Subscription} from "rxjs";
 import {IQueue} from "../../services/IQueue";
+import {HDD_ASPECT_RATIO} from "../../constants/index";
 
 export default class SlaveServer extends Server {
     regions: Array<HRegion>;
@@ -21,8 +22,11 @@ export default class SlaveServer extends Server {
 
         this.regions = [];
 
-        const {hdd, maxRegions} = serverData;
-        this.hdd = hdd;
+        const {maxRegions} = serverData;
+        let {hdd} = serverData;
+        hdd = HDD_ASPECT_RATIO * hdd;
+
+        this.hdd = HDD_ASPECT_RATIO * hdd;
         this.maxRegions = maxRegions;
 
         const regionMaxSize = Math.round(hdd / maxRegions);
@@ -34,8 +38,9 @@ export default class SlaveServer extends Server {
 
     getRegionalStatistics() {
         return this.regions.map(r => ({
-            name: `Регион ${r.id} сервера ${this.id}`,
-            value: r.maxSize - r.freeSpace
+            name: `Регион ${r.id} сервера ${this.id} (всего: ${Math.round(r.maxSize / HDD_ASPECT_RATIO * this.regions.length)})`,
+            value: (r.maxSize - r.freeSpace) / HDD_ASPECT_RATIO,
+            free: r.freeSpace / HDD_ASPECT_RATIO // for log
         }))
     }
 
@@ -43,6 +48,8 @@ export default class SlaveServer extends Server {
 
         const {regions} = this;
         let completed = false;
+
+        const needSplitedRegions = [];
 
         for (let i = 0; i < regions.length; i++) {
             const region = regions[i];
@@ -53,10 +60,15 @@ export default class SlaveServer extends Server {
 
             } else {
 
-                this.split(region);
+                needSplitedRegions.push(region);
             }
         }
 
+        needSplitedRegions.forEach(region => {
+            this.split(region);
+        });
+
+        // console.log(this.getRegionalStatistics());
         return completed;
     }
 

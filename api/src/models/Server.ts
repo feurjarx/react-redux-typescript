@@ -1,5 +1,5 @@
 import {IQueue} from "../services/IQueue";
-import {CalculateBehavior} from './servers/behaviors/CalculateBehavior';
+import {CalculateBehavior} from './servers/behaviors/calculate/CalculateBehavior';
 
 export default class Server {
 

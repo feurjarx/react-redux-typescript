@@ -3,11 +3,11 @@ import ExpectantClient from "./clients/Expectant";
 import MasterServer from "./servers/MasterServer";
 import SlaveServer from "./servers/SlaveServer";
 import MapGenerator from "./MapGenerator";
-import RandomDistribution from "./servers/behaviors/RandomDistribution";
+import {RandomSharding} from "./servers/behaviors/sharding";
 import Statistics from "./Statistics";
-import RandomSleepCalculating from "./servers/behaviors/RandomSleepCalculating";
+import {RandomSleepCalculating} from "./servers/behaviors/calculate";
 import SocketLogEmitter from "../services/SocketLogEmitter";
-import HashDistribution from "./servers/behaviors/HashDistribution";
+import {RandomSlaveSelecting} from "./servers/behaviors/slave-selecting/index";
 
 export class Life {
 
@@ -17,8 +17,7 @@ export class Life {
             serversData.find(it => it.isMaster)
         );
 
-        // masterServer.distrubutionBehavior = new HashDistribution();
-        masterServer.distrubutionBehavior = new RandomDistribution();
+        masterServer.slaveSelectingBehavior = RandomSlaveSelecting.instance;
 
         for (let i = 0; i < serversData.length; i++) {
             const serverData = serversData[i];
@@ -58,13 +57,13 @@ export class Life {
         return this;
     }
 
-    private createBigData(data) {
+    private createCluster(data) {
 
-        const {tables, requiredFilledSize} = data;
+        const {tables, dbSize} = data;
 
         const {masterServer} = this;
-        const totalSize = requiredFilledSize * 1000;
-        MapGenerator.fillRegions({tables, totalSize}, masterServer);
+        // const totalSize = dbSize * 1000;
+        MapGenerator.fillRegions({tables}, masterServer);
 
         const regionsPiesCharts = masterServer.subordinates.map(server => ({
             serverName: server.id,
@@ -89,7 +88,7 @@ export class Life {
 
         this.masterServer = Life.initServers(servers);
 
-        this.createBigData(lifeData);
+        this.createCluster(lifeData);
 
         this.statistics = new Statistics({nServers: servers.length});
 

@@ -7,6 +7,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var Server_1 = require("../Server");
 var HRegion_1 = require("../HRegion");
 var helpers_1 = require("../../helpers");
+var index_1 = require("../../constants/index");
 var SlaveServer = (function (_super) {
     __extends(SlaveServer, _super);
     function SlaveServer(provider, serverData) {
@@ -30,8 +31,10 @@ var SlaveServer = (function (_super) {
             });
         };
         _this.regions = [];
-        var hdd = serverData.hdd, maxRegions = serverData.maxRegions;
-        _this.hdd = hdd;
+        var maxRegions = serverData.maxRegions;
+        var hdd = serverData.hdd;
+        hdd = index_1.HDD_ASPECT_RATIO * hdd;
+        _this.hdd = index_1.HDD_ASPECT_RATIO * hdd;
         _this.maxRegions = maxRegions;
         var regionMaxSize = Math.round(hdd / maxRegions);
         _this.regions = helpers_1.range(0, maxRegions)
@@ -43,13 +46,16 @@ var SlaveServer = (function (_super) {
     SlaveServer.prototype.getRegionalStatistics = function () {
         var _this = this;
         return this.regions.map(function (r) { return ({
-            name: "\u0420\u0435\u0433\u0438\u043E\u043D " + r.id + " \u0441\u0435\u0440\u0432\u0435\u0440\u0430 " + _this.id,
-            value: r.maxSize - r.freeSpace
+            name: "\u0420\u0435\u0433\u0438\u043E\u043D " + r.id + " \u0441\u0435\u0440\u0432\u0435\u0440\u0430 " + _this.id + " (\u0432\u0441\u0435\u0433\u043E: " + Math.round(r.maxSize / index_1.HDD_ASPECT_RATIO * _this.regions.length) + ")",
+            value: (r.maxSize - r.freeSpace) / index_1.HDD_ASPECT_RATIO,
+            free: r.freeSpace / index_1.HDD_ASPECT_RATIO // for log
         }); });
     };
     SlaveServer.prototype.save = function (hRow) {
+        var _this = this;
         var regions = this.regions;
         var completed = false;
+        var needSplitedRegions = [];
         for (var i = 0; i < regions.length; i++) {
             var region = regions[i];
             if (region.isFitIn(hRow.getSize())) {
@@ -58,9 +64,13 @@ var SlaveServer = (function (_super) {
                 break;
             }
             else {
-                this.split(region);
+                needSplitedRegions.push(region);
             }
         }
+        needSplitedRegions.forEach(function (region) {
+            _this.split(region);
+        });
+        // console.log(this.getRegionalStatistics());
         return completed;
     };
     SlaveServer.prototype.split = function (hRegion) {

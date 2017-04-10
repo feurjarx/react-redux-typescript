@@ -15,6 +15,8 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
 var Server_1 = require("../Server");
 var rabbitmq_1 = require("./../../constants/rabbitmq");
 var index_1 = require("../../helpers/index");
+var sharding_1 = require("./behaviors/sharding");
+var constants_1 = require("./../../constants");
 var MasterServer = (function (_super) {
     __extends(MasterServer, _super);
     function MasterServer(provider, serverData) {
@@ -26,24 +28,49 @@ var MasterServer = (function (_super) {
         return _this;
     }
     ;
-    MasterServer.prototype.save = function (hRow) {
-        var getSlaveServerNo = this.distrubutionBehavior.getSlaveServerNo;
-        var attemptCounter = 0;
-        var idx;
-        var completed;
-        var safeLimit = Math.pow(this.getSlaveServersNumber(), 2);
-        do {
-            attemptCounter++;
-            idx = getSlaveServerNo(hRow, this.subordinates.length);
-            completed = this.subordinates[idx].save(hRow);
-        } while (!completed && attemptCounter < safeLimit);
-        if (!completed) {
-            throw new Error("\u0417\u0430\u043F\u0438\u0441\u044C \u0440\u0430\u0437\u043C\u0435\u0440\u043E\u043C " + hRow.getSize() + " \u043D\u0435 \u0431\u044B\u043B\u0430 \u0437\u0430\u043F\u0438\u0441\u0430\u043D\u0430 \u043D\u0438 \u0432 \u043E\u0434\u0438\u043D \u0440\u0435\u0433\u0438\u043E\u043D");
+    MasterServer.prototype.setSharding = function (sharding) {
+        if (sharding === void 0) { sharding = {}; }
+        var type = sharding.type;
+        switch (type) {
+            case constants_1.SHARDING_TYPE_DEFAULT:
+                break;
+            case constants_1.SHARDING_TYPE_VERTICAL:
+                this.shardingBehavior = sharding_1.VerticalSharding.instance;
+                break;
+            case constants_1.SHARDING_TYPE_HORIZONTAL:
+                this.shardingBehavior = sharding_1.HorizontalSharding.instance;
+                break;
+            default:
+                this.shardingBehavior = sharding_1.RandomSharding.instance;
         }
-        console.log(false, "Region no " + idx);
+    };
+    MasterServer.prototype.getSlaveServerById = function (id) {
+        return this.subordinates.find(function (slave) { return slave.id === id; });
+    };
+    MasterServer.prototype.save = function (hRow, shardingOptions) {
+        if (shardingOptions === void 0) { shardingOptions = {}; }
+        var _a = this.shardingBehavior, repeated = _a.repeated, getSlaveServerId = _a.getSlaveServerId;
+        var completed;
+        var slaveServerId;
+        var attemptCounter = 0;
+        var safeLimit = Math.pow(this.getSlaveServersNumber(), 2);
+        var slaveServersIds = this.getSlaveServersIds();
+        do {
+            slaveServerId = getSlaveServerId(hRow, slaveServersIds, __assign({}, shardingOptions, { attemptCounter: attemptCounter }));
+            completed = this
+                .getSlaveServerById(slaveServerId)
+                .save(hRow);
+        } while (repeated && !completed && ++attemptCounter < safeLimit);
+        if (!completed) {
+            throw new Error("\u0417\u0430\u043F\u0438\u0441\u044C \u0440\u0430\u0437\u043C\u0435\u0440\u043E\u043C " + hRow.getSize() + " \u043D\u0435 \u0431\u044B\u043B\u0430 \u0437\u0430\u043F\u0438\u0441\u0430\u043D\u0430 (\u0420\u0435\u0433\u0438\u043E\u043D \u0441\u0435\u0440\u0432\u0435\u0440 " + slaveServerId + ", " + this.shardingBehavior.title + ")");
+        }
+        console.log(false, "Select slave server " + slaveServerId);
     };
     MasterServer.prototype.getSlaveServersNumber = function () {
         return this.subordinates.length;
+    };
+    MasterServer.prototype.getSlaveServersIds = function () {
+        return this.subordinates.map(function (s) { return s.id; });
     };
     MasterServer.prototype.prepare = function () {
         this.listen(rabbitmq_1.RABBITMQ_QUEUE_MASTER_SERVER);
@@ -63,9 +90,9 @@ var MasterServer = (function (_super) {
             // from Clients
             var onClientReply = clientRequest.onClientReply, clientId = clientRequest.clientId;
             console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
-            var getSlaveServerNo = _this.distrubutionBehavior.getSlaveServerNo;
-            var idx = getSlaveServerNo(null, _this.subordinates.length);
-            var slaveServer = _this.subordinates[idx];
+            var getSlaveServerId = _this.slaveSelectingBehavior.getSlaveServerId;
+            var slaveServerId = getSlaveServerId(_this.getSlaveServersIds());
+            var slaveServer = _this.getSlaveServerById(slaveServerId);
             console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u0435\u0440\u0435\u043D\u0430\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u0442 \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId + " \u043D\u0430 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440 #" + slaveServer.id);
             _this
                 .redirectToSlaveServer(slaveServer, { clientId: clientId })

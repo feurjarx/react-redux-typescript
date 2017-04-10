@@ -28,48 +28,19 @@ function hash() {
 exports.hash = hash;
 function range(min, max) {
     var length = max - min;
-    return String(min)
+    return (min + ',')
         .repeat(length)
-        .split('')
+        .slice(0, -1)
+        .split(',')
         .map(function (it, i) { return +it + i; });
 }
 exports.range = range;
-exports.SocketLogger = (function () {
-    var consoleLog = console.log;
-    var counter = 0;
-    var batch = [];
-    function batchClear() {
-        while (batch.length) {
-            batch.pop();
-        }
+function generateWord(length, abc) {
+    if (abc === void 0) { abc = "ABCDEFGH"; }
+    var word = '';
+    for (var i = 0; i < length; i++) {
+        word += abc.charAt(Math.floor(Math.random() * abc.length));
     }
-    function enable(client, eventName, batchSize, delimiter) {
-        if (batchSize === void 0) { batchSize = 10; }
-        if (delimiter === void 0) { delimiter = '<br>'; }
-        console.log = function () {
-            var args = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                args[_i] = arguments[_i];
-            }
-            consoleLog.apply(console, args);
-            if (args[0] !== false) {
-                var log = args.join(',');
-                batch.push(log);
-                counter++;
-                if (counter % batchSize === 0) {
-                    client.emit(eventName, batch.join(delimiter));
-                    batchClear();
-                }
-            }
-        };
-    }
-    function disable() {
-        console.log = consoleLog;
-        counter = 0;
-        batchClear();
-    }
-    return {
-        disable: disable,
-        enable: enable
-    };
-}());
+    return word;
+}
+exports.generateWord = generateWord;

@@ -3,7 +3,6 @@ var MapGenerator_1 = require("./models/MapGenerator");
 var RabbitMQ_1 = require("./services/RabbitMQ");
 var SlaveServer_1 = require("./models/servers/SlaveServer");
 var MasterServer_1 = require("./models/servers/MasterServer");
-var HashDistribution_1 = require("./models/servers/behaviors/HashDistribution");
 var tables = [{
         name: 'user',
         fields: [{
@@ -100,7 +99,7 @@ var serversData = [{
     }];
 // add region
 var masterServer = new MasterServer_1.default(new RabbitMQ_1.default(), serversData.find(function (it) { return it.isMaster; }));
-masterServer.distrubutionBehavior = new HashDistribution_1.default();
+// masterServer.shardingBehavior = new HashSharding();
 for (var i = 0; i < serversData.length; i++) {
     var serverData = serversData[i];
     if (!serverData.isMaster) {

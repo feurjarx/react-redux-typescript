@@ -1,9 +1,26 @@
 "use strict";
 var HRow = (function () {
-    function HRow(rowKey) {
+    function HRow(rowKey, tableName) {
         this.families = {};
         this.rowKey = rowKey;
+        this.tableName = tableName;
     }
+    HRow.prototype.getFirstVersionValueFromCell = function (rowCell) {
+        var versions = rowCell.versions;
+        var tsList = Object.keys(versions);
+        return versions[tsList[0]];
+    };
+    HRow.prototype.getValueByFieldName = function (name) {
+        var result = null;
+        for (var it in this.families) {
+            var rowCell = this.families[it][name];
+            if (rowCell) {
+                result = this.getFirstVersionValueFromCell(rowCell);
+                break;
+            }
+        }
+        return result;
+    };
     HRow.prototype.getSize = function () {
         var result = 0;
         var families = this.families;

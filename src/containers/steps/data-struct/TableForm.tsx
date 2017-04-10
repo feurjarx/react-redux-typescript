@@ -4,6 +4,7 @@ import Paper from 'material-ui/Paper';
 import TextField from 'material-ui/TextField';
 import ReplicaTools from '../../../components/replic-tools/ReplicaTools';
 import FieldsGroup from "./FieldsGroup";
+import InfoSlider from "../../../components/info-slider/InfoSlider";
 
 export class TableForm extends React.Component<any, any> {
 
@@ -39,7 +40,15 @@ export class TableForm extends React.Component<any, any> {
                     <TextField
                         name={`tables.${idx}.name`}
                         defaultValue={defaultValues.name}
-                        floatingLabelText="Введите имя таблицы"
+                        hintText="Введите имя таблицы"
+                        fullWidth={true}
+                        onChange={onTextFieldChange}
+                    />
+
+                    <TextField
+                        name={`tables.${idx}.tableSize`}
+                        defaultValue={defaultValues.tableSize}
+                        hintText="Укажите размер таблицы"
                         fullWidth={true}
                         onChange={onTextFieldChange}
                     />

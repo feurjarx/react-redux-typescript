@@ -2,22 +2,41 @@ import Server from "../Server";
 import {ServerData} from "../../../typings/index";
 import SlaveServer from "./SlaveServer";
 import HRow from "../HRow";
-import DistributionBehavior from "../servers/behaviors/DistributionBehavior";
+import ShardingBehavior from "./behaviors/sharding/ShardingBehavior";
 import HRegion from "../HRegion";
-
-import {Observable, Subscription} from "rxjs";
+import {Subscription} from "rxjs";
 
 import {
     RABBITMQ_EXCHANGE_SLAVE_SERVERS,
     RABBITMQ_QUEUE_MASTER_SERVER
 } from "./../../constants/rabbitmq";
+
 import {hash} from "../../helpers/index";
+import {
+    VerticalSharding,
+    HorizontalSharding,
+    RandomSharding
+} from "./behaviors/sharding";
+
+import {
+    SHARDING_TYPE_DEFAULT,
+    SHARDING_TYPE_HORIZONTAL,
+    SHARDING_TYPE_VERTICAL
+} from "./../../constants"
+import SlaveSelectingBehavior from "./behaviors/slave-selecting/SlaveSelectingBehavior";
+
+interface ShardingProps {
+    type: string;
+    serverId?: string;
+    fieldId?: string;
+}
 
 export default class MasterServer extends Server {
 
     isMaster: boolean;
 
-    distrubutionBehavior: DistributionBehavior;
+    shardingBehavior: ShardingBehavior;
+    slaveSelectingBehavior: SlaveSelectingBehavior;
 
     subordinates: Array<SlaveServer>;
 
@@ -34,29 +53,67 @@ export default class MasterServer extends Server {
         this.subordinates = [];
     };
 
-    save(hRow: HRow) {
-        const {getSlaveServerNo} = this.distrubutionBehavior;
+    setSharding(sharding = {}) {
+        const {type} = sharding as ShardingProps;
+        switch (type) {
+            case SHARDING_TYPE_DEFAULT:
+                break;
+
+            case SHARDING_TYPE_VERTICAL:
+                this.shardingBehavior = VerticalSharding.instance;
+                break;
+
+            case SHARDING_TYPE_HORIZONTAL:
+                this.shardingBehavior = HorizontalSharding.instance;
+                break;
+
+            default:
+                this.shardingBehavior = RandomSharding.instance;
+        }
+    }
+
+    getSlaveServerById(id) {
+        return this.subordinates.find(slave => slave.id === id);
+    }
+
+    save(hRow: HRow, shardingOptions = {}) {
+        const {
+            repeated,
+            getSlaveServerId
+        } = this.shardingBehavior;
+
+        let completed: boolean;
+        let slaveServerId: any;
 
         let attemptCounter = 0;
-        let idx: number;
-        let completed: boolean;
         const safeLimit = this.getSlaveServersNumber() ** 2;
+        const slaveServersIds = this.getSlaveServersIds();
 
         do {
-            attemptCounter++;
-            idx = getSlaveServerNo(hRow, this.subordinates.length);
-            completed = this.subordinates[idx].save(hRow);
-        } while (!completed && attemptCounter < safeLimit);
+            slaveServerId = getSlaveServerId(hRow, slaveServersIds, {
+                ...shardingOptions,
+                attemptCounter
+            });
+
+            completed = this
+                .getSlaveServerById(slaveServerId)
+                .save(hRow);
+
+        } while (repeated && !completed && ++attemptCounter < safeLimit);
 
         if (!completed) {
-            throw new Error(`Запись размером ${hRow.getSize()} не была записана ни в один регион`);
+            throw new Error(`Запись размером ${hRow.getSize()} не была записана (Регион сервер ${slaveServerId}, ${this.shardingBehavior.title})`);
         }
 
-        console.log(false, `Region no ${idx}`);
+        console.log(false, `Select slave server ${slaveServerId}`);
     }
 
     getSlaveServersNumber() {
         return this.subordinates.length;
+    }
+
+    getSlaveServersIds() {
+        return this.subordinates.map(s => s.id);
     }
 
     prepare() {
@@ -83,9 +140,9 @@ export default class MasterServer extends Server {
                 const {onClientReply, clientId} = clientRequest;
                 console.log(`Мастер-сервер получил запрос от клиента #${clientId}`);
 
-                const {getSlaveServerNo} = this.distrubutionBehavior;
-                const idx = getSlaveServerNo(null, this.subordinates.length);
-                const slaveServer = this.subordinates[idx];
+                const {getSlaveServerId} = this.slaveSelectingBehavior;
+                const slaveServerId = getSlaveServerId(this.getSlaveServersIds());
+                const slaveServer = this.getSlaveServerById(slaveServerId);
                 console.log(`Мастер-сервер перенаправляет запрос от клиента #${clientId} на регион-сервер #${slaveServer.id}`);
 
                 this
