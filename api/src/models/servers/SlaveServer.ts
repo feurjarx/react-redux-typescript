@@ -13,6 +13,8 @@ export default class SlaveServer extends Server {
     hdd: number;
     maxRegions: number;
 
+    familyGuideMap = {};
+
     regionMaxSize: number;
 
     subscription: Subscription;
@@ -25,8 +27,8 @@ export default class SlaveServer extends Server {
         const {maxRegions} = serverData;
         let {hdd} = serverData;
         hdd = HDD_ASPECT_RATIO * hdd;
+        this.hdd = hdd;
 
-        this.hdd = HDD_ASPECT_RATIO * hdd;
         this.maxRegions = maxRegions;
 
         const regionMaxSize = Math.round(hdd / maxRegions);
@@ -67,6 +69,8 @@ export default class SlaveServer extends Server {
         needSplitedRegions.forEach(region => {
             this.split(region);
         });
+
+
 
         // console.log(this.getRegionalStatistics());
         return completed;
@@ -113,7 +117,7 @@ export default class SlaveServer extends Server {
                 onClientReply({
                     subKey,
                     clientId,
-                    slaveServerId: this.id,
+                    slaveId: this.id,
                     lastProcessingTime: 0,
                     requestCounter: this.requestCounter
                     // see to Life onMasterServerResponse

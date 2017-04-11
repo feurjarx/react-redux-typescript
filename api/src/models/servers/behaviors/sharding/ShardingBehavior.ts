@@ -1,6 +1,6 @@
 interface ShardingBehavior {
     repeated: boolean;
-    title?: string;
+    type?: string;
     getSlaveServerId?(...args);
 }
 

@@ -10,7 +10,7 @@ function mapStateToProps(state, props) {
     return state;
 }
 
-class PartitionsStepConnectable extends React.Component<any, any> {
+class PartitionsStep extends React.Component<any, any> {
 
     fds: FormDataService;
 
@@ -148,4 +148,4 @@ class PartitionsStepConnectable extends React.Component<any, any> {
     }
 }
 
-export default connect(mapStateToProps)(PartitionsStepConnectable);
+export default connect(mapStateToProps)(PartitionsStep);

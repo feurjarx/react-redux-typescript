@@ -22,7 +22,7 @@ export function range(min: number, max: number): Array<number> {
         .map((it,i) => +it + i);
 }
 
-export function generateWord(length, abc = "ABCDEFGH") {
+export function generateWord(length, abc = "abc") {
 
     let word = '';
     for (let i = 0; i < length; i++) {
@@ -30,4 +30,28 @@ export function generateWord(length, abc = "ABCDEFGH") {
     }
 
     return word;
+}
+
+export function str2numbers(v: string) {
+    return +v
+        .split('')
+        .map(ch => ch.charCodeAt(0))
+        .join('');
+}
+
+export function unique(arr) {
+    return arr.filter((it, i) => arr.indexOf(it) === i);
+}
+
+export function qtrim(v) {
+
+    if (['\'', '"', '`'].indexOf(v[0]) >= 0) {
+        v = v.slice(1);
+    }
+
+    if (['\'', '"', '`'].indexOf(v.slice(-1)) >= 0) {
+        v = v.slice(0, -1);
+    }
+
+    return v;
 }

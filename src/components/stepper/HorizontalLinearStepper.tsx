@@ -16,9 +16,12 @@ class HorizontalLinearStepper extends React.Component<any, any> {
 
     handleNext = () => {
         const {stepIndex} = this.state;
+        const {steps} = this.props;
+
+        console.log(stepIndex)
         this.setState({
             stepIndex: stepIndex + 1,
-            finished: stepIndex >= 2,
+            finished: stepIndex + 2 === steps.length,
         });
     };
 
@@ -98,8 +101,8 @@ const ButtonsPanel = (props) => {
         handlePrev,
         handleNext,
         stepIndex,
-        limit,
-        finished
+        finished,
+        limit
     } = props;
 
     return (

@@ -77,16 +77,12 @@ var RabbitMQ = (function () {
                         if (msg.properties.correlationId === correlationId) {
                             observer.next(__assign({ type: 'received' }, JSON.parse(msg.content.toString()), { repeat: function (newData) {
                                     sendCall(__assign({ correlationId: correlationId }, newData));
-                                    observer.next({
-                                        type: 'sent'
-                                    });
+                                    observer.next(__assign({ type: 'sent' }, data));
                                 } }));
                         }
                     }, { noAck: true });
                     sendCall(__assign({ correlationId: correlationId }, data));
-                    observer.next({
-                        type: 'sent'
-                    });
+                    observer.next(__assign({ type: 'sent' }, data));
                 });
             });
         });
@@ -115,9 +111,7 @@ var RabbitMQ = (function () {
                             replyTo: queueTemp.queue
                         });
                     });
-                    observer.next({
-                        type: 'sent'
-                    });
+                    observer.next(__assign({ type: 'sent' }, data));
                 });
             });
         });
@@ -209,8 +203,10 @@ var RabbitMQ = (function () {
         });
     };
     RabbitMQ.prototype.destroy = function () {
-        this.connection.close();
-        this.connection = null;
+        if (this.connection) {
+            this.connection.close();
+            this.connection = null;
+        }
     };
     return RabbitMQ;
 }());

@@ -50,7 +50,7 @@ class HardwareForm extends React.Component<any, any> {
         if ([null, idx].indexOf(masterIdx) >= 0) {
             checkbox = (
                 <Checkbox
-                    defaultChecked={defaultValues.isMaster}
+                    defaultChecked={defaultValues.isMaster && idx === 0}
                     onCheck={composition(onCheckHandle, this.onCheckHandle)}
                     label="Master"
                     value={idx}
@@ -71,7 +71,7 @@ class HardwareForm extends React.Component<any, any> {
                     <TextField
                         defaultValue={defaultValues.name}
                         name={`servers.${idx}.name`}
-                        floatingLabelText="Введите имя сервера"
+                        floatingLabelText="Наименование сервера"
                         onChange={onTextFieldChange}
                     />
 

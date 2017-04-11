@@ -23,10 +23,10 @@ export default class MapGenerator {
 
                 let maxFieldSize = f.length;
                 if (!maxFieldSize) {
-                    if (type === 'Строковый') {
+                    if (type === FIELD_TYPE_STRING) {
                         maxFieldSize = 255;
                     }
-                    if (type === 'Числовой') {
+                    if (type === FIELD_TYPE_NUMBER) {
                         maxFieldSize = 11;
                     }
                 }
@@ -71,7 +71,7 @@ export default class MapGenerator {
     }
 
     static getFieldsFamilyKey(fieldsNames) {
-        return fieldsNames.join('=').toUpperCase();
+        return fieldsNames.sort().join('=').toUpperCase();
     }
 
     static getFieldTypeByNameMap(fields: Array<TableField>) {
@@ -89,6 +89,13 @@ export default class MapGenerator {
         tables.forEach(table => {
 
             const {fields, sharding} = table;
+            if (!fields.find(f => f.name === 'created_at')) {
+                fields.push({
+                    name: 'created_at',
+                    type: FIELD_TYPE_NUMBER
+                });
+            }
+
             const tableSize = HDD_ASPECT_RATIO * table.tableSize;
             const tableName = table.name;
             // hTables[tableName] = {};
@@ -116,10 +123,10 @@ export default class MapGenerator {
                         let fieldValue = null;
                         switch (fieldTypeByNameMap[fieldName]) {
                             case FIELD_TYPE_NUMBER:
-                                fieldValue = random(100);
+                                fieldValue = random(10);
                                 break;
                             case FIELD_TYPE_STRING:
-                                fieldValue = generateWord(4);
+                                fieldValue = generateWord(3);
                                 break;
                         }
 

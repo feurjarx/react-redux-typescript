@@ -6,7 +6,7 @@ const socket = io.connect('http://localhost:3003');
 import {Step, StepLabel} from 'material-ui/Stepper';
 import {Dialog, FlatButton, RaisedButton} from 'material-ui';
 
-import initial from './../../configs/default-data'
+import initial from './../../configs/frontmock'
 
 import './preparing.css';
 
@@ -81,9 +81,9 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         const {dispatch} = this.props;
         const fdsData = fds.data;
 
-        // const {nClients, servers, requestsLimit} = fdsData;
         const {nClients, requestsLimit} = fdsData;
         const servers = initial.servers.filter(s => !s['isMaster']);
+        // const servers = fdsData.servers.filter(s => !s.isMaster);
 
         dispatch(initRequestsDiagram({
             nServers: servers.length,
@@ -99,6 +99,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
         socket.emit(EVENT_IO_LIFE, {
             ...initial,
+            // ...fdsData,
             clients,
             requestsLimit
         });
@@ -146,10 +147,11 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
         const { fds } = this;
 
+
+        // <PartitionsStep formDataService={fds}/>,
         const steps = [
             <HardwareStep formDataService={fds}/>,
             <TablesStep formDataService={fds}/>,
-            <PartitionsStep formDataService={fds}/>,
             <RequestsStep formDataService={fds} />,
         ];
 
@@ -176,9 +178,6 @@ export class Preparing extends React.Component<any, React.ComponentState> {
                         </Step>
                         <Step>
                             <StepLabel>Структура хранения данных</StepLabel>
-                        </Step>
-                        <Step>
-                            <StepLabel>Партиционирование данных</StepLabel>
                         </Step>
                         <Step>
                             <StepLabel>Эксперимент</StepLabel>

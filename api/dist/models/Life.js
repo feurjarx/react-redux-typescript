@@ -15,14 +15,14 @@ var Life = (function () {
         this.lifeInfoCallback = Function();
         this.bigDataInfoCallback = Function();
         this.startClientsRequests = function (lifeData) {
-            var clients = lifeData.clients, requestTimeLimit = lifeData.requestTimeLimit, requestsLimit = lifeData.requestsLimit;
+            var clients = lifeData.clients, requestTimeLimit = lifeData.requestTimeLimit, requestsLimit = lifeData.requestsLimit, sqls = lifeData.sqls;
             var statistics = _this.statistics;
             var nClients = clients.length;
             SocketLogEmitter_1.default.instance.setBatchSize(requestsLimit * nClients);
             clients.forEach(function (clientData) {
                 // [clients[0]].forEach(clientData => {
                 var nRequests = +clientData['nRequests'];
-                var client = new Expectant_1.default(new RabbitMQ_1.default());
+                var client = new Expectant_1.default(new RabbitMQ_1.default(), sqls);
                 client.requestTimeLimit = requestTimeLimit;
                 console.log("\u0421\u043E\u0437\u0434\u0430\u043D \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u0438\u0435\u043D\u0442 #" + client.id);
                 client
@@ -32,9 +32,17 @@ var Life = (function () {
                             statistics.upRequests();
                             break;
                         case 'received':
-                            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, slaveServerId = response.slaveServerId;
-                            _this.lifeInfoCallback({ slaveServerId: slaveServerId, requestCounter: requestCounter });
-                            _this.statistics.totalProcessingTime += lastProcessingTime;
+                            var lastProcessingTime = response.lastProcessingTime, slaves = response.slaves, error = response.error;
+                            if (error === 404) {
+                                statistics.upUnsuccessufulRequests();
+                            }
+                            else {
+                                slaves.forEach(function (_a) {
+                                    var slaveId = _a.slaveId, requestCounter = _a.requestCounter;
+                                    _this.lifeInfoCallback({ slaveId: slaveId, requestCounter: requestCounter });
+                                });
+                                statistics.totalProcessingTime += lastProcessingTime;
+                            }
                             break;
                         case 'stopped':
                             statistics.upCompletedClients();
@@ -49,14 +57,15 @@ var Life = (function () {
         };
         // вызов, когда приходит ответ от регион-сервера
         this.onMasterServerResponse = function (response) {
-            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, slaveServerId = response.slaveServerId;
-            _this.lifeInfoCallback({ slaveServerId: slaveServerId, requestCounter: requestCounter });
+            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, slaveId = response.slaveId;
+            _this.lifeInfoCallback({ slaveId: slaveId, requestCounter: requestCounter });
             _this.statistics.totalProcessingTime += lastProcessingTime;
         };
     }
     Life.initServers = function (serversData) {
         var masterServer = new MasterServer_1.default(new RabbitMQ_1.default(), serversData.find(function (it) { return it.isMaster; }));
-        masterServer.slaveSelectingBehavior = index_1.RandomSlaveSelecting.instance;
+        // masterServer.slaveSelectingBehavior = RandomSlaveSelecting.instance;
+        masterServer.slaveSelectingBehavior = index_1.TestSlaveSelecting.instance;
         for (var i = 0; i < serversData.length; i++) {
             var serverData = serversData[i];
             if (!serverData.isMaster) {
@@ -106,8 +115,16 @@ var Life = (function () {
         });
     };
     Life.prototype.live = function (lifeData) {
-        var servers = lifeData.servers;
+        var servers = lifeData.servers, sqls = lifeData.sqls;
+        if (!servers.find(function (it) { return it.isMaster; })) {
+            this.lifeCompleteCallback();
+            return;
+        }
         this.masterServer = Life.initServers(servers);
+        if (!this.masterServer.getSlaveServersNumber()) {
+            this.lifeCompleteCallback();
+            return;
+        }
         this.createCluster(lifeData);
         this.statistics = new Statistics_1.default({ nServers: servers.length });
         this.simulateWorkWithBigData(lifeData);
@@ -115,7 +132,6 @@ var Life = (function () {
         //     type: 'load_line',
         //     absBandwidth
         // }));
-        return this;
     };
     ;
     Life.prototype.destroy = function () {

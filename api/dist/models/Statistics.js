@@ -2,11 +2,15 @@
 var Statistics = (function () {
     function Statistics(_a) {
         var nServers = _a.nServers;
-        this.totalProcessingTime = 0;
+        this.unsuccessfulRequestsCounter = 0;
         this.completedClientsCounter = 0;
+        this.totalProcessingTime = 0;
         this.requestsCounter = 0;
         this.nServers = nServers;
     }
+    Statistics.prototype.upUnsuccessufulRequests = function () {
+        this.unsuccessfulRequestsCounter++;
+    };
     Statistics.prototype.upCompletedClients = function () {
         this.completedClientsCounter++;
     };

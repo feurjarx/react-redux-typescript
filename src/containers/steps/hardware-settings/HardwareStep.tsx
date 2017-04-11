@@ -12,13 +12,13 @@ class HardwareStep extends React.Component<any, any> {
 
     getDefaultServerData() {
         return {
-            name: 'my_server',
+            name: 'server_A',
             hdd: 1000,
             replicationNumber: 0,
             pDie: 1,
             distanceToMaster: 25,
             isMaster: false,
-            maxRegions: 10
+            maxRegions: 5
         }
     };
 
@@ -106,7 +106,6 @@ class HardwareStep extends React.Component<any, any> {
 
             const {fds, dispatchServersData} = this;
             fds.setDataByPath(checkboxElem.name, checked);
-
             dispatchServersData();
         });
     };
@@ -131,7 +130,7 @@ class HardwareStep extends React.Component<any, any> {
         const total = replics.length;
 
         return (
-            <div className="flex-row justify-center">
+            <div className="flex-row">
                 {replics.map(r => React.cloneElement(r, {total, masterIdx}))}
             </div>
         )

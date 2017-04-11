@@ -12,6 +12,7 @@ var SlaveServer = (function (_super) {
     __extends(SlaveServer, _super);
     function SlaveServer(provider, serverData) {
         var _this = _super.call(this, provider) || this;
+        _this.familyGuideMap = {};
         _this.onRequestFromMasterServer = function (data) {
             var onClientReply = data.onClientReply, clientId = data.clientId, subKey = data.subKey;
             console.log("\u0420\u0435\u0433\u0438\u043E\u043D \u0441\u0435\u0440\u0432\u0435\u0440 #" + _this.id + " \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442 \u043C\u0430\u0441\u0442\u0435\u0440\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
@@ -24,7 +25,7 @@ var SlaveServer = (function (_super) {
                 onClientReply({
                     subKey: subKey,
                     clientId: clientId,
-                    slaveServerId: _this.id,
+                    slaveId: _this.id,
                     lastProcessingTime: 0,
                     requestCounter: _this.requestCounter
                 });
@@ -34,7 +35,7 @@ var SlaveServer = (function (_super) {
         var maxRegions = serverData.maxRegions;
         var hdd = serverData.hdd;
         hdd = index_1.HDD_ASPECT_RATIO * hdd;
-        _this.hdd = index_1.HDD_ASPECT_RATIO * hdd;
+        _this.hdd = hdd;
         _this.maxRegions = maxRegions;
         var regionMaxSize = Math.round(hdd / maxRegions);
         _this.regions = helpers_1.range(0, maxRegions)

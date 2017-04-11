@@ -3,21 +3,22 @@ import ExpectantClient from "./clients/Expectant";
 import MasterServer from "./servers/MasterServer";
 import SlaveServer from "./servers/SlaveServer";
 import MapGenerator from "./MapGenerator";
-import {RandomSharding} from "./servers/behaviors/sharding";
 import Statistics from "./Statistics";
 import {RandomSleepCalculating} from "./servers/behaviors/calculate";
 import SocketLogEmitter from "../services/SocketLogEmitter";
-import {RandomSlaveSelecting} from "./servers/behaviors/slave-selecting/index";
+import {TestSlaveSelecting} from "./servers/behaviors/slave-selecting/index";
 
 export class Life {
 
     private static initServers(serversData) {
+
         const masterServer = new MasterServer(
             new RabbitMQ(),
             serversData.find(it => it.isMaster)
         );
 
-        masterServer.slaveSelectingBehavior = RandomSlaveSelecting.instance;
+        // masterServer.slaveSelectingBehavior = RandomSlaveSelecting.instance;
+        masterServer.slaveSelectingBehavior = TestSlaveSelecting.instance;
 
         for (let i = 0; i < serversData.length; i++) {
             const serverData = serversData[i];
@@ -84,9 +85,17 @@ export class Life {
 
     live(lifeData) {
 
-        const {servers} = lifeData;
+        const {servers, sqls} = lifeData;
+        if (!servers.find(it => it.isMaster)) {
+            this.lifeCompleteCallback();
+            return;
+        }
 
         this.masterServer = Life.initServers(servers);
+        if (!this.masterServer.getSlaveServersNumber()) {
+            this.lifeCompleteCallback();
+            return;
+        }
 
         this.createCluster(lifeData);
 
@@ -98,12 +107,10 @@ export class Life {
         //     type: 'load_line',
         //     absBandwidth
         // }));
-
-        return this;
     };
 
     startClientsRequests = (lifeData) => {
-        const {clients, requestTimeLimit, requestsLimit} = lifeData;
+        const {clients, requestTimeLimit, requestsLimit, sqls} = lifeData;
         const {statistics} = this;
         const nClients = clients.length;
         SocketLogEmitter.instance.setBatchSize(requestsLimit * nClients);
@@ -112,7 +119,7 @@ export class Life {
         // [clients[0]].forEach(clientData => {
 
             const nRequests = +clientData['nRequests'];
-            const client = new ExpectantClient(new RabbitMQ());
+            const client = new ExpectantClient(new RabbitMQ(), sqls);
             client.requestTimeLimit = requestTimeLimit;
 
             console.log(`Создан новый клиент #${client.id}`);
@@ -129,12 +136,21 @@ export class Life {
 
                             const {
                                 lastProcessingTime,
-                                requestCounter,
-                                slaveServerId
+                                slaves,
+                                error
                             } = response;
 
-                            this.lifeInfoCallback({slaveServerId, requestCounter});
-                            this.statistics.totalProcessingTime += lastProcessingTime;
+                            if (error === 404) {
+                                statistics.upUnsuccessufulRequests();
+
+                            } else {
+
+                                slaves.forEach(({slaveId, requestCounter}) => {
+                                    this.lifeInfoCallback({slaveId, requestCounter});
+                                });
+
+                                statistics.totalProcessingTime += lastProcessingTime;
+                            }
 
                             break;
 
@@ -157,10 +173,10 @@ export class Life {
         const {
             lastProcessingTime,
             requestCounter,
-            slaveServerId
+            slaveId
         } = response;
 
-        this.lifeInfoCallback({slaveServerId, requestCounter});
+        this.lifeInfoCallback({slaveId, requestCounter});
         this.statistics.totalProcessingTime += lastProcessingTime;
     };
 

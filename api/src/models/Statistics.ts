@@ -1,16 +1,25 @@
 export default class Statistics {
-    totalProcessingTime: number;
-    completedClientsCounter: number;
-    requestsCounter: number;
+
+    private completedClientsCounter: number;
+    private requestsCounter: number;
+    private unsuccessfulRequestsCounter: number;
+    private absBandwidthTimerId;
+
     nServers: number;
 
-    absBandwidthTimerId;
+    totalProcessingTime: number;
 
     constructor({nServers}) {
-        this.totalProcessingTime = 0;
+        this.unsuccessfulRequestsCounter = 0;
         this.completedClientsCounter = 0;
+        this.totalProcessingTime = 0;
         this.requestsCounter = 0;
+
         this.nServers = nServers;
+    }
+
+    upUnsuccessufulRequests() {
+        this.unsuccessfulRequestsCounter++;
     }
 
     upCompletedClients() {

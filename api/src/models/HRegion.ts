@@ -7,12 +7,12 @@ class HRegion {
     freeSpace: number;
     maxSize: number;
 
-    serverId: any;
+    slaveId: any;
 
-    constructor(id: number, serverId: number, maxSize: number) {
+    constructor(id: number, slaveId: number, maxSize: number) {
         this.id = id;
         this.maxSize = maxSize;
-        this.serverId = serverId;
+        this.slaveId = slaveId;
 
         this.freeSpace = maxSize;
     }

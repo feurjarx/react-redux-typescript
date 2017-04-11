@@ -175,7 +175,7 @@ export default class SqlParseService {
                         } else {
 
                             if (type === 'LITERAL') {
-                                if (parts[i + 1][0] === 'DOT') {
+                                if (parts[i + 1] && parts[i + 1][0] === 'DOT') {
                                     beforeDot = aliasMaps.reverse[part[1]];
                                     if (!beforeDot) {
                                         beforeDot = part[1];
@@ -231,8 +231,10 @@ export default class SqlParseService {
             }
 
         } catch (e) {
-            throw e;
+            // throw e;
         }
+
+        json['raw'] = query.replace(/\n/g, '');
 
         return json;
     }

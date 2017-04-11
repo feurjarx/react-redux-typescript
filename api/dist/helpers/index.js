@@ -36,7 +36,7 @@ function range(min, max) {
 }
 exports.range = range;
 function generateWord(length, abc) {
-    if (abc === void 0) { abc = "ABCDEFGH"; }
+    if (abc === void 0) { abc = "abc"; }
     var word = '';
     for (var i = 0; i < length; i++) {
         word += abc.charAt(Math.floor(Math.random() * abc.length));
@@ -44,3 +44,24 @@ function generateWord(length, abc) {
     return word;
 }
 exports.generateWord = generateWord;
+function str2numbers(v) {
+    return +v
+        .split('')
+        .map(function (ch) { return ch.charCodeAt(0); })
+        .join('');
+}
+exports.str2numbers = str2numbers;
+function unique(arr) {
+    return arr.filter(function (it, i) { return arr.indexOf(it) === i; });
+}
+exports.unique = unique;
+function qtrim(v) {
+    if (['\'', '"', '`'].indexOf(v[0]) >= 0) {
+        v = v.slice(1);
+    }
+    if (['\'', '"', '`'].indexOf(v.slice(-1)) >= 0) {
+        v = v.slice(0, -1);
+    }
+    return v;
+}
+exports.qtrim = qtrim;

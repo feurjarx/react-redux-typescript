@@ -21,3 +21,17 @@ export interface ServerData {
     pDie?: number;
     isMaster?: boolean;
 }
+
+export interface SqlParts {
+    from: Array<string>;
+    select: Array<string>;
+    where: string;
+}
+
+export interface Criteria {
+    table: string;
+    field: string;
+    operator: string;
+    value: any;
+    isPrimaryField: boolean;
+}

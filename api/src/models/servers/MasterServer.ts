@@ -1,9 +1,8 @@
 import Server from "../Server";
-import {ServerData} from "../../../typings/index";
+import {ServerData, SqlParts, Criteria} from "../../../typings/index";
 import SlaveServer from "./SlaveServer";
 import HRow from "../HRow";
 import ShardingBehavior from "./behaviors/sharding/ShardingBehavior";
-import HRegion from "../HRegion";
 import {Subscription} from "rxjs";
 
 import {
@@ -11,15 +10,13 @@ import {
     RABBITMQ_QUEUE_MASTER_SERVER
 } from "./../../constants/rabbitmq";
 
-import {hash} from "../../helpers/index";
+import {hash, composition, unique, qtrim} from "../../helpers/index";
 import {
     VerticalSharding,
-    HorizontalSharding,
-    RandomSharding
+    HorizontalSharding
 } from "./behaviors/sharding";
 
 import {
-    SHARDING_TYPE_DEFAULT,
     SHARDING_TYPE_HORIZONTAL,
     SHARDING_TYPE_VERTICAL
 } from "./../../constants"
@@ -27,8 +24,8 @@ import SlaveSelectingBehavior from "./behaviors/slave-selecting/SlaveSelectingBe
 
 interface ShardingProps {
     type: string;
-    serverId?: string;
-    fieldId?: string;
+    slaveId?: string;
+    fieldName?: string;
 }
 
 export default class MasterServer extends Server {
@@ -40,7 +37,8 @@ export default class MasterServer extends Server {
 
     subordinates: Array<SlaveServer>;
 
-    registry: Array<HRegion>; // ???
+    vGuideMap = {};
+    guideMap = {};
 
     clientsSubscription: Subscription;
     subscriptionsMap: {[key: string]: Subscription} = {};
@@ -56,9 +54,6 @@ export default class MasterServer extends Server {
     setSharding(sharding = {}) {
         const {type} = sharding as ShardingProps;
         switch (type) {
-            case SHARDING_TYPE_DEFAULT:
-                break;
-
             case SHARDING_TYPE_VERTICAL:
                 this.shardingBehavior = VerticalSharding.instance;
                 break;
@@ -68,12 +63,27 @@ export default class MasterServer extends Server {
                 break;
 
             default:
-                this.shardingBehavior = RandomSharding.instance;
+                this.shardingBehavior = HorizontalSharding.instance;
         }
     }
 
     getSlaveServerById(id) {
         return this.subordinates.find(slave => slave.id === id);
+    }
+
+    updateGuideMaps(hRow: HRow, slaveId, {serverId = null}) {
+
+        if (serverId) {
+            // v-sharding
+            this.vGuideMap[hRow.tableName] = serverId;
+
+        } else {
+            // h-sharding
+            hRow.getFields().forEach(arrow => {
+                const guideKey = HRow.getGuideArrowKey(arrow);
+                this.guideMap[guideKey] = slaveId;
+            });
+        }
     }
 
     save(hRow: HRow, shardingOptions = {}) {
@@ -83,29 +93,31 @@ export default class MasterServer extends Server {
         } = this.shardingBehavior;
 
         let completed: boolean;
-        let slaveServerId: any;
+        let slaveId: any;
 
         let attemptCounter = 0;
         const safeLimit = this.getSlaveServersNumber() ** 2;
-        const slaveServersIds = this.getSlaveServersIds();
+        const slavesIds = this.getSlaveServersIds();
 
         do {
-            slaveServerId = getSlaveServerId(hRow, slaveServersIds, {
+            slaveId = getSlaveServerId(hRow, slavesIds, {
                 ...shardingOptions,
                 attemptCounter
             });
 
             completed = this
-                .getSlaveServerById(slaveServerId)
+                .getSlaveServerById(slaveId)
                 .save(hRow);
 
         } while (repeated && !completed && ++attemptCounter < safeLimit);
 
         if (!completed) {
-            throw new Error(`Запись размером ${hRow.getSize()} не была записана (Регион сервер ${slaveServerId}, ${this.shardingBehavior.title})`);
+            throw new Error(`Запись размером ${hRow.getSize()} не была записана (Регион сервер ${slaveId}, ${this.shardingBehavior.type})`);
         }
 
-        console.log(false, `Select slave server ${slaveServerId}`);
+        this.updateGuideMaps(hRow, slaveId, shardingOptions);
+
+        console.log(false, `Select slave server ${slaveId}`);
     }
 
     getSlaveServersNumber() {
@@ -121,11 +133,136 @@ export default class MasterServer extends Server {
         this.listen(RABBITMQ_QUEUE_MASTER_SERVER);
 
         const promises = [];
-        this.subordinates.forEach(slaveServer => {
-            promises.push(slaveServer.listenExchange(RABBITMQ_EXCHANGE_SLAVE_SERVERS));
+        this.subordinates.forEach(slave => {
+            promises.push(slave.listenExchange(RABBITMQ_EXCHANGE_SLAVE_SERVERS));
         });
 
         return Promise.all(promises);
+    }
+
+    getCriteriaCases(where = ''): Array<Criteria[]> {
+        where = where.toLowerCase();
+
+        const ins = [];
+        const ors = [];
+        const operators = ['=', '<', '>', 'in'];
+
+        where.split('or').forEach((orCase: string) => {
+            orCase = orCase.trim();
+
+            const ands: Array<Criteria> = [];
+            orCase.split('and').forEach((andCase: string) => {
+                andCase = andCase.trim();
+
+                for (let i = 0; i < operators.length; i++) {
+                    const operator = operators[i];
+
+                    let [left, value] = andCase.split(operator).map(it => it.trim());
+                    if (value) {
+
+                        if (operator === 'in') {
+                            ins.push(andCase);
+                            continue;
+                        }
+
+                        const [table, field] = left.split('.');
+
+                        value = qtrim(value);
+
+                        ands.push({
+                            table,
+                            field,
+                            operator,
+                            value,
+                            isPrimaryField: field === 'id'
+                        });
+
+                        break;
+                    }
+                }
+            });
+
+            if (ands.length) {
+                ors.push(ands);
+            }
+        });
+
+        // operator IN transformation to {'or', '='}
+        ins.forEach(inItem => {
+            let [left, right] = inItem.split('in').map(it => it.trim());
+            const [table, field] = left.split('.');
+
+            right = right.slice(1, -1); // remove '(' and ')'
+            const inValues = right.split(',');
+            inValues.forEach(v => {
+                ors.push([{
+                    table,
+                    field,
+                    operator: '=',
+                    value: qtrim(v),
+                    isPrimaryField: field === 'id'
+                }])
+            });
+        });
+
+        return ors;
+    }
+
+    getSlaveServersIdsBySql(sqlParts: SqlParts) {
+
+        const result = [];
+
+        const tableName = sqlParts.from[0];
+
+        // check as vertical sharding
+        if (this.vGuideMap[tableName]) {
+            result.push(this.vGuideMap[tableName]);
+
+        } else {
+
+            const criteriaCases = this.getCriteriaCases(sqlParts.where);
+            if (criteriaCases.length) {
+
+                criteriaCases.forEach((ands: Array<Criteria>) => {
+
+                    let slavesIds = [];
+                    let primaryFieldName = null;
+
+                    for (let i = 0; i < ands.length; i++) {
+                        const criteria = ands[i];
+
+                        if (criteria.operator !== '=') {
+                            slavesIds = [];
+                            break;
+                        }
+
+                        // for '='
+                        if (primaryFieldName === criteria.table + '.' + criteria.field) {
+                            slavesIds = [];
+                            // for, example "... WHERE user.id = 1 and user.id = 2"
+                            break;
+                        }
+
+                        const guideKey = HRow.getGuideArrowKey(criteria);
+                        const slaveId = this.guideMap[guideKey];
+                        if (!slaveId) {
+                            slavesIds = [];
+                            break;
+                        }
+
+                        slavesIds.push(slaveId);
+
+                        if (criteria.isPrimaryField) {
+                            primaryFieldName = criteria.table + '.' + criteria.field;
+                        }
+                    }
+
+                    result.push(...slavesIds);
+                });
+            }
+        }
+
+        return unique(result);
     }
 
     listen(queueName, lazy = false) {
@@ -137,26 +274,55 @@ export default class MasterServer extends Server {
             .subscribe(clientRequest => {
                 // from Clients
 
-                const {onClientReply, clientId} = clientRequest;
+                const {onClientReply, clientId, sqlParts} = clientRequest;
                 console.log(`Мастер-сервер получил запрос от клиента #${clientId}`);
 
-                const {getSlaveServerId} = this.slaveSelectingBehavior;
-                const slaveServerId = getSlaveServerId(this.getSlaveServersIds());
-                const slaveServer = this.getSlaveServerById(slaveServerId);
-                console.log(`Мастер-сервер перенаправляет запрос от клиента #${clientId} на регион-сервер #${slaveServer.id}`);
+                // для простых случае с оператором "="
+                let slavesIds = this.getSlaveServersIdsBySql(sqlParts);
+                if (!slavesIds.length) {
+                    slavesIds = this.getSlaveServersIds();
+                }
 
-                this
-                    .redirectToSlaveServer(slaveServer, {clientId})
-                    .then(onClientReply);
+                const promises = [];
+                slavesIds.forEach(slaveId => {
+                    const slave = this.getSlaveServerById(slaveId);
+                    console.log(`Мастер-сервер перенаправляет запрос от клиента #${clientId} на регион-сервер #${slaveId}`);
+
+                    promises.push(this.redirectToSlaveServer(slave, {clientId, sqlParts}));
+                });
+
+                if (promises.length) {
+                    Promise.all(promises).then(responses => {
+
+                        const lastProcessingTime = responses.reduce((sum, it) => sum + it.lastProcessingTime, 0) / responses.length;
+                        const slavesNames =  responses.map(it => it.slaveId);
+
+                        const slaves = responses.map(it => ({
+                            requestCounter: it.requestCounter,
+                            slaveId: it.slaveId
+                        }));
+
+                        onClientReply({
+                            type: 'received',
+                            slaves,
+                            slavesNames,
+                            lastProcessingTime: Math.round(lastProcessingTime)
+                        });
+                    });
+
+                } else {
+
+                    onClientReply([{error: 404}]);
+                }
             });
 
     }
 
-    redirectToSlaveServer(slaveServer: SlaveServer, data) {
+    redirectToSlaveServer(slave: SlaveServer, data) {
 
         return new Promise((resolve, reject) => {
 
-            const routeKey = slaveServer.id;
+            const routeKey = slave.id;
             const subKey = hash(routeKey, Date.now());
             this.subscriptionsMap[subKey] = this.provider
                 .publishAndWaitByRouteKeys(RABBITMQ_EXCHANGE_SLAVE_SERVERS, [routeKey], {...data, subKey})
@@ -169,8 +335,8 @@ export default class MasterServer extends Server {
 
                         case 'received':
 
-                            const {slaveServerId, clientId, subKey} = response;
-                            console.log(`Мастер-сервер получил ответ с регион-сервера ${slaveServerId} на запрос от клиента #${clientId}`);
+                            const {slaveId, clientId, subKey} = response;
+                            console.log(`Мастер-сервер получил ответ с регион-сервера ${slaveId} на запрос от клиента #${clientId}`);
 
                             resolve(response);
 

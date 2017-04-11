@@ -3,9 +3,18 @@ import {connect} from "react-redux";
 
 import {updateOtherStepsData} from "../../../actions/index";
 import FormDataService from "../../../services/FormDataService";
-import {TableForm} from "./TableForm";
+import TableForm from "./TableForm";
+import {SHARDING_TYPE_DEFAULT, FIELD_TYPE_NUMBER} from "../../../constants/index";
 
-@connect()
+function mapStateToProps(state, props) {
+    const {servers} = state.otherStepsData;
+
+    return {
+        servers
+    };
+}
+
+
 class TablesStep extends React.Component<any, any> {
 
     fds: FormDataService;
@@ -14,9 +23,13 @@ class TablesStep extends React.Component<any, any> {
         return {
             name: 'user',
             tableSize: null,
+            sharding: {
+                type: SHARDING_TYPE_DEFAULT
+            },
             fields: [{
-                name: null,
-                type: null
+                name: 'id',
+                type: FIELD_TYPE_NUMBER,
+                familyName: null
             }]
         }
     };
@@ -29,7 +42,22 @@ class TablesStep extends React.Component<any, any> {
         this.fds = formDataService;
 
         this.state = {
-            replics: []
+            replics: [],
+            serversSource: []
+        }
+    }
+
+    componentWillReceiveProps(props) {
+        let {servers} = props;
+        if (servers) {
+            const serversSource = servers
+                .filter(s => !s.isMaster)
+                .map(s => ({
+                    text: s.name,
+                    value: s.name
+                }));
+
+            this.setState({serversSource});
         }
     }
 
@@ -46,6 +74,7 @@ class TablesStep extends React.Component<any, any> {
 
         replics.push(
             <TableForm
+                formDataService={this.fds}
                 total={replics.length}
                 key={replics.length}
                 idx={replics.length}
@@ -109,15 +138,15 @@ class TablesStep extends React.Component<any, any> {
 
     render() {
 
-        const {replics} = this.state;
+        const {replics, serversSource} = this.state;
         const total = replics.length;
 
         return (
-            <div className="flex-row justify-center">
-                {replics.map(r => React.cloneElement(r, {total}))}
+            <div className="flex-row">
+                {replics.map(r => React.cloneElement(r, {total, serversSource}))}
             </div>
         )
     }
 }
 
-export default TablesStep;
+export default connect(mapStateToProps)(TablesStep);

@@ -5,6 +5,7 @@ import TextField from 'material-ui/TextField';
 import Checkbox from 'material-ui/Checkbox';
 import ReplicaTools from '../../../components/replic-tools/ReplicaTools';
 import AutoComplete from "../../../components/AutoCompleteSyntheticable";
+import {FIELD_TYPE_NUMBER, FIELD_TYPE_STRING} from "../../../constants";
 
 const paperStyle = {padding: 10, marginBottom: 10, marginLeft: 1, marginTop: 1};
 
@@ -15,10 +16,10 @@ export class FieldForm extends React.Component<any, any> {
     };
 
     typesSource = [{
-        text: 'Строковый',
+        text: FIELD_TYPE_STRING,
         value: 'string'
     }, {
-        text: 'Числовой',
+        text: FIELD_TYPE_NUMBER,
         value: 'integer'
     }];
 

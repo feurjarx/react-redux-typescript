@@ -1,6 +1,6 @@
 import ShardingBehavior from "./ShardingBehavior";
 import HRow from "../../../HRow";
-import {random} from '../../../../helpers/index'
+import {random, str2numbers} from '../../../../helpers/index'
 
 export class VerticalSharding implements ShardingBehavior {
     private static _instance;
@@ -14,7 +14,7 @@ export class VerticalSharding implements ShardingBehavior {
 
     title = 'vertical';
     repeated = false;
-    getSlaveServerId(hRow, slaveServersIds, {serverId}) {
+    getSlaveServerId(hRow, slavesIds, {serverId}) {
         return serverId;
     }
 }
@@ -32,9 +32,14 @@ export class HorizontalSharding implements ShardingBehavior {
     title = 'horizontal';
     repeated = true;
 
-    getSlaveServerId(hRow: HRow, slaveServersIds: Array<any>, {fieldId, attemptCounter = 0}) {
-        let idx = (hRow.getValueByFieldName(fieldId) + attemptCounter)% slaveServersIds.length;
-        return slaveServersIds[idx];
+    getSlaveServerId(hRow: HRow, slavesIds: Array<any>, {fieldName = 'id', attemptCounter = 0}) {
+        let value = hRow.getValueByFieldName(fieldName);
+        if (typeof value  === 'string') {
+            value = str2numbers(value);
+        }
+
+        let idx = (value + attemptCounter) % slavesIds.length;
+        return slavesIds[idx];
     }
 }
 
@@ -49,7 +54,7 @@ export class RandomSharding implements ShardingBehavior {
     }
 
     repeated = true;
-    getSlaveServerId(_, slaveServerIds: Array<any>) {
-        return slaveServerIds[random(slaveServerIds.length - 1)];
+    getSlaveServerId(_, slavesIds: Array<any>) {
+        return slavesIds[random(slavesIds.length - 1)];
     }
 }

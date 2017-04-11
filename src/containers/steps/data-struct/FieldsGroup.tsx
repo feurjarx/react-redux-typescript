@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import {FieldForm} from "./FieldForm";
+import {composition} from "../../../helpers";
 
 export default class FieldsGroup extends React.Component<any, any> {
 
@@ -50,7 +51,6 @@ export default class FieldsGroup extends React.Component<any, any> {
         } = this.state;
 
         const {
-            // onCheck,
             tableIdx,
             defaultFieldData,
             onTextFieldChange,
@@ -77,7 +77,7 @@ export default class FieldsGroup extends React.Component<any, any> {
             />
         );
 
-        this.setState({replics}, () => this.scrollToBottom());
+        this.setState({replics});
     };
 
     onReplicaRemove = () => {
@@ -96,18 +96,13 @@ export default class FieldsGroup extends React.Component<any, any> {
         this.onReplicaAdd();
     }
 
-    scrollToBottom() {
-        const fieldsList = this.refs['fieldsList'] as HTMLElement;
-        fieldsList.scrollTop = fieldsList.scrollHeight;
-    };
-
     render() {
 
         const {replics, primaryIdx, familiesSource} = this.state;
         const total = replics.length;
 
         return (
-            <div ref="fieldsList" style={{overflowY: 'auto', height: 160}}>
+            <div>
                 {replics.map(r => React.cloneElement(r, {total, primaryIdx, familiesSource}))}
             </div>
         )

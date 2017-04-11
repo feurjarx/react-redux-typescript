@@ -1,10 +1,10 @@
 "use strict";
 var HRegion = (function () {
-    function HRegion(id, serverId, maxSize) {
+    function HRegion(id, slaveId, maxSize) {
         this.rows = {};
         this.id = id;
         this.maxSize = maxSize;
-        this.serverId = serverId;
+        this.slaveId = slaveId;
         this.freeSpace = maxSize;
     }
     HRegion.prototype.isFitIn = function (requiredSize) {

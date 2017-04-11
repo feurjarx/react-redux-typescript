@@ -45,15 +45,33 @@ export class RequestsStep extends React.Component<any, any> {
 
     fds: FormDataService;
 
+//     defaultSql = (`
+// SELECT id,name, tel, contact.id
+// FROM user AS u
+// JOIN contact AS c ON c.id = user.contact_id
+// WHERE u.id > 1000 AND u.name IN ("Ivan", "Alex")
+// GROUP BY u.id,u.name
+// OFFSET 5
+// LIMIT 10
+//     `).trim();
+
     defaultSql = (`
-SELECT id,name, tel, contact.id
-FROM user AS u
-JOIN contact AS c ON c.id = user.contact_id 
-WHERE u.id > 1000 AND u.name IN ("Ivan", "Alex")
-GROUP BY u.id,u.name
-OFFSET 5
-LIMIT 10
-    `).trim();
+SELECT name, year FROM user;
+SELECT name, year FROM user AS u WHERE u.name = 'abc';
+SELECT name, year FROM user AS u WHERE u.name = 'abc' OR u.email = 'abc';
+SELECT name, year FROM user AS u WHERE u.name = 'abc' OR u.tel = 9;
+SELECT * FROM user AS u WHERE u.name = 'abc';
+
+SELECT * FROM session AS s WHERE s.created_at > 1491923854;
+SELECT user_id FROM session AS s WHERE status = 'abc';
+SELECT status, user_id FROM session AS s WHERE s.expired_at = 9;
+
+SELECT favourite_title FROM playlist AS p WHERE p.isFavourite = 1;
+SELECT * FROM playlist AS p WHERE p.created_at > 1491923854;
+SELECT name, description FROM playlist AS p WHERE p.created_at > 1491923854;
+SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc');
+
+`).trim();
 
     getDefaultRequestsData() {
         return {
@@ -89,6 +107,7 @@ LIMIT 10
     sqlToJson(sql: string) {
         const sqlItems = sql
             .split(';')
+            .filter(q => Object.keys(q).length)
             .map(q => SqlParseService.sqlQuery2Json(q));
 
         return JSON.stringify(sqlItems, null, 2);
@@ -126,18 +145,20 @@ LIMIT 10
         const editor = CodeMirror.fromTextArea(sqlbox, codeMirrorConfig);
         editor.on('change', onTextareaKeyUp);
 
-        const {updateDisplay, sqlToJson, defaultSql} = this;
-
-        const sqls = sqlToJson(defaultSql);
+        const sqls = this.sqlToJson(this.defaultSql);
         fds.data.sqls = JSON.parse(sqls);
-        updateDisplay(sqls);
+        this.updateDisplay(sqls);
     };
 
+    private timerId;
     onTextareaKeyUp = (editor) => {
-        const {updateDisplay, sqlToJson, fds} = this;
-        const sqls = sqlToJson(editor.getValue());
-        fds.data.sqls = JSON.parse(sqls);
-        updateDisplay(sqls);
+        clearTimeout(this.timerId);
+        this.timerId = setTimeout(() => {
+            const {updateDisplay, sqlToJson, fds} = this;
+            const sqls = sqlToJson(editor.getValue());
+            fds.data.sqls = JSON.parse(sqls);
+            updateDisplay(sqls);
+        }, 1000);
     };
 
     componentWillReceiveProps(props) {

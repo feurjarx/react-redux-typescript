@@ -17,10 +17,10 @@ var MapGenerator = (function () {
             else {
                 var maxFieldSize = f.length;
                 if (!maxFieldSize) {
-                    if (type === 'Строковый') {
+                    if (type === index_2.FIELD_TYPE_STRING) {
                         maxFieldSize = 255;
                     }
-                    if (type === 'Числовой') {
+                    if (type === index_2.FIELD_TYPE_NUMBER) {
                         maxFieldSize = 11;
                     }
                 }
@@ -53,7 +53,7 @@ var MapGenerator = (function () {
         return result;
     };
     MapGenerator.getFieldsFamilyKey = function (fieldsNames) {
-        return fieldsNames.join('=').toUpperCase();
+        return fieldsNames.sort().join('=').toUpperCase();
     };
     MapGenerator.getFieldTypeByNameMap = function (fields) {
         var map = {};
@@ -68,6 +68,12 @@ var MapGenerator = (function () {
         // const maxTableSize = dbSize / tables.length; // avg
         tables.forEach(function (table) {
             var fields = table.fields, sharding = table.sharding;
+            if (!fields.find(function (f) { return f.name === 'created_at'; })) {
+                fields.push({
+                    name: 'created_at',
+                    type: index_2.FIELD_TYPE_NUMBER
+                });
+            }
             var tableSize = index_2.HDD_ASPECT_RATIO * table.tableSize;
             var tableName = table.name;
             // hTables[tableName] = {};
@@ -88,10 +94,10 @@ var MapGenerator = (function () {
                         var fieldValue = null;
                         switch (fieldTypeByNameMap[fieldName]) {
                             case index_2.FIELD_TYPE_NUMBER:
-                                fieldValue = index_1.random(100);
+                                fieldValue = index_1.random(10);
                                 break;
                             case index_2.FIELD_TYPE_STRING:
-                                fieldValue = index_1.generateWord(4);
+                                fieldValue = index_1.generateWord(3);
                                 break;
                         }
                         var fieldSize = sizeByFieldNameMap[fieldName];

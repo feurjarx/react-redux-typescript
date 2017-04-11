@@ -94,7 +94,8 @@ export default class RabbitMQ implements IQueue {
                                         });
 
                                         observer.next({
-                                            type: 'sent'
+                                            type: 'sent',
+                                            ...data
                                         });
                                     }
                                 });
@@ -107,7 +108,8 @@ export default class RabbitMQ implements IQueue {
                         });
 
                         observer.next({
-                            type: 'sent'
+                            type: 'sent',
+                            ...data
                         });
                     })
                 })
@@ -148,7 +150,8 @@ export default class RabbitMQ implements IQueue {
                         });
 
                         observer.next({
-                            type: 'sent'
+                            type: 'sent',
+                            ...data
                         });
                     });
                 })
@@ -270,7 +273,9 @@ export default class RabbitMQ implements IQueue {
     }
 
     destroy() {
-        this.connection.close();
-        this.connection = null;
+        if (this.connection) {
+            this.connection.close();
+            this.connection = null;
+        }
     }
 }
