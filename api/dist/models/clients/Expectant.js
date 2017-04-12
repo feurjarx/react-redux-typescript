@@ -7,6 +7,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var Client_1 = require("../Client");
 var rabbitmq_1 = require("../../constants/rabbitmq");
 var index_1 = require("../../helpers/index");
+var index_2 = require("../../constants/index");
 var ExpectantClient = (function (_super) {
     __extends(ExpectantClient, _super);
     function ExpectantClient(provider, sqls) {
@@ -14,7 +15,7 @@ var ExpectantClient = (function (_super) {
         _this.sqls = sqls;
         return _this;
     }
-    ExpectantClient.prototype.getRandomSqlParts = function () {
+    ExpectantClient.prototype.getRandomSqlQueryParts = function () {
         var sqls = this.sqls;
         var idx = index_1.random(sqls.length - 1);
         return sqls[idx];
@@ -30,15 +31,15 @@ var ExpectantClient = (function (_super) {
             clientId: this.id,
             last: requestsReverseCounter <= 1,
             requestTimeLimit: requestTimeLimit,
-            sqlParts: this.getRandomSqlParts(),
+            sqlQueryParts: this.getRandomSqlQueryParts(),
         });
         this.subscription = observable
             .subscribe(function (response) {
             switch (response.type) {
-                case 'sent':
-                    console.log("\u041A\u043B\u0438\u0435\u043D\u0442 #" + _this.id + " \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u043B \u0437\u0430\u043F\u0440\u043E\u0441: " + response.sqlParts.raw);
+                case index_2.RESPONSE_TYPE_SENT:
+                    console.log("\u041A\u043B\u0438\u0435\u043D\u0442 #" + _this.id + " \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u043B \u0437\u0430\u043F\u0440\u043E\u0441: " + response.sqlQueryParts.raw);
                     break;
-                case 'received':
+                case index_2.RESPONSE_TYPE_RECEIVED:
                     if (response.slavesNames) {
                         console.log("\u041A\u043B\u0438\u0435\u043D\u0442 #" + _this.id + " \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442\u0432\u0435\u0442 \u043E\u0442 \u043C\u0430\u0441\u0442\u0435\u0440\u0430. \u041E\u0431\u0440\u0430\u0431\u0430\u0442\u044B\u0432\u0430\u043B\u0438 \u0437\u0430\u043F\u0440\u043E\u0441 #" + response.slavesNames.join(','));
                     }
@@ -51,11 +52,11 @@ var ExpectantClient = (function (_super) {
                         response.repeat({
                             clientId: _this.id,
                             last: requestsReverseCounter <= 1,
-                            sqlParts: _this.getRandomSqlParts()
+                            sqlQueryParts: _this.getRandomSqlQueryParts()
                         });
                     }
                     else {
-                        response.type = 'stopped';
+                        response.type = index_2.RESPONSE_TYPE_STOPPED;
                         _this.stop();
                     }
                     break;

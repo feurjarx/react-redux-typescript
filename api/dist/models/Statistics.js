@@ -1,12 +1,13 @@
 "use strict";
 var Statistics = (function () {
     function Statistics(_a) {
-        var nServers = _a.nServers;
+        var nServers = _a.nServers, nClients = _a.nClients;
         this.unsuccessfulRequestsCounter = 0;
         this.completedClientsCounter = 0;
         this.totalProcessingTime = 0;
         this.requestsCounter = 0;
         this.nServers = nServers;
+        this.nClients = nClients;
     }
     Statistics.prototype.upUnsuccessufulRequests = function () {
         this.unsuccessfulRequestsCounter++;
@@ -17,8 +18,8 @@ var Statistics = (function () {
     Statistics.prototype.upRequests = function () {
         this.requestsCounter++;
     };
-    Statistics.prototype.isEqualCompletedClients = function (n) {
-        return this.completedClientsCounter === +n;
+    Statistics.prototype.isEqualCompletedClients = function () {
+        return this.completedClientsCounter === this.nClients;
     };
     Statistics.prototype.subscribeToAbsBandwidth = function (callback, interval) {
         var _this = this;

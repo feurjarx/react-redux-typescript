@@ -6,7 +6,6 @@ export default class Server {
     id: any;
 
     requestCounter = 0;
-    lastProcessingTime = 0;
 
     provider: IQueue;
 

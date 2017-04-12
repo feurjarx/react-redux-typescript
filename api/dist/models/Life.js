@@ -8,6 +8,7 @@ var Statistics_1 = require("./Statistics");
 var calculate_1 = require("./servers/behaviors/calculate");
 var SocketLogEmitter_1 = require("../services/SocketLogEmitter");
 var index_1 = require("./servers/behaviors/slave-selecting/index");
+var index_2 = require("../constants/index");
 var Life = (function () {
     function Life() {
         var _this = this;
@@ -16,9 +17,7 @@ var Life = (function () {
         this.bigDataInfoCallback = Function();
         this.startClientsRequests = function (lifeData) {
             var clients = lifeData.clients, requestTimeLimit = lifeData.requestTimeLimit, requestsLimit = lifeData.requestsLimit, sqls = lifeData.sqls;
-            var statistics = _this.statistics;
-            var nClients = clients.length;
-            SocketLogEmitter_1.default.instance.setBatchSize(requestsLimit * nClients);
+            SocketLogEmitter_1.default.instance.setBatchSize(requestsLimit * clients.length);
             clients.forEach(function (clientData) {
                 // [clients[0]].forEach(clientData => {
                 var nRequests = +clientData['nRequests'];
@@ -26,44 +25,40 @@ var Life = (function () {
                 client.requestTimeLimit = requestTimeLimit;
                 console.log("\u0421\u043E\u0437\u0434\u0430\u043D \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u0438\u0435\u043D\u0442 #" + client.id);
                 client
-                    .requestsToMasterServer(nRequests, function (response) {
-                    switch (response.type) {
-                        case 'sent':
-                            statistics.upRequests();
-                            break;
-                        case 'received':
-                            var lastProcessingTime = response.lastProcessingTime, slaves = response.slaves, error = response.error;
-                            if (error === 404) {
-                                statistics.upUnsuccessufulRequests();
-                            }
-                            else {
-                                slaves.forEach(function (_a) {
-                                    var slaveId = _a.slaveId, requestCounter = _a.requestCounter;
-                                    _this.lifeInfoCallback({ slaveId: slaveId, requestCounter: requestCounter });
-                                });
-                                statistics.totalProcessingTime += lastProcessingTime;
-                            }
-                            break;
-                        case 'stopped':
-                            statistics.upCompletedClients();
-                            if (statistics.isEqualCompletedClients(nClients)) {
-                                statistics.unsubscribeFromAbsBandwidth();
-                                _this.lifeCompleteCallback();
-                            }
-                            break;
-                    }
-                });
+                    .requestsToMasterServer(nRequests, _this.onMasterResponse);
             });
         };
-        // вызов, когда приходит ответ от регион-сервера
-        this.onMasterServerResponse = function (response) {
-            var lastProcessingTime = response.lastProcessingTime, requestCounter = response.requestCounter, slaveId = response.slaveId;
-            _this.lifeInfoCallback({ slaveId: slaveId, requestCounter: requestCounter });
-            _this.statistics.totalProcessingTime += lastProcessingTime;
+        this.onMasterResponse = function (response) {
+            var statistics = _this.statistics;
+            switch (response.type) {
+                case index_2.RESPONSE_TYPE_SENT:
+                    statistics.upRequests();
+                    break;
+                case index_2.RESPONSE_TYPE_RECEIVED:
+                    var processingTime = response.processingTime, slavesPiesData = response.slavesPiesData, error = response.error;
+                    if (error === 404) {
+                        statistics.upUnsuccessufulRequests();
+                    }
+                    else {
+                        slavesPiesData.forEach(function (_a) {
+                            var slaveId = _a.slaveId, requestCounter = _a.requestCounter;
+                            _this.lifeInfoCallback({ slaveId: slaveId, requestCounter: requestCounter });
+                        });
+                        statistics.totalProcessingTime += processingTime;
+                    }
+                    break;
+                case index_2.RESPONSE_TYPE_STOPPED:
+                    statistics.upCompletedClients();
+                    if (statistics.isEqualCompletedClients()) {
+                        statistics.unsubscribeFromAbsBandwidth();
+                        _this.lifeCompleteCallback();
+                    }
+                    break;
+            }
         };
     }
     Life.initServers = function (serversData) {
-        var masterServer = new MasterServer_1.default(new RabbitMQ_1.default(), serversData.find(function (it) { return it.isMaster; }));
+        var masterServer = new MasterServer_1.default(new RabbitMQ_1.default());
         // masterServer.slaveSelectingBehavior = RandomSlaveSelecting.instance;
         masterServer.slaveSelectingBehavior = index_1.TestSlaveSelecting.instance;
         for (var i = 0; i < serversData.length; i++) {
@@ -115,18 +110,21 @@ var Life = (function () {
         });
     };
     Life.prototype.live = function (lifeData) {
-        var servers = lifeData.servers, sqls = lifeData.sqls;
+        var servers = lifeData.servers, clients = lifeData.clients;
         if (!servers.find(function (it) { return it.isMaster; })) {
             this.lifeCompleteCallback();
             return;
         }
         this.masterServer = Life.initServers(servers);
-        if (!this.masterServer.getSlaveServersNumber()) {
+        if (!this.masterServer.getSlavesNumber()) {
             this.lifeCompleteCallback();
             return;
         }
         this.createCluster(lifeData);
-        this.statistics = new Statistics_1.default({ nServers: servers.length });
+        this.statistics = new Statistics_1.default({
+            nServers: servers.length,
+            nClients: clients.length
+        });
         this.simulateWorkWithBigData(lifeData);
         // statistics.subscribeToAbsBandwidth(absBandwidth => this.lifeInfoCallback({
         //     type: 'load_line',

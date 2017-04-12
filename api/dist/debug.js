@@ -98,7 +98,7 @@ var serversData = [{
         hdd: 12000,
     }];
 // add region
-var masterServer = new MasterServer_1.default(new RabbitMQ_1.default(), serversData.find(function (it) { return it.isMaster; }));
+var masterServer = new MasterServer_1.default(new RabbitMQ_1.default());
 // masterServer.shardingBehavior = new HashSharding();
 for (var i = 0; i < serversData.length; i++) {
     var serverData = serversData[i];

@@ -1,6 +1,6 @@
 import {random} from '../../../../helpers/index'
 import SlaveSelectingBehavior from "./SlaveSelectingBehavior";
-import {SqlParts} from "../../../../../typings/index";
+import {SqlQueryParts} from "../../../../../typings/index";
 
 export class RandomSlaveSelecting implements SlaveSelectingBehavior {
     private static _instance;
@@ -27,7 +27,7 @@ export class TestSlaveSelecting implements SlaveSelectingBehavior {
         return this._instance;
     }
 
-    sqls: Array<SqlParts>;
+    sqls: Array<SqlQueryParts>;
 
     getSlaveServerId(slavesIds: Array<any>) {
         return slavesIds[random(slavesIds.length - 1)];

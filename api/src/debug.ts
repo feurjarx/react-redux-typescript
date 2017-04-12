@@ -103,10 +103,7 @@ const serversData = [{
 }] as Array<ServerData>;
 // add region
 
-const masterServer = new MasterServer(
-    new RabbitMQ(),
-    serversData.find(it => it.isMaster)
-);
+const masterServer = new MasterServer(new RabbitMQ());
 
 // masterServer.shardingBehavior = new HashSharding();
 

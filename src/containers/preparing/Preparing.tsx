@@ -6,7 +6,7 @@ const socket = io.connect('http://localhost:3003');
 import {Step, StepLabel} from 'material-ui/Stepper';
 import {Dialog, FlatButton, RaisedButton} from 'material-ui';
 
-import initial from './../../configs/frontmock'
+import initial from '../../configs/frontend-mock-data'
 
 import './preparing.css';
 

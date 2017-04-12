@@ -16,7 +16,7 @@ class HardwareStep extends React.Component<any, any> {
             hdd: 1000,
             replicationNumber: 0,
             pDie: 1,
-            distanceToMaster: 25,
+            distanceToMasterKm: 25,
             isMaster: false,
             maxRegions: 5
         }

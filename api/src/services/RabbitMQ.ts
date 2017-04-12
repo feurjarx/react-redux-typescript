@@ -8,6 +8,7 @@ import {Promise} from 'es6-shim';
 import rabbitmqConfig from './../configs/rabbitmq';
 import AssertQueue = Replies.AssertQueue;
 import Function0 = _.Function0;
+import {RESPONSE_TYPE_RECEIVED, RESPONSE_TYPE_SENT} from "../constants/index";
 const md5 = require('md5');
 
 export default class RabbitMQ implements IQueue {
@@ -84,7 +85,7 @@ export default class RabbitMQ implements IQueue {
                         ch.consume(queueTemp.queue, msg => {
                             if (msg.properties.correlationId === correlationId) {
                                 observer.next({
-                                    type: 'received',
+                                    type: RESPONSE_TYPE_RECEIVED,
                                     ...JSON.parse(msg.content.toString()),
                                     repeat: newData => {
 
@@ -94,7 +95,7 @@ export default class RabbitMQ implements IQueue {
                                         });
 
                                         observer.next({
-                                            type: 'sent',
+                                            type: RESPONSE_TYPE_SENT,
                                             ...data
                                         });
                                     }
@@ -108,7 +109,7 @@ export default class RabbitMQ implements IQueue {
                         });
 
                         observer.next({
-                            type: 'sent',
+                            type: RESPONSE_TYPE_SENT,
                             ...data
                         });
                     })
@@ -135,7 +136,7 @@ export default class RabbitMQ implements IQueue {
                         ch.consume(queueTemp.queue, (msg) => {
                             if (msg.properties.correlationId === correlationId) {
                                 observer.next({
-                                    type: 'received',
+                                    type: RESPONSE_TYPE_RECEIVED,
                                     ...JSON.parse(msg.content.toString())
                                 });
                             }
@@ -150,7 +151,7 @@ export default class RabbitMQ implements IQueue {
                         });
 
                         observer.next({
-                            type: 'sent',
+                            type: RESPONSE_TYPE_SENT,
                             ...data
                         });
                     });
@@ -200,12 +201,12 @@ export default class RabbitMQ implements IQueue {
 
                         const response = {
                             ...JSON.parse(msg.content.toString()),
-                            onClientReply: Function()
+                            onReply: Function()
                         };
 
                         const { replyTo, correlationId } = msg.properties;
                         if (correlationId && replyTo) {
-                            response.onClientReply = (replyData) => {
+                            response.onReply = (replyData) => {
                                 const buffer = new Buffer(JSON.stringify(replyData));
                                 ch.sendToQueue(replyTo, buffer, {correlationId});
                             };
@@ -247,12 +248,12 @@ export default class RabbitMQ implements IQueue {
 
                             const response = {
                                 ...JSON.parse(msg.content.toString()),
-                                onClientReply: Function()
+                                onReply: Function()
                             };
 
                             const { replyTo, correlationId } = msg.properties;
                             if (correlationId && replyTo) {
-                                response.onClientReply = (replyData) => {
+                                response.onReply = (replyData) => {
                                     const buffer = new Buffer(JSON.stringify(replyData));
                                     ch.sendToQueue(replyTo, buffer, {correlationId});
                                     if (lazy) {

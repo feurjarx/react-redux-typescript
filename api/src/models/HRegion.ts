@@ -9,7 +9,7 @@ class HRegion {
 
     slaveId: any;
 
-    constructor(id: number, slaveId: number, maxSize: number) {
+    constructor(id: number, slaveId, maxSize: number) {
         this.id = id;
         this.maxSize = maxSize;
         this.slaveId = slaveId;

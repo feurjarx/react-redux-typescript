@@ -52,9 +52,6 @@ var MapGenerator = (function () {
         });
         return result;
     };
-    MapGenerator.getFieldsFamilyKey = function (fieldsNames) {
-        return fieldsNames.sort().join('=').toUpperCase();
-    };
     MapGenerator.getFieldTypeByNameMap = function (fields) {
         var map = {};
         fields.forEach(function (f) { return map[f.name] = f.type; });
@@ -88,7 +85,7 @@ var MapGenerator = (function () {
                 var hRow = new HRow_1.default(rowKey, tableName);
                 // fill one hRow
                 families.forEach(function (fieldsNames) {
-                    var familyKey = _this.getFieldsFamilyKey(fieldsNames);
+                    var familyKey = HRow_1.default.calcFamilyKey(fieldsNames);
                     var fieldsValues = {};
                     fieldsNames.forEach(function (fieldName) {
                         var fieldValue = null;
@@ -112,7 +109,8 @@ var MapGenerator = (function () {
                     hRow.families[familyKey] = fieldsValues;
                 });
                 // hTables[tableName][rowKey] = hRow;
-                masterServer.setSharding(sharding);
+                var shardingType = sharding ? sharding.type : '';
+                masterServer.setShardingType(shardingType);
                 masterServer.save(hRow, sharding);
                 tableSizeCounter += rowSizesInfo.rowSize;
             };

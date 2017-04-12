@@ -7,11 +7,13 @@ export default {
         {
             name: 'Slave1',
             maxRegions: 3,
+            distanceToMasterKm: 2500,
             hdd: 100
         },
         {
             name: 'Slave2',
             maxRegions: 5,
+            distanceToMasterKm: 100,
             hdd: 200
         }
     ],
@@ -137,6 +139,17 @@ export default {
             ],
             "select": [
                 "user.name",
+                "user.email"
+            ],
+            "where": "user.name = 'abc'",
+            "raw": "SELECT name, year FROM user"
+        },
+        {
+            "from": [
+                "user"
+            ],
+            "select": [
+                "user.name",
                 "user.year"
             ],
             "raw": "SELECT name, year FROM user"
@@ -243,8 +256,8 @@ export default {
                 "playlist.name",
                 "playlist.description"
             ],
-            "where": "playlist.created_at > 1491923854",
-            "raw": "SELECT name, description FROM playlist AS p WHERE p.created_at > 1491923854"
+            "where": "playlist.created_at > 1",
+            "raw": "SELECT name, description FROM playlist AS p WHERE p.created_at > 1"
         },
         {
             "from": [

@@ -1,13 +1,14 @@
 import Client from "../Client";
 import {Subscription} from "rxjs";
 import {RABBITMQ_QUEUE_MASTER_SERVER} from  "../../constants/rabbitmq";
-import {SqlParts} from "../../../typings/index";
+import {SqlQueryParts} from "../../../typings/index";
 import {random} from "../../helpers/index";
+import {RESPONSE_TYPE_STOPPED, RESPONSE_TYPE_RECEIVED, RESPONSE_TYPE_SENT} from "../../constants/index";
 
 export default class ExpectantClient extends Client {
 
     private subscription: Subscription;
-    private sqls: Array<SqlParts>;
+    private sqls: Array<SqlQueryParts>;
 
     constructor(provider, sqls) {
         super(provider);
@@ -15,7 +16,7 @@ export default class ExpectantClient extends Client {
         this.sqls = sqls;
     }
 
-    getRandomSqlParts() {
+    getRandomSqlQueryParts() {
         const {sqls} = this;
         const idx = random(sqls.length - 1);
         return sqls[idx];
@@ -31,18 +32,18 @@ export default class ExpectantClient extends Client {
                 clientId: this.id,
                 last: requestsReverseCounter <= 1,
                 requestTimeLimit,
-                sqlParts: this.getRandomSqlParts(),
+                sqlQueryParts: this.getRandomSqlQueryParts(),
             });
 
         this.subscription = observable
             .subscribe(response => {
 
                 switch (response.type) {
-                    case 'sent':
-                        console.log(`Клиент #${ this.id } выполнил запрос: ${response.sqlParts.raw}`);
+                    case RESPONSE_TYPE_SENT:
+                        console.log(`Клиент #${ this.id } выполнил запрос: ${response.sqlQueryParts.raw}`);
                         break;
 
-                    case 'received':
+                    case RESPONSE_TYPE_RECEIVED:
 
                         if (response.slavesNames) {
                             console.log(`Клиент #${ this.id } получил ответ от мастера. Обрабатывали запрос #${response.slavesNames.join(',')}`);
@@ -58,11 +59,11 @@ export default class ExpectantClient extends Client {
                             response.repeat({
                                 clientId: this.id,
                                 last: requestsReverseCounter <= 1,
-                                sqlParts: this.getRandomSqlParts()
+                                sqlQueryParts: this.getRandomSqlQueryParts()
                             });
 
                         } else {
-                            response.type = 'stopped';
+                            response.type = RESPONSE_TYPE_STOPPED;
                             this.stop();
                         }
 

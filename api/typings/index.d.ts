@@ -15,17 +15,18 @@ export interface TableData {
 export interface ServerData {
     name: string;
     hdd: number;
-    distanceToMaster: number;
+    distanceToMasterKm: number;
     replicationNumber?: number;
     maxRegions?: number;
     pDie?: number;
     isMaster?: boolean;
 }
 
-export interface SqlParts {
+export interface SqlQueryParts {
     from: Array<string>;
     select: Array<string>;
     where: string;
+    join: any;
 }
 
 export interface Criteria {
@@ -34,4 +35,32 @@ export interface Criteria {
     operator: string;
     value: any;
     isPrimaryField: boolean;
+}
+
+export interface ClientRequestFromMaster {
+    onReply: Function;
+    clientId: any;
+    subKey: string;
+    sqlQueryParts: SqlQueryParts;
+}
+
+export interface HRowCell {
+    fieldSize: number;
+    versions: {
+        [ts: number]: any
+    };
+}
+
+export interface HRowSelecting {
+    valuesMap: {
+        [field: string]: HRowCell;
+    };
+    processingTime: number;
+    successful?: boolean;
+}
+
+export interface HRowArrow {
+    table: string;
+    field: string;
+    value: any;
 }

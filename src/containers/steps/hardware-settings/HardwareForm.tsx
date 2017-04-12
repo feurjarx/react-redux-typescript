@@ -121,9 +121,9 @@ class HardwareForm extends React.Component<any, any> {
                     />
 
                     <InfoSlider
-                        defaultValue={defaultValues.distanceToMaster}
+                        defaultValue={defaultValues.distanceToMasterKm}
                         label="Расстояние до master-сервера"
-                        name={`servers.${idx}.distanceToMaster`}
+                        name={`servers.${idx}.distanceToMasterKm`}
                         shortSyntax='км'
                         min={0}
                         max={25000}

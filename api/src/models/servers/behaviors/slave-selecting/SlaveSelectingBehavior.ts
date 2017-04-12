@@ -1,7 +1,7 @@
-import {SqlParts} from "../../../../../typings/index";
+import {SqlQueryParts} from "../../../../../typings/index";
 interface SlaveSelectingBehavior {
     title?: string;
-    sqls?: Array<SqlParts>;
+    sqls?: Array<SqlQueryParts>;
     getSlaveServerId?(...args);
 }
 

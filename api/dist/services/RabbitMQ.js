@@ -11,6 +11,7 @@ var amqp = require("amqplib/callback_api");
 var Observable_1 = require("rxjs/Observable");
 var es6_shim_1 = require("es6-shim");
 var rabbitmq_1 = require("./../configs/rabbitmq");
+var index_1 = require("../constants/index");
 var md5 = require('md5');
 var RabbitMQ = (function () {
     function RabbitMQ() {
@@ -75,14 +76,14 @@ var RabbitMQ = (function () {
                     };
                     ch.consume(queueTemp.queue, function (msg) {
                         if (msg.properties.correlationId === correlationId) {
-                            observer.next(__assign({ type: 'received' }, JSON.parse(msg.content.toString()), { repeat: function (newData) {
+                            observer.next(__assign({ type: index_1.RESPONSE_TYPE_RECEIVED }, JSON.parse(msg.content.toString()), { repeat: function (newData) {
                                     sendCall(__assign({ correlationId: correlationId }, newData));
-                                    observer.next(__assign({ type: 'sent' }, data));
+                                    observer.next(__assign({ type: index_1.RESPONSE_TYPE_SENT }, data));
                                 } }));
                         }
                     }, { noAck: true });
                     sendCall(__assign({ correlationId: correlationId }, data));
-                    observer.next(__assign({ type: 'sent' }, data));
+                    observer.next(__assign({ type: index_1.RESPONSE_TYPE_SENT }, data));
                 });
             });
         });
@@ -101,7 +102,7 @@ var RabbitMQ = (function () {
                     var correlationId = md5(Date.now());
                     ch.consume(queueTemp.queue, function (msg) {
                         if (msg.properties.correlationId === correlationId) {
-                            observer.next(__assign({ type: 'received' }, JSON.parse(msg.content.toString())));
+                            observer.next(__assign({ type: index_1.RESPONSE_TYPE_RECEIVED }, JSON.parse(msg.content.toString())));
                         }
                     }, { noAck: noAck });
                     routeKeys.forEach(function (routeKey) {
@@ -111,7 +112,7 @@ var RabbitMQ = (function () {
                             replyTo: queueTemp.queue
                         });
                     });
-                    observer.next(__assign({ type: 'sent' }, data));
+                    observer.next(__assign({ type: index_1.RESPONSE_TYPE_SENT }, data));
                 });
             });
         });
@@ -147,10 +148,10 @@ var RabbitMQ = (function () {
                     ch.prefetch(1);
                 }
                 ch.consume(queueName, function (msg) {
-                    var response = __assign({}, JSON.parse(msg.content.toString()), { onClientReply: Function() });
+                    var response = __assign({}, JSON.parse(msg.content.toString()), { onReply: Function() });
                     var _a = msg.properties, replyTo = _a.replyTo, correlationId = _a.correlationId;
                     if (correlationId && replyTo) {
-                        response.onClientReply = function (replyData) {
+                        response.onReply = function (replyData) {
                             var buffer = new Buffer(JSON.stringify(replyData));
                             ch.sendToQueue(replyTo, buffer, { correlationId: correlationId });
                         };
@@ -182,10 +183,10 @@ var RabbitMQ = (function () {
                     resolve();
                     ch.consume(queueTemp.queue, function (msg) {
                         // from MasterServer (client request redirect)
-                        var response = __assign({}, JSON.parse(msg.content.toString()), { onClientReply: Function() });
+                        var response = __assign({}, JSON.parse(msg.content.toString()), { onReply: Function() });
                         var _a = msg.properties, replyTo = _a.replyTo, correlationId = _a.correlationId;
                         if (correlationId && replyTo) {
-                            response.onClientReply = function (replyData) {
+                            response.onReply = function (replyData) {
                                 var buffer = new Buffer(JSON.stringify(replyData));
                                 ch.sendToQueue(replyTo, buffer, { correlationId: correlationId });
                                 if (lazy) {

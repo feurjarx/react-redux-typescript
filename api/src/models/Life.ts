@@ -7,15 +7,13 @@ import Statistics from "./Statistics";
 import {RandomSleepCalculating} from "./servers/behaviors/calculate";
 import SocketLogEmitter from "../services/SocketLogEmitter";
 import {TestSlaveSelecting} from "./servers/behaviors/slave-selecting/index";
+import {RESPONSE_TYPE_STOPPED, RESPONSE_TYPE_RECEIVED, RESPONSE_TYPE_SENT} from "../constants/index";
 
 export class Life {
 
     private static initServers(serversData) {
 
-        const masterServer = new MasterServer(
-            new RabbitMQ(),
-            serversData.find(it => it.isMaster)
-        );
+        const masterServer = new MasterServer(new RabbitMQ());
 
         // masterServer.slaveSelectingBehavior = RandomSlaveSelecting.instance;
         masterServer.slaveSelectingBehavior = TestSlaveSelecting.instance;
@@ -85,21 +83,24 @@ export class Life {
 
     live(lifeData) {
 
-        const {servers, sqls} = lifeData;
+        const {servers, clients} = lifeData;
         if (!servers.find(it => it.isMaster)) {
             this.lifeCompleteCallback();
             return;
         }
 
         this.masterServer = Life.initServers(servers);
-        if (!this.masterServer.getSlaveServersNumber()) {
+        if (!this.masterServer.getSlavesNumber()) {
             this.lifeCompleteCallback();
             return;
         }
 
         this.createCluster(lifeData);
 
-        this.statistics = new Statistics({nServers: servers.length});
+        this.statistics = new Statistics({
+            nServers: servers.length,
+            nClients: clients.length
+        });
 
         this.simulateWorkWithBigData(lifeData);
 
@@ -111,9 +112,7 @@ export class Life {
 
     startClientsRequests = (lifeData) => {
         const {clients, requestTimeLimit, requestsLimit, sqls} = lifeData;
-        const {statistics} = this;
-        const nClients = clients.length;
-        SocketLogEmitter.instance.setBatchSize(requestsLimit * nClients);
+        SocketLogEmitter.instance.setBatchSize(requestsLimit * clients.length);
 
         clients.forEach(clientData => {
         // [clients[0]].forEach(clientData => {
@@ -125,61 +124,51 @@ export class Life {
             console.log(`Создан новый клиент #${client.id}`);
 
             client
-                .requestsToMasterServer(nRequests, (response) => {
-                    switch (response.type) {
-
-                        case 'sent':
-                            statistics.upRequests();
-                            break;
-
-                        case 'received':
-
-                            const {
-                                lastProcessingTime,
-                                slaves,
-                                error
-                            } = response;
-
-                            if (error === 404) {
-                                statistics.upUnsuccessufulRequests();
-
-                            } else {
-
-                                slaves.forEach(({slaveId, requestCounter}) => {
-                                    this.lifeInfoCallback({slaveId, requestCounter});
-                                });
-
-                                statistics.totalProcessingTime += lastProcessingTime;
-                            }
-
-                            break;
-
-                        case 'stopped':
-                            statistics.upCompletedClients();
-                            if (statistics.isEqualCompletedClients(nClients)) {
-                                statistics.unsubscribeFromAbsBandwidth();
-                                this.lifeCompleteCallback();
-                            }
-
-                            break;
-                    }
-                });
+                .requestsToMasterServer(nRequests, this.onMasterResponse);
         });
     };
 
-    // вызов, когда приходит ответ от регион-сервера
-    onMasterServerResponse = (response) => {
+    onMasterResponse = (response) => {
+        const {statistics} = this;
 
-        const {
-            lastProcessingTime,
-            requestCounter,
-            slaveId
-        } = response;
+        switch (response.type) {
 
-        this.lifeInfoCallback({slaveId, requestCounter});
-        this.statistics.totalProcessingTime += lastProcessingTime;
+            case RESPONSE_TYPE_SENT:
+                statistics.upRequests();
+                break;
+
+            case RESPONSE_TYPE_RECEIVED:
+
+                const {
+                    processingTime,
+                    slavesPiesData,
+                    error
+                } = response;
+
+                if (error === 404) {
+                    statistics.upUnsuccessufulRequests();
+
+                } else {
+
+                    slavesPiesData.forEach(({slaveId, requestCounter}) => {
+                        this.lifeInfoCallback({slaveId, requestCounter});
+                    });
+
+                    statistics.totalProcessingTime += processingTime;
+                }
+
+                break;
+
+            case RESPONSE_TYPE_STOPPED:
+                statistics.upCompletedClients();
+                if (statistics.isEqualCompletedClients()) {
+                    statistics.unsubscribeFromAbsBandwidth();
+                    this.lifeCompleteCallback();
+                }
+
+                break;
+        }
     };
-
 
     destroy() {
         this.masterServer.close();

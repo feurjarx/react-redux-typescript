@@ -3,7 +3,7 @@ import HRow from "./HRow";
 import MasterServer from "./servers/MasterServer";
 import {RandomSharding} from "./servers/behaviors/sharding";
 import {TableField} from "../../typings/index";
-import {FIELD_TYPE_NUMBER, FIELD_TYPE_STRING, HDD_ASPECT_RATIO} from "../constants/index";
+import {FIELD_TYPE_NUMBER, FIELD_TYPE_STRING, HDD_ASPECT_RATIO, SQL_OPERATOR_EQ} from "../constants/index";
 
 export default class MapGenerator {
 
@@ -70,10 +70,6 @@ export default class MapGenerator {
         return result;
     }
 
-    static getFieldsFamilyKey(fieldsNames) {
-        return fieldsNames.sort().join('=').toUpperCase();
-    }
-
     static getFieldTypeByNameMap(fields: Array<TableField>) {
         let map = {};
         fields.forEach(f => map[f.name] = f.type)
@@ -117,7 +113,7 @@ export default class MapGenerator {
                 // fill one hRow
                 families.forEach(fieldsNames => {
 
-                    const familyKey = this.getFieldsFamilyKey(fieldsNames);
+                    const familyKey = HRow.calcFamilyKey(fieldsNames);
                     const fieldsValues = {};
                     fieldsNames.forEach(fieldName => {
                         let fieldValue = null;
@@ -143,7 +139,8 @@ export default class MapGenerator {
                 });
 
                 // hTables[tableName][rowKey] = hRow;
-                masterServer.setSharding(sharding);
+                const shardingType = sharding ? sharding.type : '';
+                masterServer.setShardingType(shardingType);
                 masterServer.save(hRow, sharding);
                 tableSizeCounter += rowSizesInfo.rowSize;
             }

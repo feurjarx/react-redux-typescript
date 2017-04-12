@@ -1,5 +1,5 @@
 import Server from "../Server";
-import {ServerData, SqlParts, Criteria} from "../../../typings/index";
+import {SqlQueryParts, Criteria} from "../../../typings/index";
 import SlaveServer from "./SlaveServer";
 import HRow from "../HRow";
 import ShardingBehavior from "./behaviors/sharding/ShardingBehavior";
@@ -18,9 +18,10 @@ import {
 
 import {
     SHARDING_TYPE_HORIZONTAL,
-    SHARDING_TYPE_VERTICAL
+    SHARDING_TYPE_VERTICAL, SQL_OPERATOR_EQ, RESPONSE_TYPE_RECEIVED, RESPONSE_TYPE_SENT
 } from "./../../constants"
 import SlaveSelectingBehavior from "./behaviors/slave-selecting/SlaveSelectingBehavior";
+import SqlSyntaxService from "../../services/SqlSyntaxService";
 
 interface ShardingProps {
     type: string;
@@ -30,29 +31,22 @@ interface ShardingProps {
 
 export default class MasterServer extends Server {
 
-    isMaster: boolean;
-
     shardingBehavior: ShardingBehavior;
     slaveSelectingBehavior: SlaveSelectingBehavior;
 
-    subordinates: Array<SlaveServer>;
+    subordinates: Array<SlaveServer> = [];
 
     vGuideMap = {};
     guideMap = {};
 
     clientsSubscription: Subscription;
-    subscriptionsMap: {[key: string]: Subscription} = {};
+    slavesSubscriptionsMap: {[key: string]: Subscription} = {};
 
-    constructor(provider, serverData: ServerData) {
+    constructor(provider) {
         super(provider);
-
-        const {isMaster} = serverData;
-        this.isMaster = isMaster;
-        this.subordinates = [];
     };
 
-    setSharding(sharding = {}) {
-        const {type} = sharding as ShardingProps;
+    setShardingType(type) {
         switch (type) {
             case SHARDING_TYPE_VERTICAL:
                 this.shardingBehavior = VerticalSharding.instance;
@@ -67,7 +61,7 @@ export default class MasterServer extends Server {
         }
     }
 
-    getSlaveServerById(id) {
+    getSlaveById(id) {
         return this.subordinates.find(slave => slave.id === id);
     }
 
@@ -79,9 +73,8 @@ export default class MasterServer extends Server {
 
         } else {
             // h-sharding
-            hRow.getFields().forEach(arrow => {
-                const guideKey = HRow.getGuideArrowKey(arrow);
-                this.guideMap[guideKey] = slaveId;
+            hRow.getArrowKeys().forEach(arrowKey => {
+                this.guideMap[arrowKey] = slaveId;
             });
         }
     }
@@ -96,8 +89,8 @@ export default class MasterServer extends Server {
         let slaveId: any;
 
         let attemptCounter = 0;
-        const safeLimit = this.getSlaveServersNumber() ** 2;
-        const slavesIds = this.getSlaveServersIds();
+        const safeLimit = this.getSlavesNumber() ** 2;
+        const slavesIds = this.getSlavesIds();
 
         do {
             slaveId = getSlaveServerId(hRow, slavesIds, {
@@ -106,7 +99,7 @@ export default class MasterServer extends Server {
             });
 
             completed = this
-                .getSlaveServerById(slaveId)
+                .getSlaveById(slaveId)
                 .save(hRow);
 
         } while (repeated && !completed && ++attemptCounter < safeLimit);
@@ -120,11 +113,11 @@ export default class MasterServer extends Server {
         console.log(false, `Select slave server ${slaveId}`);
     }
 
-    getSlaveServersNumber() {
+    getSlavesNumber() {
         return this.subordinates.length;
     }
 
-    getSlaveServersIds() {
+    getSlavesIds() {
         return this.subordinates.map(s => s.id);
     }
 
@@ -140,90 +133,21 @@ export default class MasterServer extends Server {
         return Promise.all(promises);
     }
 
-    getCriteriaCases(where = ''): Array<Criteria[]> {
-        where = where.toLowerCase();
-
-        const ins = [];
-        const ors = [];
-        const operators = ['=', '<', '>', 'in'];
-
-        where.split('or').forEach((orCase: string) => {
-            orCase = orCase.trim();
-
-            const ands: Array<Criteria> = [];
-            orCase.split('and').forEach((andCase: string) => {
-                andCase = andCase.trim();
-
-                for (let i = 0; i < operators.length; i++) {
-                    const operator = operators[i];
-
-                    let [left, value] = andCase.split(operator).map(it => it.trim());
-                    if (value) {
-
-                        if (operator === 'in') {
-                            ins.push(andCase);
-                            continue;
-                        }
-
-                        const [table, field] = left.split('.');
-
-                        value = qtrim(value);
-
-                        ands.push({
-                            table,
-                            field,
-                            operator,
-                            value,
-                            isPrimaryField: field === 'id'
-                        });
-
-                        break;
-                    }
-                }
-            });
-
-            if (ands.length) {
-                ors.push(ands);
-            }
-        });
-
-        // operator IN transformation to {'or', '='}
-        ins.forEach(inItem => {
-            let [left, right] = inItem.split('in').map(it => it.trim());
-            const [table, field] = left.split('.');
-
-            right = right.slice(1, -1); // remove '(' and ')'
-            const inValues = right.split(',');
-            inValues.forEach(v => {
-                ors.push([{
-                    table,
-                    field,
-                    operator: '=',
-                    value: qtrim(v),
-                    isPrimaryField: field === 'id'
-                }])
-            });
-        });
-
-        return ors;
-    }
-
-    getSlaveServersIdsBySql(sqlParts: SqlParts) {
+    getSlavesIdsBySql(sqlQueryParts: SqlQueryParts) {
 
         const result = [];
 
-        const tableName = sqlParts.from[0];
+        const tableName = sqlQueryParts.from[0];
 
-        // check as vertical sharding
+        // check v-sharding
         if (this.vGuideMap[tableName]) {
             result.push(this.vGuideMap[tableName]);
 
         } else {
 
-            const criteriaCases = this.getCriteriaCases(sqlParts.where);
-            if (criteriaCases.length) {
-
-                criteriaCases.forEach((ands: Array<Criteria>) => {
+            SqlSyntaxService.instance
+                .getAndsListFromWhere(sqlQueryParts.where)
+                .forEach((ands: Array<Criteria>) => {
 
                     let slavesIds = [];
                     let primaryFieldName = null;
@@ -231,7 +155,7 @@ export default class MasterServer extends Server {
                     for (let i = 0; i < ands.length; i++) {
                         const criteria = ands[i];
 
-                        if (criteria.operator !== '=') {
+                        if (criteria.operator !== SQL_OPERATOR_EQ) {
                             slavesIds = [];
                             break;
                         }
@@ -243,7 +167,7 @@ export default class MasterServer extends Server {
                             break;
                         }
 
-                        const guideKey = HRow.getGuideArrowKey(criteria);
+                        const guideKey = HRow.calcArrowKey(criteria);
                         const slaveId = this.guideMap[guideKey];
                         if (!slaveId) {
                             slavesIds = [];
@@ -259,7 +183,6 @@ export default class MasterServer extends Server {
 
                     result.push(...slavesIds);
                 });
-            }
         }
 
         return unique(result);
@@ -273,46 +196,58 @@ export default class MasterServer extends Server {
             .consume(queueName, { lazy })
             .subscribe(clientRequest => {
                 // from Clients
+                let processingTimeCounter = 0;
 
-                const {onClientReply, clientId, sqlParts} = clientRequest;
+                const {clientId, sqlQueryParts} = clientRequest;
+                const onClientReply = clientRequest.onReply;
                 console.log(`Мастер-сервер получил запрос от клиента #${clientId}`);
 
-                // для простых случае с оператором "="
-                let slavesIds = this.getSlaveServersIdsBySql(sqlParts);
-                if (!slavesIds.length) {
-                    slavesIds = this.getSlaveServersIds();
-                }
+                if (sqlQueryParts.select) {
 
-                const promises = [];
-                slavesIds.forEach(slaveId => {
-                    const slave = this.getSlaveServerById(slaveId);
-                    console.log(`Мастер-сервер перенаправляет запрос от клиента #${clientId} на регион-сервер #${slaveId}`);
+                    // для простых случае с оператором "=" по словарям
+                    let slavesIds = this.getSlavesIdsBySql(sqlQueryParts);
+                    if (!slavesIds.length) {
+                        slavesIds = this.getSlavesIds();
+                    }
 
-                    promises.push(this.redirectToSlaveServer(slave, {clientId, sqlParts}));
-                });
+                    const promises = [];
+                    slavesIds.forEach(slaveId => {
+                        const slave = this.getSlaveById(slaveId);
+                        console.log(`Мастер-сервер перенаправляет запрос от клиента #${clientId} на регион-сервер #${slaveId}`);
 
-                if (promises.length) {
-                    Promise.all(promises).then(responses => {
+                        promises.push(this.redirectToSlaveServer(slave, {clientId, sqlQueryParts}));
 
-                        const lastProcessingTime = responses.reduce((sum, it) => sum + it.lastProcessingTime, 0) / responses.length;
-                        const slavesNames =  responses.map(it => it.slaveId);
-
-                        const slaves = responses.map(it => ({
-                            requestCounter: it.requestCounter,
-                            slaveId: it.slaveId
-                        }));
-
-                        onClientReply({
-                            type: 'received',
-                            slaves,
-                            slavesNames,
-                            lastProcessingTime: Math.round(lastProcessingTime)
-                        });
+                        processingTimeCounter += slave.calcTransferTime();
                     });
 
-                } else {
+                    if (promises.length) {
+                        Promise.all(promises).then(responses => {
 
-                    onClientReply([{error: 404}]);
+                            const processingTimeAvg = Math.round(
+                                responses.reduce((sum, it) => sum + it.processingTime, 0) / responses.length
+                            );
+
+                            const slavesNames = responses.map(it => it.slaveId);
+                            const slavesPiesData = responses.map(it => ({
+                                requestCounter: it.requestCounter,
+                                slaveId: it.slaveId
+                            }));
+
+                            onClientReply({
+                                type: RESPONSE_TYPE_RECEIVED,
+                                slavesPiesData,
+                                slavesNames,
+                                processingTime: processingTimeCounter + processingTimeAvg // среднее, потому что slave ищут параллельно
+                            });
+                        });
+
+                    } else {
+
+                        onClientReply([{error: 404}]);
+                    }
+
+                } else {
+                    // TODO: INSERT, UPDATE
                 }
             });
 
@@ -324,23 +259,23 @@ export default class MasterServer extends Server {
 
             const routeKey = slave.id;
             const subKey = hash(routeKey, Date.now());
-            this.subscriptionsMap[subKey] = this.provider
+            this.slavesSubscriptionsMap[subKey] = this.provider
                 .publishAndWaitByRouteKeys(RABBITMQ_EXCHANGE_SLAVE_SERVERS, [routeKey], {...data, subKey})
                 .subscribe(response => {
                     // from SlaveServer
 
                     switch (response.type) {
-                        case 'sent':
+                        case RESPONSE_TYPE_SENT:
                             break;
 
-                        case 'received':
+                        case RESPONSE_TYPE_RECEIVED:
 
                             const {slaveId, clientId, subKey} = response;
                             console.log(`Мастер-сервер получил ответ с регион-сервера ${slaveId} на запрос от клиента #${clientId}`);
 
                             resolve(response);
 
-                            this.subscriptionsMap[subKey].unsubscribe();
+                            this.slavesSubscriptionsMap[subKey].unsubscribe();
 
                             break;
                         default:

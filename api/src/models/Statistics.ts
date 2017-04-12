@@ -6,16 +6,18 @@ export default class Statistics {
     private absBandwidthTimerId;
 
     nServers: number;
+    nClients: number;
 
     totalProcessingTime: number;
 
-    constructor({nServers}) {
+    constructor({nServers, nClients}) {
         this.unsuccessfulRequestsCounter = 0;
         this.completedClientsCounter = 0;
         this.totalProcessingTime = 0;
         this.requestsCounter = 0;
 
         this.nServers = nServers;
+        this.nClients = nClients;
     }
 
     upUnsuccessufulRequests() {
@@ -30,8 +32,8 @@ export default class Statistics {
         this.requestsCounter++;
     }
 
-    isEqualCompletedClients(n: number) {
-        return this.completedClientsCounter === +n;
+    isEqualCompletedClients() {
+        return this.completedClientsCounter === this.nClients;
     }
 
     subscribeToAbsBandwidth(callback = Function(), interval = 300) {
