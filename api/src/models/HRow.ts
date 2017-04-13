@@ -180,5 +180,4 @@ export default class HRow {
 
         return result;
     }
-
 }

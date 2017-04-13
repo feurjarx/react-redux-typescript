@@ -4,6 +4,9 @@ import rabbitmqConfig from "../configs/rabbitmq";
 export default class Client {
     id: number;
 
+    /**
+     * @deprecated
+     */
     requestTimeLimit: number = null;
 
     protected provider: IQueue;

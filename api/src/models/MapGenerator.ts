@@ -79,8 +79,6 @@ export default class MapGenerator {
     static fillRegions({tables}, masterServer: MasterServer) {
 
         const generator = new MapGenerator();
-        // const hTables = {};
-        // const maxTableSize = dbSize / tables.length; // avg
 
         tables.forEach(table => {
 
@@ -94,7 +92,6 @@ export default class MapGenerator {
 
             const tableSize = HDD_ASPECT_RATIO * table.tableSize;
             const tableName = table.name;
-            // hTables[tableName] = {};
 
             const families = this.getFamilies(fields);
             const fieldTypeByNameMap = this.getFieldTypeByNameMap(fields);
@@ -138,14 +135,11 @@ export default class MapGenerator {
                     hRow.families[familyKey] = fieldsValues;
                 });
 
-                // hTables[tableName][rowKey] = hRow;
                 const shardingType = sharding ? sharding.type : '';
                 masterServer.setShardingType(shardingType);
                 masterServer.save(hRow, sharding);
                 tableSizeCounter += rowSizesInfo.rowSize;
             }
         });
-
-        // return hTables; // logical data struct
     }
 }

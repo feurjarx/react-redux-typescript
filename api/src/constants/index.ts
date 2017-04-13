@@ -18,3 +18,5 @@ export const RESPONSE_TYPE_SENT = 'sent';
 export const RESPONSE_TYPE_RECEIVED = 'received';
 export const RESPONSE_TYPE_STOPPED = 'stopped';
 
+export const CHART_TYPE_REQUESTS_DIAGRAM = 'requests_diagram';
+export const CHART_TYPE_SLAVES_LOAD = 'slaves_load_chart';

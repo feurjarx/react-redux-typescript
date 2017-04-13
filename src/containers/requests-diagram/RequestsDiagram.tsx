@@ -7,9 +7,11 @@ import ChartDataPoint = CanvasJS.ChartDataPoint;
 const CanvasJS = require('canvasjs/dist/canvasjs.js');
 
 function mapStateToProps(state) {
-    const {requestsDiagram} = state.chartsData;
+    const {requestsDiagramNewItem, initial} = state.chartsData;
+
     return {
-        requestsDiagram
+        requestsDiagramNewItem,
+        initial
     };
 }
 
@@ -27,13 +29,15 @@ class RequestsDiagram extends React.Component<any, React.ComponentState> {
 
     initChart(initialChartData) {
 
-        this.clear();
+        // this.clear();
+        this.idxPointByServerIdMap = {};
+        this.dataPoints = [];
 
-        const {dataPoints, idxPointByServerIdMap} = this;
-        let {maxValue, serversIds} = initialChartData;
+        const {idxPointByServerIdMap} = this;
+        let {requestsDiagramMaxValue, serversIds} = initialChartData;
 
         serversIds.forEach((id,i) => {
-            dataPoints.push({
+            this.dataPoints.push({
                 x: i,
                 y: 0,
                 label: `Регион сервер ${id}`
@@ -49,38 +53,28 @@ class RequestsDiagram extends React.Component<any, React.ComponentState> {
             axisY: {
                 gridThickness: 0,
                 minimum: 0,
-                maximum: maxValue
+                maximum: requestsDiagramMaxValue
             },
             data: [{
                 type: "column",
                 bevelEnabled: true,
                 indexLabel: "{y}",
-                dataPoints
+                dataPoints: this.dataPoints
             }]
         });
     }
 
-    clear() {
-        // Warning! Can not dataPoints = []
-        while (this.dataPoints.pop()) {}
-        this.idxPointByServerIdMap = {};
-    }
-
     componentWillReceiveProps(props) {
 
-        const {requestsDiagram} = props;
-        if (requestsDiagram) {
+        const {requestsDiagramNewItem, initial} = props;
+        if (initial) {
+            this.initChart(initial);
 
-            if (requestsDiagram.newItem) {
+        } else if (requestsDiagramNewItem) {
 
-                const {slaveId, requestCounter} = requestsDiagram.newItem;
-                const idx = this.idxPointByServerIdMap[slaveId];
-                this.dataPoints[idx].y = requestCounter;
-
-            } else {
-
-                this.initChart(requestsDiagram.initial);
-            }
+            const {slaveId, requestsCounter} = requestsDiagramNewItem;
+            const idx = this.idxPointByServerIdMap[slaveId];
+            this.dataPoints[idx].y = requestsCounter;
 
             this.chart.render();
         }

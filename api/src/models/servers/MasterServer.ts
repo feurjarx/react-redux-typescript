@@ -10,7 +10,7 @@ import {
     RABBITMQ_QUEUE_MASTER_SERVER
 } from "./../../constants/rabbitmq";
 
-import {hash, composition, unique, qtrim} from "../../helpers/index";
+import {hash, unique} from "../../helpers/index";
 import {
     VerticalSharding,
     HorizontalSharding
@@ -22,17 +22,12 @@ import {
 } from "./../../constants"
 import SlaveSelectingBehavior from "./behaviors/slave-selecting/SlaveSelectingBehavior";
 import SqlSyntaxService from "../../services/SqlSyntaxService";
-
-interface ShardingProps {
-    type: string;
-    slaveId?: string;
-    fieldName?: string;
-}
+import {IQueue} from "../../services/IQueue";
+import RabbitMQ from "../../services/RabbitMQ";
 
 export default class MasterServer extends Server {
 
     shardingBehavior: ShardingBehavior;
-    slaveSelectingBehavior: SlaveSelectingBehavior;
 
     subordinates: Array<SlaveServer> = [];
 
@@ -110,7 +105,7 @@ export default class MasterServer extends Server {
 
         this.updateGuideMaps(hRow, slaveId, shardingOptions);
 
-        console.log(false, `Select slave server ${slaveId}`);
+        console.log(false, `Выбран slave #${slaveId}`);
     }
 
     getSlavesNumber() {
@@ -195,12 +190,14 @@ export default class MasterServer extends Server {
         this.clientsSubscription = this.provider
             .consume(queueName, { lazy })
             .subscribe(clientRequest => {
-                // from Clients
+
+                // clientRequest.onReply({error: 404});
+
                 let processingTimeCounter = 0;
 
                 const {clientId, sqlQueryParts} = clientRequest;
                 const onClientReply = clientRequest.onReply;
-                console.log(`Мастер-сервер получил запрос от клиента #${clientId}`);
+                console.log(`Мастер-сервер получил запрос от клиента #${clientId}: ${sqlQueryParts.raw}`);
 
                 if (sqlQueryParts.select) {
 
@@ -215,7 +212,7 @@ export default class MasterServer extends Server {
                         const slave = this.getSlaveById(slaveId);
                         console.log(`Мастер-сервер перенаправляет запрос от клиента #${clientId} на регион-сервер #${slaveId}`);
 
-                        promises.push(this.redirectToSlaveServer(slave, {clientId, sqlQueryParts}));
+                        promises.push(this.redirectToSlaveServer(slave, {clientId, sqlQueryParts}, new RabbitMQ()));
 
                         processingTimeCounter += slave.calcTransferTime();
                     });
@@ -228,14 +225,17 @@ export default class MasterServer extends Server {
                             );
 
                             const slavesNames = responses.map(it => it.slaveId);
-                            const slavesPiesData = responses.map(it => ({
-                                requestCounter: it.requestCounter,
+                            const slavesRequestsDiagramData = responses.map(it => ({
+                                requestsCounter: it.requestsCounter,
                                 slaveId: it.slaveId
                             }));
 
+                            const slavesProcessingTimeList = responses.map(it => it.processingTime);
+
                             onClientReply({
                                 type: RESPONSE_TYPE_RECEIVED,
-                                slavesPiesData,
+                                slavesRequestsDiagramData,
+                                slavesProcessingTimeList,
                                 slavesNames,
                                 processingTime: processingTimeCounter + processingTimeAvg // среднее, потому что slave ищут параллельно
                             });
@@ -243,7 +243,7 @@ export default class MasterServer extends Server {
 
                     } else {
 
-                        onClientReply([{error: 404}]);
+                        onClientReply({error: 404});
                     }
 
                 } else {
@@ -253,14 +253,25 @@ export default class MasterServer extends Server {
 
     }
 
-    redirectToSlaveServer(slave: SlaveServer, data) {
+    redirectToSlaveServer(slave: SlaveServer, data, tempProvider: IQueue = null) {
+
+        let provider: IQueue;
+        let autoclose: boolean;
+
+        if (tempProvider) {
+            provider = tempProvider;
+            autoclose = true;
+        } else {
+            provider = this.provider;
+            autoclose = false;
+        }
 
         return new Promise((resolve, reject) => {
 
             const routeKey = slave.id;
             const subKey = hash(routeKey, Date.now());
-            this.slavesSubscriptionsMap[subKey] = this.provider
-                .publishAndWaitByRouteKeys(RABBITMQ_EXCHANGE_SLAVE_SERVERS, [routeKey], {...data, subKey})
+            this.slavesSubscriptionsMap[subKey] = provider
+                .publishAndWaitByRouteKeys(RABBITMQ_EXCHANGE_SLAVE_SERVERS, [routeKey], {...data, subKey}, {autoclose})
                 .subscribe(response => {
                     // from SlaveServer
 
@@ -271,7 +282,7 @@ export default class MasterServer extends Server {
                         case RESPONSE_TYPE_RECEIVED:
 
                             const {slaveId, clientId, subKey} = response;
-                            console.log(`Мастер-сервер получил ответ с регион-сервера ${slaveId} на запрос от клиента #${clientId}`);
+                            console.log(`Мастер-сервер получил ответ с регион-сервера #${slaveId} на запрос от клиента #${clientId}`);
 
                             resolve(response);
 
@@ -287,9 +298,11 @@ export default class MasterServer extends Server {
 
     close() {
         super.close();
+        console.log(`Мастер #${ this.id } отключен.`);
+
         this.subordinates.forEach(s => s.close());
+        console.log(`Регион-сервера отключены.`);
+
         this.clientsSubscription.unsubscribe();
     }
-
-
 }

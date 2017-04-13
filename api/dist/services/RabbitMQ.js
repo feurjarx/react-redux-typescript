@@ -88,21 +88,24 @@ var RabbitMQ = (function () {
             });
         });
     };
-    RabbitMQ.prototype.publishAndWaitByRouteKeys = function (exchange, routeKeys, data) {
+    RabbitMQ.prototype.publishAndWaitByRouteKeys = function (exchange, routeKeys, data, _a) {
         var _this = this;
         if (data === void 0) { data = {}; }
+        var _b = _a.autoclose, autoclose = _b === void 0 ? false : _b;
         return new Observable_1.Observable(function (observer) {
             _this.connect()
                 .then(function (ch) {
                 var exclusive = true;
                 var noAck = true;
                 ch.assertQueue('', { exclusive: exclusive }, function (err, queueTemp) {
-                    var durable = false;
-                    ch.assertExchange(exchange, 'direct', { durable: durable });
+                    ch.assertExchange(exchange, 'direct', { durable: false });
                     var correlationId = md5(Date.now());
                     ch.consume(queueTemp.queue, function (msg) {
                         if (msg.properties.correlationId === correlationId) {
                             observer.next(__assign({ type: index_1.RESPONSE_TYPE_RECEIVED }, JSON.parse(msg.content.toString())));
+                        }
+                        if (autoclose) {
+                            setTimeout(function () { return _this.destroy(); }, 500);
                         }
                     }, { noAck: noAck });
                     routeKeys.forEach(function (routeKey) {
@@ -132,9 +135,6 @@ var RabbitMQ = (function () {
             })
                 .catch(function (err) { return reject(err); });
         });
-    };
-    RabbitMQ.prototype.acknowledge = function (msg) {
-        this.channel.ack(msg);
     };
     RabbitMQ.prototype.consume = function (queueName, _a) {
         var _this = this;
@@ -171,6 +171,7 @@ var RabbitMQ = (function () {
             _this.connect()
                 .then(function (ch) {
                 var durable = false;
+                // const durable = true;
                 ch.assertExchange(exchange, 'direct', { durable: durable });
                 var exclusive = true;
                 ch.assertQueue('', { exclusive: exclusive }, function (err, queueTemp) {
@@ -197,9 +198,6 @@ var RabbitMQ = (function () {
                         observer.next(response);
                     }, { noAck: !lazy });
                 });
-            })
-                .catch(function (err) {
-                throw new Error('Connect invalid');
             });
         });
     };

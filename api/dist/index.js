@@ -8,32 +8,28 @@ var SocketLogEmitter_1 = require("./services/SocketLogEmitter");
 exports.run = function () {
     var httpServer = http.createServer();
     var io = ioServer(httpServer);
+    var life;
     io.on(events_1.EVENT_IO_CONNECTION, function (client) {
         SocketLogEmitter_1.default.instance
             .init(client, events_1.EVENT_IO_LOGS)
             .enable();
         console.log(false, 'browser client connected.');
-        var life;
         client.on(events_1.EVENT_IO_LIFE, function (data) {
-            if (life) {
-                life.destroy();
+            if (!life || !life.active) {
+                if (life) {
+                    life.destroy();
+                }
+                life = new Life_1.Life();
+                life
+                    .onLifeInfo(function (browserData, type) {
+                    client.emit(events_1.EVENT_IO_LIFE, browserData, type);
+                })
+                    .onLifeComplete(function () {
+                    client.emit(events_1.EVENT_IO_THE_END);
+                })
+                    .onBigDataInfo(function (browserData) { return (client.emit(events_1.EVENT_IO_PRELIFE, browserData)); })
+                    .live(data);
             }
-            life = new Life_1.Life();
-            life
-                .onLifeInfo(function (browserData) {
-                if (browserData.type === 'load_line') {
-                    client.emit(events_1.EVENT_IO_LOAD_LINE, browserData);
-                }
-                else {
-                    client.emit(events_1.EVENT_IO_LIFE, browserData);
-                }
-            })
-                .onLifeComplete(function () {
-                SocketLogEmitter_1.default.instance.emitForce(); // остаток логов на выпуск
-                client.emit(events_1.EVENT_IO_THE_END);
-            })
-                .onBigDataInfo(function (browserData) { return (client.emit(events_1.EVENT_IO_PRELIFE, browserData)); })
-                .live(data);
         });
         client.on(events_1.EVENT_IO_DISCONNECT, function () {
             console.log('browser client was disconnected.');

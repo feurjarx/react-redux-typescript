@@ -27,6 +27,7 @@ export interface SqlQueryParts {
     select: Array<string>;
     where: string;
     join: any;
+    raw: string;
 }
 
 export interface Criteria {

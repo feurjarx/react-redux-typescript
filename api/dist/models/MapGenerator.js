@@ -61,8 +61,6 @@ var MapGenerator = (function () {
         var _this = this;
         var tables = _a.tables;
         var generator = new MapGenerator();
-        // const hTables = {};
-        // const maxTableSize = dbSize / tables.length; // avg
         tables.forEach(function (table) {
             var fields = table.fields, sharding = table.sharding;
             if (!fields.find(function (f) { return f.name === 'created_at'; })) {
@@ -73,7 +71,6 @@ var MapGenerator = (function () {
             }
             var tableSize = index_2.HDD_ASPECT_RATIO * table.tableSize;
             var tableName = table.name;
-            // hTables[tableName] = {};
             var families = _this.getFamilies(fields);
             var fieldTypeByNameMap = _this.getFieldTypeByNameMap(fields);
             var tableSizeCounter = 0;
@@ -108,7 +105,6 @@ var MapGenerator = (function () {
                     });
                     hRow.families[familyKey] = fieldsValues;
                 });
-                // hTables[tableName][rowKey] = hRow;
                 var shardingType = sharding ? sharding.type : '';
                 masterServer.setShardingType(shardingType);
                 masterServer.save(hRow, sharding);
@@ -118,7 +114,6 @@ var MapGenerator = (function () {
                 _loop_1(i);
             }
         });
-        // return hTables; // logical data struct
     };
     return MapGenerator;
 }());

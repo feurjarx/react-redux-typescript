@@ -33,7 +33,7 @@ class RegionsPiesChart extends React.Component<any, any> {
         let pieChart: JSX.Element = null;
         if (pies.length) {
 
-            const height = document.getElementById('tabs-content').clientHeight - 120;
+            const height = document.getElementById('tabs-content').clientHeight - 58;
             const radius = 1/2 * height - 70;
             const diameter = 2 * radius;
             const interval = 20;
@@ -67,7 +67,7 @@ class RegionsPiesChart extends React.Component<any, any> {
                                         key={i}
                                         data={chartData}
                                         cx={(diameter + 20) * i + radius + 20}
-                                        cy={radius}
+                                        cy={1.5 * radius}
                                         labelLine={false}
                                         label={PieLabel}
                                         outerRadius={radius}
@@ -88,7 +88,6 @@ class RegionsPiesChart extends React.Component<any, any> {
 
         return (
             <div className={`${pies.length ? '' : 'hidden'}`}>
-                <h2 className="text-center">Заполнение регионов</h2>
                 {pieChart}
             </div>
         )

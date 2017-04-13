@@ -1,7 +1,8 @@
 import {
+    PUSH_NEW_ITEMS_TO_SLAVES_LOAD_CHART,
     PUSH_NEW_ITEM_TO_REQUESTS_DIAGRAM,
     UPDATE_REGIONS_PIES_CHARTS,
-    INIT_REQUESTS_DIAGRAM
+    INIT_CHARTS_DATA
 } from "../constants/actions";
 
 export default function chartsData(state = {}, action) {
@@ -14,22 +15,29 @@ export default function chartsData(state = {}, action) {
                 ...action.data
             };
 
-        case INIT_REQUESTS_DIAGRAM:
+        case INIT_CHARTS_DATA:
 
             return {
                 ...state,
-                requestsDiagram: {
-                    initial: action.data
-                }
+                initial: action.data,
+                // requestsDiagramNewItem: null,
+                // slavesLoadNewTimeList: []
             };
 
         case PUSH_NEW_ITEM_TO_REQUESTS_DIAGRAM:
 
             return {
                 ...state,
-                requestsDiagram: {
-                    newItem: action.data
-                }
+                initial: null,
+                requestsDiagramNewItem: action.data
+            };
+
+        case PUSH_NEW_ITEMS_TO_SLAVES_LOAD_CHART:
+
+            return {
+                ...state,
+                initial: null,
+                slavesLoadNewTimeList: action.data
             };
 
         default:

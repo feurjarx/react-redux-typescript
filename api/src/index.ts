@@ -19,6 +19,7 @@ export const run = () => {
 
     const httpServer = http.createServer();
     const io = ioServer(httpServer);
+    let life: Life;
 
     io.on(EVENT_IO_CONNECTION, client => {
 
@@ -28,30 +29,28 @@ export const run = () => {
 
         console.log(false, 'browser client connected.');
 
-        let life: Life;
         client.on(EVENT_IO_LIFE,
             (data) => {
-                if (life) {
-                    life.destroy();
-                }
 
-                life = new Life();
-                life
-                    .onLifeInfo(browserData => {
-                        if (browserData.type === 'load_line') {
-                            client.emit(EVENT_IO_LOAD_LINE, browserData);
-                        } else {
-                            client.emit(EVENT_IO_LIFE, browserData);
-                        }
-                    })
-                    .onLifeComplete(() => {
-                        SocketLogEmitter.instance.emitForce(); // остаток логов на выпуск
-                        client.emit(EVENT_IO_THE_END);
-                    })
-                    .onBigDataInfo(browserData => (
-                        client.emit(EVENT_IO_PRELIFE, browserData)
-                    ))
-                    .live(data);
+                if (!life || !life.active) {
+
+                    if (life) {
+                        life.destroy();
+                    }
+
+                    life = new Life();
+                    life
+                        .onLifeInfo((browserData, type) => {
+                            client.emit(EVENT_IO_LIFE, browserData, type);
+                        })
+                        .onLifeComplete(() => {
+                            client.emit(EVENT_IO_THE_END);
+                        })
+                        .onBigDataInfo(browserData => (
+                            client.emit(EVENT_IO_PRELIFE, browserData)
+                        ))
+                        .live(data);
+                }
             }
         );
 

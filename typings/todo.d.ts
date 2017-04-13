@@ -15,7 +15,7 @@ export declare namespace Todo {
 export declare namespace Monitor {
     export interface Item {
         id: number;
-        requestCounter: number;
+        requestsCounter: number;
         name?: string;
     }
 }

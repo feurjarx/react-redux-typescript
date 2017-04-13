@@ -12,5 +12,16 @@ var RandomSleepCalculating = (function () {
     };
     return RandomSleepCalculating;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = RandomSleepCalculating;
+exports.RandomSleepCalculating = RandomSleepCalculating;
+var SleepCalculating = (function () {
+    function SleepCalculating(sleep) {
+        this.sleep = 200;
+        this.sleep = sleep;
+    }
+    SleepCalculating.prototype.calculate = function () {
+        var _this = this;
+        return new es6_shim_1.Promise(function (resolve) { return setTimeout(function () { return resolve(); }, _this.sleep); });
+    };
+    return SleepCalculating;
+}());
+exports.SleepCalculating = SleepCalculating;

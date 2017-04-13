@@ -6,8 +6,14 @@ import MapGenerator from "./MapGenerator";
 import Statistics from "./Statistics";
 import {RandomSleepCalculating} from "./servers/behaviors/calculate";
 import SocketLogEmitter from "../services/SocketLogEmitter";
-import {TestSlaveSelecting} from "./servers/behaviors/slave-selecting/index";
-import {RESPONSE_TYPE_STOPPED, RESPONSE_TYPE_RECEIVED, RESPONSE_TYPE_SENT} from "../constants/index";
+
+import {
+    RESPONSE_TYPE_RECEIVED,
+    RESPONSE_TYPE_STOPPED,
+    RESPONSE_TYPE_SENT,
+    CHART_TYPE_REQUESTS_DIAGRAM,
+    CHART_TYPE_SLAVES_LOAD
+} from "../constants/index";
 
 export class Life {
 
@@ -15,14 +21,11 @@ export class Life {
 
         const masterServer = new MasterServer(new RabbitMQ());
 
-        // masterServer.slaveSelectingBehavior = RandomSlaveSelecting.instance;
-        masterServer.slaveSelectingBehavior = TestSlaveSelecting.instance;
-
         for (let i = 0; i < serversData.length; i++) {
             const serverData = serversData[i];
             if (!serverData.isMaster) {
                 const server = new SlaveServer(new RabbitMQ(), serverData);
-                server.calculateBehavior = new RandomSleepCalculating(200);
+                server.calculateBehavior = new RandomSleepCalculating(500);
                 server.id = serverData.name;
                 masterServer.subordinates.push(server);
             }
@@ -30,6 +33,8 @@ export class Life {
 
         return masterServer;
     }
+
+    active: boolean;
 
     private masterServer: MasterServer;
     private statistics: Statistics;
@@ -58,10 +63,9 @@ export class Life {
 
     private createCluster(data) {
 
-        const {tables, dbSize} = data;
+        const {tables} = data;
 
         const {masterServer} = this;
-        // const totalSize = dbSize * 1000;
         MapGenerator.fillRegions({tables}, masterServer);
 
         const regionsPiesCharts = masterServer.subordinates.map(server => ({
@@ -82,6 +86,8 @@ export class Life {
     }
 
     live(lifeData) {
+
+        this.active = true;
 
         const {servers, clients} = lifeData;
         if (!servers.find(it => it.isMaster)) {
@@ -104,10 +110,10 @@ export class Life {
 
         this.simulateWorkWithBigData(lifeData);
 
-        // statistics.subscribeToAbsBandwidth(absBandwidth => this.lifeInfoCallback({
-        //     type: 'load_line',
-        //     absBandwidth
-        // }));
+        this.statistics.subscribeToProp(
+            Statistics.SLAVES_LAST_PROCESSING_TIME_LIST,
+            data => this.lifeInfoCallback(data, CHART_TYPE_SLAVES_LOAD)
+        );
     };
 
     startClientsRequests = (lifeData) => {
@@ -119,12 +125,10 @@ export class Life {
 
             const nRequests = +clientData['nRequests'];
             const client = new ExpectantClient(new RabbitMQ(), sqls);
-            client.requestTimeLimit = requestTimeLimit;
 
-            console.log(`Создан новый клиент #${client.id}`);
+            console.log(`Создан новый клиент: #${client.id}`);
 
-            client
-                .requestsToMasterServer(nRequests, this.onMasterResponse);
+            client.requestsToMasterServer(nRequests, this.onMasterResponse);
         });
     };
 
@@ -140,8 +144,9 @@ export class Life {
             case RESPONSE_TYPE_RECEIVED:
 
                 const {
+                    slavesRequestsDiagramData,
+                    slavesProcessingTimeList,
                     processingTime,
-                    slavesPiesData,
                     error
                 } = response;
 
@@ -150,9 +155,14 @@ export class Life {
 
                 } else {
 
-                    slavesPiesData.forEach(({slaveId, requestCounter}) => {
-                        this.lifeInfoCallback({slaveId, requestCounter});
+                    slavesRequestsDiagramData.forEach(chartData => {
+                        this.lifeInfoCallback(chartData, CHART_TYPE_REQUESTS_DIAGRAM);
                     });
+
+                    slavesProcessingTimeList.forEach((time, i) => {
+                        this.statistics.setLastProcessingTime(i, time);
+                    });
+
 
                     statistics.totalProcessingTime += processingTime;
                 }
@@ -160,10 +170,17 @@ export class Life {
                 break;
 
             case RESPONSE_TYPE_STOPPED:
+
                 statistics.upCompletedClients();
                 if (statistics.isEqualCompletedClients()) {
-                    statistics.unsubscribeFromAbsBandwidth();
+                    statistics.unsubscribeFromProp(Statistics.SLAVES_LAST_PROCESSING_TIME_LIST);
+
                     this.lifeCompleteCallback();
+                    setTimeout(() => {
+                        this.masterServer.close();
+                        this.active = false;
+                        SocketLogEmitter.instance.emitForce(); // остаток логов на выпуск
+                    }, 5000);
                 }
 
                 break;
@@ -173,5 +190,4 @@ export class Life {
     destroy() {
         this.masterServer.close();
     }
-
 }

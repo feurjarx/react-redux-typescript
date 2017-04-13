@@ -26,14 +26,13 @@ var ExpectantClient = (function (_super) {
         if (callback === void 0) { callback = Function(); }
         var requestTimeLimit = this.requestTimeLimit;
         var requestsReverseCounter = nRequests;
-        var observable = this.provider
+        this.subscription = this.provider
             .publishAndWait(rabbitmq_1.RABBITMQ_QUEUE_MASTER_SERVER, {
             clientId: this.id,
             last: requestsReverseCounter <= 1,
             requestTimeLimit: requestTimeLimit,
             sqlQueryParts: this.getRandomSqlQueryParts(),
-        });
-        this.subscription = observable
+        })
             .subscribe(function (response) {
             switch (response.type) {
                 case index_2.RESPONSE_TYPE_SENT:
@@ -41,7 +40,7 @@ var ExpectantClient = (function (_super) {
                     break;
                 case index_2.RESPONSE_TYPE_RECEIVED:
                     if (response.slavesNames) {
-                        console.log("\u041A\u043B\u0438\u0435\u043D\u0442 #" + _this.id + " \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442\u0432\u0435\u0442 \u043E\u0442 \u043C\u0430\u0441\u0442\u0435\u0440\u0430. \u041E\u0431\u0440\u0430\u0431\u0430\u0442\u044B\u0432\u0430\u043B\u0438 \u0437\u0430\u043F\u0440\u043E\u0441 #" + response.slavesNames.join(','));
+                        console.log("\u041A\u043B\u0438\u0435\u043D\u0442 #" + _this.id + " \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442\u0432\u0435\u0442 \u043E\u0442 \u043C\u0430\u0441\u0442\u0435\u0440\u0430. \u041E\u0431\u0440\u0430\u0431\u0430\u0442\u044B\u0432\u0430\u043B\u0438 \u0437\u0430\u043F\u0440\u043E\u0441: " + response.slavesNames.join(','));
                     }
                     else {
                         console.log("\u041A\u043B\u0438\u0435\u043D\u0442 #" + _this.id + " \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442\u0432\u0435\u0442 \u043E\u0442 \u043C\u0430\u0441\u0442\u0435\u0440\u0430. \u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u043F\u043E\u0434\u0445\u043E\u0434\u044F\u0449\u0435\u0433\u043E \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440\u0430");

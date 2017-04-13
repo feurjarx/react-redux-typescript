@@ -17,18 +17,17 @@ import {
     EVENT_IO_LOGS,
     EVENT_IO_PRELIFE,
     EVENT_IO_THE_END,
-    EVENT_IO_LOAD_LINE,
     EVENT_IO_DISCONNECT
 } from "../../constants/events";
 
 import {
+    pushNewItemsToSlavesLoadChart,
     pushNewItemToRequestsDiagram,
     pushLogsBatchToConsoleDrawer,
     updateRegionsPiesCharts,
-    initRequestsDiagram,
+    initChartsData,
     startStopwatch,
-    updateCpuChart,
-    stopStopwatch,
+    stopStopwatch
 } from "../../actions/index";
 
 import HorizontalLinearStepper from "../../components/stepper/HorizontalLinearStepper";
@@ -38,31 +37,33 @@ import FormDataService from "../../services/FormDataService";
 import PartitionsStep from "../steps/partitions-settings/PartitionsStep";
 import {prettylog} from "../../helpers/index";
 import TablesStep from "../steps/data-struct/TablesStep";
+import {CHART_TYPE_REQUESTS_DIAGRAM, CHART_TYPE_SLAVES_LOAD} from "../../constants/index";
 
 @connect()
-export class Preparing extends React.Component<any, React.ComponentState> {
+export class Preparing extends React.Component<any, any> {
 
     fds: FormDataService;
 
-    state = {
-        open: false,
-    };
-
-    constructor(props) {
+    constructor() {
         super();
 
+        this.state = {
+            open: false,
+            active: false
+        };
+
+        this.fds = new FormDataService();
+    }
+
+    componentDidMount() {
         // socket.on('connect', function () {});
         socket.on(EVENT_IO_LIFE, this.onLifeUpdate);
         socket.on(EVENT_IO_PRELIFE, this.onBigDataResponse);
         socket.on(EVENT_IO_LOGS, this.onConsoleDrawerUpdate);
         socket.on(EVENT_IO_THE_END, this.onLifeComplete);
-        socket.on(EVENT_IO_DISCONNECT, function () {
-            props.dispatch(stopStopwatch());
+        socket.on(EVENT_IO_DISCONNECT, () => {
+            this.props.dispatch(stopStopwatch());
         });
-
-        socket.on(EVENT_IO_LOAD_LINE, this.onLoadLineUpdate);
-
-        this.fds = new FormDataService();
     }
 
     handleOpen = () => {
@@ -85,10 +86,9 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         const servers = initial.servers.filter(s => !s['isMaster']);
         // const servers = fdsData.servers.filter(s => !s.isMaster);
 
-        dispatch(initRequestsDiagram({
-            nServers: servers.length,
+        dispatch(initChartsData({
             serversIds: servers.map(s => s.name),
-            maxValue: +requestsLimit * +nClients + 5
+            requestsDiagramMaxValue: (+requestsLimit * +nClients) * 2
         }));
 
         const clients = [];
@@ -107,18 +107,26 @@ export class Preparing extends React.Component<any, React.ComponentState> {
         dispatch(startStopwatch());
 
         this.handleClose();
+
+        this.setState({active: true});
     };
 
     onBigDataResponse = (data) => {
         this.props.dispatch(updateRegionsPiesCharts(data));
     };
 
-    onLoadLineUpdate = (data) => {
-        this.props.dispatch(updateCpuChart(data));
-    };
-
-    onLifeUpdate = (data) => {
-        this.props.dispatch(pushNewItemToRequestsDiagram(data));
+    onLifeUpdate = (data, type) => {
+        const {dispatch} = this.props;
+        switch (type) {
+            case CHART_TYPE_REQUESTS_DIAGRAM:
+                dispatch(pushNewItemToRequestsDiagram(data));
+                break;
+            case CHART_TYPE_SLAVES_LOAD:
+                dispatch(pushNewItemsToSlavesLoadChart(data));
+                break;
+            default:
+                throw new Error('Unknown life data type');
+        }
     };
 
     onConsoleDrawerUpdate = (logsJson) => {
@@ -128,6 +136,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
     onLifeComplete = () => {
         const { dispatch } =  this.props;
         dispatch(stopStopwatch());
+        this.setState({active: false});
     };
 
     render() {
@@ -145,8 +154,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
             />
         ];
 
-        const { fds } = this;
-
+        const {fds} = this;
 
         // <PartitionsStep formDataService={fds}/>,
         const steps = [
@@ -161,7 +169,7 @@ export class Preparing extends React.Component<any, React.ComponentState> {
 
             <div>
 
-                <RaisedButton label="Запустить модель" primary={true} onTouchTap={this.handleOpen} />
+                <RaisedButton className={this.state.active ? 'hidden' : ''} label="Запустить модель" primary={true} onTouchTap={this.handleOpen} />
                 <Dialog
                     title="Подготовка запуска"
                     actions={ actions }

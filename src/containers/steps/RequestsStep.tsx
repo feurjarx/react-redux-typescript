@@ -45,16 +45,6 @@ export class RequestsStep extends React.Component<any, any> {
 
     fds: FormDataService;
 
-//     defaultSql = (`
-// SELECT id,name, tel, contact.id
-// FROM user AS u
-// JOIN contact AS c ON c.id = user.contact_id
-// WHERE u.id > 1000 AND u.name IN ("Ivan", "Alex")
-// GROUP BY u.id,u.name
-// OFFSET 5
-// LIMIT 10
-//     `).trim();
-
     defaultSql = (`
 SELECT name, year FROM user;
 SELECT name, year FROM user AS u WHERE u.name = 'abc';
@@ -75,8 +65,8 @@ SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc'
 
     getDefaultRequestsData() {
         return {
-            nClients: 5,
-            requestsLimit: 3,
+            nClients: 15,
+            requestsLimit: 13,
             requestTimeLimit: 10,
         }
     };
@@ -222,15 +212,17 @@ SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc'
                             onChange={ handleSlidersChange }
                         />
 
-                        <InfoSlider
-                            label="Объем данных"
-                            name="dbSize"
-                            shortSyntax="Гб"
-                            min={1}
-                            max={10000}
-                            defaultValue={ 1000 }
-                            onChange={handleSlidersChange}
-                        />
+                        {/*
+                         <InfoSlider
+                             label="Объем данных"
+                             name="dbSize"
+                             shortSyntax="Гб"
+                             min={1}
+                             max={10000}
+                             defaultValue={ 1000 }
+                             onChange={handleSlidersChange}
+                         />
+                        */}
                     </div>
                 </Paper>
                 <div id="sqlbox-block">

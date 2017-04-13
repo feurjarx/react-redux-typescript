@@ -5,7 +5,7 @@ export default class Server {
 
     id: any;
 
-    requestCounter = 0;
+    requestsCounter = 0;
 
     provider: IQueue;
 

@@ -27,15 +27,13 @@ export default class ExpectantClient extends Client {
         const {requestTimeLimit} = this;
         let requestsReverseCounter = nRequests;
 
-        const observable = this.provider
+        this.subscription = this.provider
             .publishAndWait(RABBITMQ_QUEUE_MASTER_SERVER, {
                 clientId: this.id,
                 last: requestsReverseCounter <= 1,
                 requestTimeLimit,
                 sqlQueryParts: this.getRandomSqlQueryParts(),
-            });
-
-        this.subscription = observable
+            })
             .subscribe(response => {
 
                 switch (response.type) {
@@ -46,7 +44,7 @@ export default class ExpectantClient extends Client {
                     case RESPONSE_TYPE_RECEIVED:
 
                         if (response.slavesNames) {
-                            console.log(`Клиент #${ this.id } получил ответ от мастера. Обрабатывали запрос #${response.slavesNames.join(',')}`);
+                            console.log(`Клиент #${ this.id } получил ответ от мастера. Обрабатывали запрос: ${response.slavesNames.join(',')}`);
                         } else {
                             console.log(`Клиент #${ this.id } получил ответ от мастера. Не найдено подходящего регион-сервера`);
                         }

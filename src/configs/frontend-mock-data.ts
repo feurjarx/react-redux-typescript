@@ -15,16 +15,40 @@ export default {
             maxRegions: 5,
             distanceToMasterKm: 100,
             hdd: 200
+        },
+        {
+            name: 'Slave3',
+            maxRegions: 3,
+            distanceToMasterKm: 2500,
+            hdd: 100
+        },
+        {
+            name: 'Slave4',
+            maxRegions: 2,
+            distanceToMasterKm: 100,
+            hdd: 200
+        },
+        {
+            name: 'Slave6',
+            maxRegions: 3,
+            distanceToMasterKm: 0,
+            hdd: 100
+        },
+        {
+            name: 'Slave7',
+            maxRegions: 100,
+            distanceToMasterKm: 10000,
+            hdd: 1000
         }
     ],
     tables: [
         {
             name: 'user',
             tableSize: 90,
-            // sharding: {
-            //     type: 'Вертикальный',
-            //     serverId: 'server_B'
-            // },
+            sharding: {
+                type: 'Вертикальный',
+                serverId: 'Slave2'
+            },
             fields: [{
                 name: 'id',
                 type: 'Числовой',
@@ -144,100 +168,100 @@ export default {
             "where": "user.name = 'abc'",
             "raw": "SELECT name, year FROM user"
         },
-        {
-            "from": [
-                "user"
-            ],
-            "select": [
-                "user.name",
-                "user.year"
-            ],
-            "raw": "SELECT name, year FROM user"
-        },
-        {
-            "from": [
-                "user"
-            ],
-            "select": [
-                "user.name",
-                "user.year"
-            ],
-            "where": "user.name = 'abc'",
-            "raw": "SELECT name, year FROM user AS u WHERE u.name = 'abc'"
-        },
-        {
-            "from": [
-                "user"
-            ],
-            "select": [
-                "user.name",
-                "user.year"
-            ],
-            "where": "user.name = 'abc' OR user.email = 'abc'",
-            "raw": "SELECT name, year FROM user AS u WHERE u.name = 'abc' OR u.email = 'abc'"
-        },
-        {
-            "from": [
-                "user"
-            ],
-            "select": [
-                "user.name",
-                "user.year"
-            ],
-            "where": "user.name = 'abc' OR user.tel = 9",
-            "raw": "SELECT name, year FROM user AS u WHERE u.name = 'abc' OR u.tel = 9"
-        },
-        {
-            "from": [
-                "user"
-            ],
-            "select": [
-                "*"
-            ],
-            "where": "user.name = 'abc'",
-            "raw": "SELECT * FROM user AS u WHERE u.name = 'abc'"
-        },
-        {
-            "from": [
-                "session"
-            ],
-            "select": [
-                "*"
-            ],
-            "where": "session.created_at > 1491923854",
-            "raw": "SELECT * FROM session AS s WHERE s.created_at > 1491923854"
-        },
-        {
-            "from": [
-                "session"
-            ],
-            "select": [
-                "session.user_id"
-            ],
-            "where": "status = 'abc'",
-            "raw": "SELECT user_id FROM session AS s WHERE status = 'abc'"
-        },
-        {
-            "from": [
-                "session"
-            ],
-            "select": [
-                "session.status",
-                "session.user_id"
-            ],
-            "where": "session.expired_at = 9",
-            "raw": "SELECT status, user_id FROM session AS s WHERE s.expired_at = 9"
-        },
-        {
-            "from": [
-                "playlist"
-            ],
-            "select": [
-                "playlist.favourite_title"
-            ],
-            "where": "playlist.isFavourite = 1",
-            "raw": "SELECT favourite_title FROM playlist AS p WHERE p.isFavourite = 1"
-        },
+        // {
+        //     "from": [
+        //         "user"
+        //     ],
+        //     "select": [
+        //         "user.name",
+        //         "user.year"
+        //     ],
+        //     "raw": "SELECT name, year FROM user"
+        // },
+        // {
+        //     "from": [
+        //         "user"
+        //     ],
+        //     "select": [
+        //         "user.name",
+        //         "user.year"
+        //     ],
+        //     "where": "user.name = 'abc'",
+        //     "raw": "SELECT name, year FROM user AS u WHERE u.name = 'abc'"
+        // },
+        // {
+        //     "from": [
+        //         "user"
+        //     ],
+        //     "select": [
+        //         "user.name",
+        //         "user.year"
+        //     ],
+        //     "where": "user.name = 'abc' OR user.email = 'abc'",
+        //     "raw": "SELECT name, year FROM user AS u WHERE u.name = 'abc' OR u.email = 'abc'"
+        // },
+        // {
+        //     "from": [
+        //         "user"
+        //     ],
+        //     "select": [
+        //         "user.name",
+        //         "user.year"
+        //     ],
+        //     "where": "user.name = 'abc' OR user.tel = 9",
+        //     "raw": "SELECT name, year FROM user AS u WHERE u.name = 'abc' OR u.tel = 9"
+        // },
+        // {
+        //     "from": [
+        //         "user"
+        //     ],
+        //     "select": [
+        //         "*"
+        //     ],
+        //     "where": "user.name = 'abc'",
+        //     "raw": "SELECT * FROM user AS u WHERE u.name = 'abc'"
+        // },
+        // {
+        //     "from": [
+        //         "session"
+        //     ],
+        //     "select": [
+        //         "*"
+        //     ],
+        //     "where": "session.created_at > 1491923854",
+        //     "raw": "SELECT * FROM session AS s WHERE s.created_at > 1491923854"
+        // },
+        // {
+        //     "from": [
+        //         "session"
+        //     ],
+        //     "select": [
+        //         "session.user_id"
+        //     ],
+        //     "where": "status = 'abc'",
+        //     "raw": "SELECT user_id FROM session AS s WHERE status = 'abc'"
+        // },
+        // {
+        //     "from": [
+        //         "session"
+        //     ],
+        //     "select": [
+        //         "session.status",
+        //         "session.user_id"
+        //     ],
+        //     "where": "session.expired_at = 9",
+        //     "raw": "SELECT status, user_id FROM session AS s WHERE s.expired_at = 9"
+        // },
+        // {
+        //     "from": [
+        //         "playlist"
+        //     ],
+        //     "select": [
+        //         "playlist.favourite_title"
+        //     ],
+        //     "where": "playlist.isFavourite = 1",
+        //     "raw": "SELECT favourite_title FROM playlist AS p WHERE p.isFavourite = 1"
+        // },
         {
             "from": [
                 "playlist"
@@ -248,27 +272,27 @@ export default {
             "where": "playlist.created_at > 1491923854",
             "raw": "SELECT * FROM playlist AS p WHERE p.created_at > 1491923854"
         },
-        {
-            "from": [
-                "playlist"
-            ],
-            "select": [
-                "playlist.name",
-                "playlist.description"
-            ],
-            "where": "playlist.created_at > 1",
-            "raw": "SELECT name, description FROM playlist AS p WHERE p.created_at > 1"
-        },
-        {
-            "from": [
-                "playlist"
-            ],
-            "select": [
-                "playlist.name",
-                "playlist.description"
-            ],
-            "where": "playlist.name IN ('abc','bca','ccc')",
-            "raw": "SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc')"
-        }
+        // {
+        //     "from": [
+        //         "playlist"
+        //     ],
+        //     "select": [
+        //         "playlist.name",
+        //         "playlist.description"
+        //     ],
+        //     "where": "playlist.created_at > 1",
+        //     "raw": "SELECT name, description FROM playlist AS p WHERE p.created_at > 1"
+        // },
+        // {
+        //     "from": [
+        //         "playlist"
+        //     ],
+        //     "select": [
+        //         "playlist.name",
+        //         "playlist.description"
+        //     ],
+        //     "where": "playlist.name IN ('abc','bca','ccc')",
+        //     "raw": "SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc')"
+        // }
     ]
 }

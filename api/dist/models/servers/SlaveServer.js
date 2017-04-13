@@ -28,14 +28,14 @@ var SlaveServer = (function (_super) {
         _this.onClientRequestFromMaster = function (request) {
             var sqlQueryParts = request.sqlQueryParts, clientId = request.clientId, subKey = request.subKey;
             var onMasterReply = request.onReply;
-            console.log("\u0420\u0435\u0433\u0438\u043E\u043D \u0441\u0435\u0440\u0432\u0435\u0440 #" + _this.id + " \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442 \u043C\u0430\u0441\u0442\u0435\u0440\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
-            _this.requestCounter++;
+            console.log("\u0420\u0435\u0433\u0438\u043E\u043D \u0441\u0435\u0440\u0432\u0435\u0440 #" + _this.id + " \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u0437\u0430\u043F\u0440\u043E\u0441 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId + ": " + sqlQueryParts.raw);
+            _this.requestsCounter++;
             _this.calculateBehavior
                 .calculate()
                 .then(function () {
                 console.log("\u0420\u0435\u0433\u0438\u043E\u043D \u0441\u0435\u0440\u0432\u0435\u0440 #" + _this.id + " \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u043B \u043C\u0430\u0441\u0442\u0435\u0440\u0443 \u043E\u0442\u0432\u0435\u0442 \u043D\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
                 onMasterReply(__assign({ subKey: subKey,
-                    clientId: clientId, slaveId: _this.id, requestCounter: _this.requestCounter }, _this.read(sqlQueryParts)));
+                    clientId: clientId, slaveId: _this.id, requestsCounter: _this.requestsCounter }, _this.read(sqlQueryParts)));
             });
         };
         _this.regions = [];

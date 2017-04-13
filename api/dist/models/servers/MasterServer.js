@@ -19,6 +19,7 @@ var index_1 = require("../../helpers/index");
 var sharding_1 = require("./behaviors/sharding");
 var constants_1 = require("./../../constants");
 var SqlSyntaxService_1 = require("../../services/SqlSyntaxService");
+var RabbitMQ_1 = require("../../services/RabbitMQ");
 var MasterServer = (function (_super) {
     __extends(MasterServer, _super);
     function MasterServer(provider) {
@@ -77,7 +78,7 @@ var MasterServer = (function (_super) {
             throw new Error("\u0417\u0430\u043F\u0438\u0441\u044C \u0440\u0430\u0437\u043C\u0435\u0440\u043E\u043C " + hRow.getSize() + " \u043D\u0435 \u0431\u044B\u043B\u0430 \u0437\u0430\u043F\u0438\u0441\u0430\u043D\u0430 (\u0420\u0435\u0433\u0438\u043E\u043D \u0441\u0435\u0440\u0432\u0435\u0440 " + slaveId + ", " + this.shardingBehavior.type + ")");
         }
         this.updateGuideMaps(hRow, slaveId, shardingOptions);
-        console.log(false, "Select slave server " + slaveId);
+        console.log(false, "\u0412\u044B\u0431\u0440\u0430\u043D slave #" + slaveId);
     };
     MasterServer.prototype.getSlavesNumber = function () {
         return this.subordinates.length;
@@ -142,11 +143,11 @@ var MasterServer = (function (_super) {
         this.clientsSubscription = this.provider
             .consume(queueName, { lazy: lazy })
             .subscribe(function (clientRequest) {
-            // from Clients
+            // clientRequest.onReply({error: 404});
             var processingTimeCounter = 0;
             var clientId = clientRequest.clientId, sqlQueryParts = clientRequest.sqlQueryParts;
             var onClientReply = clientRequest.onReply;
-            console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
+            console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId + ": " + sqlQueryParts.raw);
             if (sqlQueryParts.select) {
                 // для простых случае с оператором "=" по словарям
                 var slavesIds = _this.getSlavesIdsBySql(sqlQueryParts);
@@ -157,40 +158,53 @@ var MasterServer = (function (_super) {
                 slavesIds.forEach(function (slaveId) {
                     var slave = _this.getSlaveById(slaveId);
                     console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u0435\u0440\u0435\u043D\u0430\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u0442 \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId + " \u043D\u0430 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440 #" + slaveId);
-                    promises_1.push(_this.redirectToSlaveServer(slave, { clientId: clientId, sqlQueryParts: sqlQueryParts }));
+                    promises_1.push(_this.redirectToSlaveServer(slave, { clientId: clientId, sqlQueryParts: sqlQueryParts }, new RabbitMQ_1.default()));
                     processingTimeCounter += slave.calcTransferTime();
                 });
                 if (promises_1.length) {
                     Promise.all(promises_1).then(function (responses) {
                         var processingTimeAvg = Math.round(responses.reduce(function (sum, it) { return sum + it.processingTime; }, 0) / responses.length);
                         var slavesNames = responses.map(function (it) { return it.slaveId; });
-                        var slavesPiesData = responses.map(function (it) { return ({
-                            requestCounter: it.requestCounter,
+                        var slavesRequestsDiagramData = responses.map(function (it) { return ({
+                            requestsCounter: it.requestsCounter,
                             slaveId: it.slaveId
                         }); });
+                        var slavesProcessingTimeList = responses.map(function (it) { return it.processingTime; });
                         onClientReply({
                             type: constants_1.RESPONSE_TYPE_RECEIVED,
-                            slavesPiesData: slavesPiesData,
+                            slavesRequestsDiagramData: slavesRequestsDiagramData,
+                            slavesProcessingTimeList: slavesProcessingTimeList,
                             slavesNames: slavesNames,
                             processingTime: processingTimeCounter + processingTimeAvg // среднее, потому что slave ищут параллельно
                         });
                     });
                 }
                 else {
-                    onClientReply([{ error: 404 }]);
+                    onClientReply({ error: 404 });
                 }
             }
             else {
             }
         });
     };
-    MasterServer.prototype.redirectToSlaveServer = function (slave, data) {
+    MasterServer.prototype.redirectToSlaveServer = function (slave, data, tempProvider) {
         var _this = this;
+        if (tempProvider === void 0) { tempProvider = null; }
+        var provider;
+        var autoclose;
+        if (tempProvider) {
+            provider = tempProvider;
+            autoclose = true;
+        }
+        else {
+            provider = this.provider;
+            autoclose = false;
+        }
         return new Promise(function (resolve, reject) {
             var routeKey = slave.id;
             var subKey = index_1.hash(routeKey, Date.now());
-            _this.slavesSubscriptionsMap[subKey] = _this.provider
-                .publishAndWaitByRouteKeys(rabbitmq_1.RABBITMQ_EXCHANGE_SLAVE_SERVERS, [routeKey], __assign({}, data, { subKey: subKey }))
+            _this.slavesSubscriptionsMap[subKey] = provider
+                .publishAndWaitByRouteKeys(rabbitmq_1.RABBITMQ_EXCHANGE_SLAVE_SERVERS, [routeKey], __assign({}, data, { subKey: subKey }), { autoclose: autoclose })
                 .subscribe(function (response) {
                 // from SlaveServer
                 switch (response.type) {
@@ -198,7 +212,7 @@ var MasterServer = (function (_super) {
                         break;
                     case constants_1.RESPONSE_TYPE_RECEIVED:
                         var slaveId = response.slaveId, clientId = response.clientId, subKey_1 = response.subKey;
-                        console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442\u0432\u0435\u0442 \u0441 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440\u0430 " + slaveId + " \u043D\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
+                        console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u043E\u0442\u0432\u0435\u0442 \u0441 \u0440\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440\u0430 #" + slaveId + " \u043D\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
                         resolve(response);
                         _this.slavesSubscriptionsMap[subKey_1].unsubscribe();
                         break;
@@ -210,7 +224,9 @@ var MasterServer = (function (_super) {
     };
     MasterServer.prototype.close = function () {
         _super.prototype.close.call(this);
+        console.log("\u041C\u0430\u0441\u0442\u0435\u0440 #" + this.id + " \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D.");
         this.subordinates.forEach(function (s) { return s.close(); });
+        console.log("\u0420\u0435\u0433\u0438\u043E\u043D-\u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u044B.");
         this.clientsSubscription.unsubscribe();
     };
     return MasterServer;

@@ -7,8 +7,7 @@ var MapGenerator_1 = require("./MapGenerator");
 var Statistics_1 = require("./Statistics");
 var calculate_1 = require("./servers/behaviors/calculate");
 var SocketLogEmitter_1 = require("../services/SocketLogEmitter");
-var index_1 = require("./servers/behaviors/slave-selecting/index");
-var index_2 = require("../constants/index");
+var index_1 = require("../constants/index");
 var Life = (function () {
     function Life() {
         var _this = this;
@@ -22,36 +21,41 @@ var Life = (function () {
                 // [clients[0]].forEach(clientData => {
                 var nRequests = +clientData['nRequests'];
                 var client = new Expectant_1.default(new RabbitMQ_1.default(), sqls);
-                client.requestTimeLimit = requestTimeLimit;
-                console.log("\u0421\u043E\u0437\u0434\u0430\u043D \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u0438\u0435\u043D\u0442 #" + client.id);
-                client
-                    .requestsToMasterServer(nRequests, _this.onMasterResponse);
+                console.log("\u0421\u043E\u0437\u0434\u0430\u043D \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u0438\u0435\u043D\u0442: #" + client.id);
+                client.requestsToMasterServer(nRequests, _this.onMasterResponse);
             });
         };
         this.onMasterResponse = function (response) {
             var statistics = _this.statistics;
             switch (response.type) {
-                case index_2.RESPONSE_TYPE_SENT:
+                case index_1.RESPONSE_TYPE_SENT:
                     statistics.upRequests();
                     break;
-                case index_2.RESPONSE_TYPE_RECEIVED:
-                    var processingTime = response.processingTime, slavesPiesData = response.slavesPiesData, error = response.error;
+                case index_1.RESPONSE_TYPE_RECEIVED:
+                    var slavesRequestsDiagramData = response.slavesRequestsDiagramData, slavesProcessingTimeList = response.slavesProcessingTimeList, processingTime = response.processingTime, error = response.error;
                     if (error === 404) {
                         statistics.upUnsuccessufulRequests();
                     }
                     else {
-                        slavesPiesData.forEach(function (_a) {
-                            var slaveId = _a.slaveId, requestCounter = _a.requestCounter;
-                            _this.lifeInfoCallback({ slaveId: slaveId, requestCounter: requestCounter });
+                        slavesRequestsDiagramData.forEach(function (chartData) {
+                            _this.lifeInfoCallback(chartData, index_1.CHART_TYPE_REQUESTS_DIAGRAM);
+                        });
+                        slavesProcessingTimeList.forEach(function (time, i) {
+                            _this.statistics.setLastProcessingTime(i, time);
                         });
                         statistics.totalProcessingTime += processingTime;
                     }
                     break;
-                case index_2.RESPONSE_TYPE_STOPPED:
+                case index_1.RESPONSE_TYPE_STOPPED:
                     statistics.upCompletedClients();
                     if (statistics.isEqualCompletedClients()) {
-                        statistics.unsubscribeFromAbsBandwidth();
+                        statistics.unsubscribeFromProp(Statistics_1.default.SLAVES_LAST_PROCESSING_TIME_LIST);
                         _this.lifeCompleteCallback();
+                        setTimeout(function () {
+                            _this.masterServer.close();
+                            _this.active = false;
+                            SocketLogEmitter_1.default.instance.emitForce(); // остаток логов на выпуск
+                        }, 5000);
                     }
                     break;
             }
@@ -59,13 +63,11 @@ var Life = (function () {
     }
     Life.initServers = function (serversData) {
         var masterServer = new MasterServer_1.default(new RabbitMQ_1.default());
-        // masterServer.slaveSelectingBehavior = RandomSlaveSelecting.instance;
-        masterServer.slaveSelectingBehavior = index_1.TestSlaveSelecting.instance;
         for (var i = 0; i < serversData.length; i++) {
             var serverData = serversData[i];
             if (!serverData.isMaster) {
                 var server = new SlaveServer_1.default(new RabbitMQ_1.default(), serverData);
-                server.calculateBehavior = new calculate_1.RandomSleepCalculating(200);
+                server.calculateBehavior = new calculate_1.RandomSleepCalculating(500);
                 server.id = serverData.name;
                 masterServer.subordinates.push(server);
             }
@@ -90,9 +92,8 @@ var Life = (function () {
         return this;
     };
     Life.prototype.createCluster = function (data) {
-        var tables = data.tables, dbSize = data.dbSize;
+        var tables = data.tables;
         var masterServer = this.masterServer;
-        // const totalSize = dbSize * 1000;
         MapGenerator_1.default.fillRegions({ tables: tables }, masterServer);
         var regionsPiesCharts = masterServer.subordinates.map(function (server) { return ({
             serverName: server.id,
@@ -110,6 +111,8 @@ var Life = (function () {
         });
     };
     Life.prototype.live = function (lifeData) {
+        var _this = this;
+        this.active = true;
         var servers = lifeData.servers, clients = lifeData.clients;
         if (!servers.find(function (it) { return it.isMaster; })) {
             this.lifeCompleteCallback();
@@ -126,10 +129,7 @@ var Life = (function () {
             nClients: clients.length
         });
         this.simulateWorkWithBigData(lifeData);
-        // statistics.subscribeToAbsBandwidth(absBandwidth => this.lifeInfoCallback({
-        //     type: 'load_line',
-        //     absBandwidth
-        // }));
+        this.statistics.subscribeToProp(Statistics_1.default.SLAVES_LAST_PROCESSING_TIME_LIST, function (data) { return _this.lifeInfoCallback(data, index_1.CHART_TYPE_SLAVES_LOAD); });
     };
     ;
     Life.prototype.destroy = function () {

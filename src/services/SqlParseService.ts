@@ -1,4 +1,3 @@
-import {prettylog} from "../helpers/index";
 const lexer = require('sql-parser/lib/lexer');
 
 export default class SqlParseService {

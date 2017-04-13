@@ -14,3 +14,5 @@ exports.SQL_OPERATORS = [exports.SQL_OPERATOR_EQ, exports.SQL_OPERATOR_GT, expor
 exports.RESPONSE_TYPE_SENT = 'sent';
 exports.RESPONSE_TYPE_RECEIVED = 'received';
 exports.RESPONSE_TYPE_STOPPED = 'stopped';
+exports.CHART_TYPE_REQUESTS_DIAGRAM = 'requests_diagram';
+exports.CHART_TYPE_SLAVES_LOAD = 'slaves_load_chart';

@@ -3,6 +3,9 @@ var rabbitmq_1 = require("../configs/rabbitmq");
 var Client = (function () {
     function Client(provider) {
         if (provider === void 0) { provider = null; }
+        /**
+         * @deprecated
+         */
         this.requestTimeLimit = null;
         this.id = new Date().getTime() % 10000;
         this.provider = provider;

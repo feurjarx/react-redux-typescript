@@ -2,20 +2,11 @@ import {
     PUSH_NEW_ITEM_TO_REQUESTS_DIAGRAM,
     PUSH_LOGS_BATCH_TO_CONSOLE_DRAWER,
     UPDATE_REGIONS_PIES_CHARTS,
-    UPDATE_CPU_CHART_COMPLETED,
-    INIT_REQUESTS_DIAGRAM,
+    INIT_CHARTS_DATA,
     OTHER_STEPS_DATA,
-    UPDATE_CPU_CHART,
     START_STOPWATCH,
-    STOP_STOPWATCH
+    STOP_STOPWATCH, PUSH_NEW_ITEMS_TO_SLAVES_LOAD_CHART
 } from '../constants/actions'
-
-export function updateCpuChart(data) {
-    return {
-        type: UPDATE_CPU_CHART,
-        data
-    };
-}
 
 export function updateRegionsPiesCharts(data) {
     return {
@@ -24,15 +15,16 @@ export function updateRegionsPiesCharts(data) {
     };
 }
 
-export function updateCpuChartCompleted() {
+export function pushNewItemsToSlavesLoadChart(data) {
     return {
-        type: UPDATE_CPU_CHART_COMPLETED
+        type: PUSH_NEW_ITEMS_TO_SLAVES_LOAD_CHART,
+        data
     };
 }
 
-export function initRequestsDiagram(data) {
+export function initChartsData(data) {
     return {
-        type: INIT_REQUESTS_DIAGRAM,
+        type: INIT_CHARTS_DATA,
         data
     };
 }

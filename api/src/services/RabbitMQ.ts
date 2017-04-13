@@ -1,4 +1,4 @@
-import {IQueue, PublishAndWaitResponse} from "./IQueue";
+import {IQueue,} from "./IQueue";
 import * as amqp from 'amqplib/callback_api';
 import {Channel} from "amqplib/callback_api";
 import {Message, Replies} from "amqplib";
@@ -7,7 +7,6 @@ import {Observable} from 'rxjs/Observable';
 import {Promise} from 'es6-shim';
 import rabbitmqConfig from './../configs/rabbitmq';
 import AssertQueue = Replies.AssertQueue;
-import Function0 = _.Function0;
 import {RESPONSE_TYPE_RECEIVED, RESPONSE_TYPE_SENT} from "../constants/index";
 const md5 = require('md5');
 
@@ -73,6 +72,7 @@ export default class RabbitMQ implements IQueue {
                     ch.assertQueue('', { exclusive }, function(err, queueTemp) {
 
                         const correlationId = md5(Date.now());
+
                         const sendCall = function(data) {
                             ch.sendToQueue(queueName,
                                 new Buffer(JSON.stringify(data)), {
@@ -83,6 +83,7 @@ export default class RabbitMQ implements IQueue {
                         };
 
                         ch.consume(queueTemp.queue, msg => {
+
                             if (msg.properties.correlationId === correlationId) {
                                 observer.next({
                                     type: RESPONSE_TYPE_RECEIVED,
@@ -117,7 +118,7 @@ export default class RabbitMQ implements IQueue {
         })
     }
 
-    publishAndWaitByRouteKeys(exchange: string, routeKeys: Array<string>, data = {}) {
+    publishAndWaitByRouteKeys(exchange: string, routeKeys: Array<string>, data = {}, {autoclose = false}) {
 
         return new Observable(observer => {
 
@@ -126,10 +127,9 @@ export default class RabbitMQ implements IQueue {
 
                     const exclusive = true;
                     const noAck = true;
-                    ch.assertQueue('', {exclusive}, function(err, queueTemp) {
+                    ch.assertQueue('', {exclusive}, (err, queueTemp) => {
 
-                        const durable = false;
-                        ch.assertExchange(exchange, 'direct', {durable});
+                        ch.assertExchange(exchange, 'direct', {durable: false});
 
                         const correlationId = md5(Date.now());
 
@@ -140,6 +140,11 @@ export default class RabbitMQ implements IQueue {
                                     ...JSON.parse(msg.content.toString())
                                 });
                             }
+
+                            if (autoclose) {
+                                setTimeout(() => this.destroy(), 500);
+                            }
+
                         }, {noAck});
 
                         routeKeys.forEach(routeKey => {
@@ -177,10 +182,6 @@ export default class RabbitMQ implements IQueue {
                 })
                 .catch(err => reject(err))
         });
-    }
-
-    acknowledge(msg) {
-        this.channel.ack(msg);
     }
 
     consume(queueName: string, {lazy = false}): Observable<any> {
@@ -229,6 +230,7 @@ export default class RabbitMQ implements IQueue {
             this.connect()
                 .then(ch => {
                     const durable = false;
+                    // const durable = true;
                     ch.assertExchange(exchange, 'direct', {durable});
 
                     const exclusive = true;
@@ -253,6 +255,7 @@ export default class RabbitMQ implements IQueue {
 
                             const { replyTo, correlationId } = msg.properties;
                             if (correlationId && replyTo) {
+
                                 response.onReply = (replyData) => {
                                     const buffer = new Buffer(JSON.stringify(replyData));
                                     ch.sendToQueue(replyTo, buffer, {correlationId});
@@ -266,9 +269,6 @@ export default class RabbitMQ implements IQueue {
 
                         }, { noAck: !lazy });
                     });
-                })
-                .catch(err => {
-                    throw new Error('Connect invalid');
                 });
         });
     }

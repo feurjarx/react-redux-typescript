@@ -2,7 +2,7 @@
 var Server = (function () {
     function Server(provider) {
         if (provider === void 0) { provider = null; }
-        this.requestCounter = 0;
+        this.requestsCounter = 0;
         this.id = new Date().getTime();
         if (provider) {
             this.provider = provider;

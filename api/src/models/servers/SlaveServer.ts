@@ -6,15 +6,13 @@ import {range, unique} from '../../helpers';
 import {Subscription} from "rxjs";
 import {IQueue} from "../../services/IQueue";
 import {
-    HDD_ASPECT_RATIO, SQL_OPERATOR_EQ, SQL_OPERATOR_LT, SQL_OPERATOR_GT,
-    SQL_LITERAL_ALL
+    HDD_ASPECT_RATIO,
+    SQL_OPERATOR_EQ,
+    SQL_OPERATOR_LT,
+    SQL_OPERATOR_GT
 } from "../../constants/index";
-import SqlSyntaxService from "../../services/SqlSyntaxService";
 
-interface SlaveGuideItem {
-    rowKey: string;
-    region: HRegion;
-}
+import SqlSyntaxService from "../../services/SqlSyntaxService";
 
 export default class SlaveServer extends Server {
 
@@ -270,9 +268,9 @@ export default class SlaveServer extends Server {
         const {sqlQueryParts, clientId, subKey} = request;
         const onMasterReply = request.onReply;
 
-        console.log(`Регион сервер #${this.id} получил от мастера запрос клиента #${clientId}`);
+        console.log(`Регион сервер #${this.id} получил запрос клиента #${clientId}: ${sqlQueryParts.raw}`);
 
-        this.requestCounter++;
+        this.requestsCounter++;
 
         this.calculateBehavior
             .calculate()
@@ -282,11 +280,9 @@ export default class SlaveServer extends Server {
                     subKey,
                     clientId,
                     slaveId: this.id,
-                    requestCounter: this.requestCounter,
+                    requestsCounter: this.requestsCounter,
                     ...this.read(sqlQueryParts)
                 });
             });
     };
-
-
 }
