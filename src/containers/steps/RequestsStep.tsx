@@ -2,6 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 const syntaxConfig = require('../../configs/syntax.json');
+
 import InfoSlider from '../../components/info-slider/InfoSlider';
 import Paper from 'material-ui/Paper'
 import FormDataService from "../../services/FormDataService";
@@ -20,8 +21,9 @@ import 'codemirror/theme/eclipse.css';
 
 const hljs = require('highlight.js');
 hljs.initHighlightingOnLoad();
-
 import 'highlight.js/styles/default.css';
+
+import initial from "./../../configs/frontend-data";
 
 const codeMirrorConfig = {
     mode: 'text/x-mariadb',
@@ -45,41 +47,21 @@ export class RequestsStep extends React.Component<any, any> {
 
     fds: FormDataService;
 
-    defaultSql = (`
-SELECT name, year FROM user;
-SELECT name, year FROM user AS u WHERE u.name = 'abc';
-SELECT name, year FROM user AS u WHERE u.name = 'abc' OR u.email = 'abc';
-SELECT name, year FROM user AS u WHERE u.name = 'abc' OR u.tel = 9;
-SELECT * FROM user AS u WHERE u.name = 'abc';
-
-SELECT * FROM session AS s WHERE s.created_at > 1491923854;
-SELECT user_id FROM session AS s WHERE status = 'abc';
-SELECT status, user_id FROM session AS s WHERE s.expired_at = 9;
-
-SELECT favourite_title FROM playlist AS p WHERE p.isFavourite = 1;
-SELECT * FROM playlist AS p WHERE p.created_at > 1491923854;
-SELECT name, description FROM playlist AS p WHERE p.created_at > 1491923854;
-SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc');
-
-`).trim();
-
-    getDefaultRequestsData() {
-        return {
-            nClients: 15,
-            requestsLimit: 13,
-            requestTimeLimit: 10,
-        }
-    };
+    sqlsRaw: string;
 
     constructor(props) {
         super();
 
         const {formDataService} = props;
 
-        const defaultData = this.getDefaultRequestsData();
+        this.sqlsRaw = initial.sqlsRaw;
+
+        const {nClients, requestsLimit, requestTimeLimit, sqlsRaw} = initial;
 
         this.state = {
-            ...defaultData,
+            nClients,
+            requestsLimit,
+            requestTimeLimit,
             displayValue: '',
             cmInited: false
         };
@@ -88,7 +70,10 @@ SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc'
 
         formDataService.setData({
             ...fdsData,
-            ...defaultData
+            sqlsRaw,
+            nClients,
+            requestsLimit,
+            requestTimeLimit,
         });
 
         this.fds = formDataService;
@@ -135,7 +120,7 @@ SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc'
         const editor = CodeMirror.fromTextArea(sqlbox, codeMirrorConfig);
         editor.on('change', onTextareaKeyUp);
 
-        const sqls = this.sqlToJson(this.defaultSql);
+        const sqls = this.sqlToJson(this.sqlsRaw);
         fds.data.sqls = JSON.parse(sqls);
         this.updateDisplay(sqls);
     };
@@ -146,6 +131,7 @@ SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc'
         this.timerId = setTimeout(() => {
             const {updateDisplay, sqlToJson, fds} = this;
             const sqls = sqlToJson(editor.getValue());
+            fds.data.sqlsRaw = editor.getValue();
             fds.data.sqls = JSON.parse(sqls);
             updateDisplay(sqls);
         }, 1000);
@@ -160,10 +146,15 @@ SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc'
         }
     }
 
+    componentDidMount() {
+        const sqls = this.sqlToJson(this.sqlsRaw);
+        this.fds.data.sqls = JSON.parse(sqls);
+    }
+
     render() {
 
         const {
-            defaultSql,
+            sqlsRaw,
             onTextareaKeyUp,
             handleFormChange,
             handleSlidersChange
@@ -173,7 +164,7 @@ SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc'
             nClients,
             requestsLimit,
             requestTimeLimit,
-        } = this.getDefaultRequestsData();
+        } = initial;
 
         const {displayValue} = this.state;
 
@@ -228,7 +219,7 @@ SELECT name, description FROM playlist AS p WHERE p.name IN ('abc', 'bca', 'ccc'
                 <div id="sqlbox-block">
                     <textarea onKeyUp={onTextareaKeyUp}
                         ref="sqlbox"
-                        defaultValue={defaultSql}
+                        defaultValue={sqlsRaw}
                     />
                 </div>
                 <div id="json-display-block" ref="jsonDisplayBlock">

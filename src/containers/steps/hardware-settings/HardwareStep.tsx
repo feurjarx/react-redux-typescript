@@ -4,6 +4,7 @@ import FormDataService from "../../../services/FormDataService";
 import {updateOtherStepsData} from "../../../actions/index";
 import {connect} from "react-redux";
 import HardwareForm from './HardwareForm'
+import initial from "./../../../configs/frontend-data";
 
 @connect()
 class HardwareStep extends React.Component<any, any> {
@@ -35,10 +36,13 @@ class HardwareStep extends React.Component<any, any> {
         }
     }
 
-    onServerAdd = () => {
+    onServerAdd = (serverData = null) => {
+
+        if (!serverData) {
+            serverData = this.getDefaultServerData();
+        }
 
         const {replics} = this.state;
-        const {getDefaultServerData} = this;
 
         replics.push(
             <HardwareForm
@@ -50,13 +54,13 @@ class HardwareStep extends React.Component<any, any> {
                 onTextFieldChange={this.onTextFieldChange}
                 onServerAdd={this.onServerAdd}
                 onServerRemove={this.onServerRemove}
-                defaultValues={getDefaultServerData()}
+                defaultValues={serverData}
             />
         );
 
         this.setState({replics}, () => {
             const {fds, dispatchServersData} = this;
-            fds.data['servers'].push(getDefaultServerData());
+            fds.data['servers'].push(serverData);
             dispatchServersData();
         });
     };
@@ -120,8 +124,17 @@ class HardwareStep extends React.Component<any, any> {
         dispatchServersData();
     };
 
-    componentWillMount() {
-        this.onServerAdd();
+    componentDidMount() {
+
+        if (initial.servers) {
+            initial.servers.forEach(serverData => {
+                this.onServerAdd(serverData);
+            });
+
+        } else {
+
+            this.onServerAdd();
+        }
     }
 
     render() {

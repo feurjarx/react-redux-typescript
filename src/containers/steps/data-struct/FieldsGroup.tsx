@@ -42,7 +42,7 @@ export default class FieldsGroup extends React.Component<any, any> {
         this.setState({familiesSource})
     };
 
-    onReplicaAdd = () => {
+    onFieldAdd = (fieldData = null) => {
 
         const {
             replics,
@@ -52,10 +52,13 @@ export default class FieldsGroup extends React.Component<any, any> {
 
         const {
             tableIdx,
-            defaultFieldData,
             onTextFieldChange,
             onAutoCompleteUpdate
         } = this.props;
+
+        if (!fieldData) {
+            fieldData = this.props.defaultFieldsData[0];
+        }
 
         const {onCheck, onUpdateFamiliesSource} = this;
 
@@ -71,16 +74,16 @@ export default class FieldsGroup extends React.Component<any, any> {
                 familiesSource={familiesSource}
                 onUpdateFamiliesSource={onUpdateFamiliesSource}
                 onCheck={onCheck}
-                onReplicaAdd={this.onReplicaAdd}
-                onReplicaRemove={this.onReplicaRemove}
-                defaultValues={defaultFieldData}
+                onFieldAdd={this.onFieldAdd}
+                onFieldRemove={this.onFieldRemove}
+                defaultValues={fieldData}
             />
         );
 
         this.setState({replics});
     };
 
-    onReplicaRemove = () => {
+    onFieldRemove = () => {
         const {replics} = this.state;
         const {tableIdx, onFieldRemove} = this.props;
         replics.pop();
@@ -92,8 +95,10 @@ export default class FieldsGroup extends React.Component<any, any> {
         });
     };
 
-    componentWillMount() {
-        this.onReplicaAdd();
+    componentDidMount() {
+        this.props.defaultFieldsData.forEach(tableData => {
+            this.onFieldAdd(tableData);
+        });
     }
 
     render() {

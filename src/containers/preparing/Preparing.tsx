@@ -6,7 +6,7 @@ const socket = io.connect('http://localhost:3003');
 import {Step, StepLabel} from 'material-ui/Stepper';
 import {Dialog, FlatButton, RaisedButton} from 'material-ui';
 
-import initial from '../../configs/frontend-mock-data'
+import initial from '../../configs/frontend-data'
 
 import './preparing.css';
 
@@ -83,8 +83,8 @@ export class Preparing extends React.Component<any, any> {
         const fdsData = fds.data;
 
         const {nClients, requestsLimit} = fdsData;
-        const servers = initial.servers.filter(s => !s['isMaster']);
-        // const servers = fdsData.servers.filter(s => !s.isMaster);
+        // const servers = initial.servers.filter(s => !s['isMaster']);
+        const servers = fdsData.servers.filter(s => !s.isMaster);
 
         dispatch(initChartsData({
             serversIds: servers.map(s => s.name),
@@ -98,8 +98,8 @@ export class Preparing extends React.Component<any, any> {
         }
 
         socket.emit(EVENT_IO_LIFE, {
-            ...initial,
-            // ...fdsData,
+            // ...initial,
+            ...fdsData,
             clients,
             requestsLimit
         });
@@ -109,6 +109,8 @@ export class Preparing extends React.Component<any, any> {
         this.handleClose();
 
         this.setState({active: true});
+
+        localStorage.setItem('initial', JSON.stringify(fdsData));
     };
 
     onBigDataResponse = (data) => {

@@ -40,11 +40,11 @@ export class FieldForm extends React.Component<any, any> {
             total,
             onCheck,
             tableIdx,
+            onFieldAdd,
             primaryIdx,
-            onReplicaAdd,
             defaultValues,
             familiesSource,
-            onReplicaRemove,
+            onFieldRemove,
             onTextFieldChange,
             onAutoCompleteUpdate
         } = this.props;
@@ -54,8 +54,8 @@ export class FieldForm extends React.Component<any, any> {
 
         return (
             <ReplicaTools
-                onReplicaAdd={onReplicaAdd}
-                onReplicaRemove={onReplicaRemove}
+                onReplicaAdd={onFieldAdd}
+                onReplicaRemove={onFieldRemove}
                 removeable={removeable}
                 addable={addable}
             >
@@ -78,6 +78,7 @@ export class FieldForm extends React.Component<any, any> {
                             dataSource={typesSource}
                             name={`tables.${tableIdx}.fields.${idx}.type`}
                             onUpdateInput={ onAutoCompleteUpdate }
+                            searchText={defaultValues.type}
                         />
 
                         <TextField
@@ -99,6 +100,7 @@ export class FieldForm extends React.Component<any, any> {
                             name={`tables.${tableIdx}.fields.${idx}.familyName`}
                             onUpdateInput={ onAutoCompleteUpdate }
                             onBlur={ onFamilyAutoCompleteBlur }
+                            searchText={defaultValues.familyName}
                         />
                     </div>
                     <div className="flex-column" style={{marginTop: 15}}>
@@ -108,6 +110,7 @@ export class FieldForm extends React.Component<any, any> {
                             name={`tables.${tableIdx}.fields.${idx}.isPrimary`}
                             label="первичный"
                             labelStyle={{color: 'rgba(0, 0, 0, 0.298039)'}}
+                            defaultChecked={defaultValues.isPrimary}
                         />
                         <Checkbox
                             disabled={primaryIdx === idx}
@@ -116,8 +119,8 @@ export class FieldForm extends React.Component<any, any> {
                             onCheck={onCheck.bind(null, {isPrimary: false})}
                             label="внешний"
                             labelStyle={{color: 'rgba(0, 0, 0, 0.298039)'}}
+                            defaultChecked={defaultValues.indexed}
                         />
-
                     </div>
                 </Paper>
             </ReplicaTools>

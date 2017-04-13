@@ -48,6 +48,15 @@ export default class TableForm extends React.Component<any, any> {
         });
     };
 
+    componentWillReceiveProps(props) {
+        const {defaultValues} = props;
+        if (defaultValues && defaultValues.sharding && defaultValues.sharding.type) {
+            this.setState({
+                shardingType: defaultValues.sharding.type
+            });
+        }
+    }
+
     render() {
 
         const {
@@ -65,6 +74,12 @@ export default class TableForm extends React.Component<any, any> {
 
         const {shardingType, fieldsSource} = this.state;
 
+        let serverId, fieldName;
+        if (defaultValues.sharding) {
+            serverId = defaultValues.sharding.serverId;
+            fieldName = defaultValues.sharding.fieldName;
+        }
+
         const addable = idx === total - 1;
         const removeable = addable && total - 1;
 
@@ -80,6 +95,7 @@ export default class TableForm extends React.Component<any, any> {
                     dataSource={serversSource}
                     name={`tables.${idx}.sharding.slaveId`}
                     onUpdateInput={ onAutoCompleteUpdate }
+                    searchText={serverId}
                 />
             );
         }
@@ -97,6 +113,7 @@ export default class TableForm extends React.Component<any, any> {
                     name={`tables.${idx}.sharding.fieldName`}
                     onFocus={this.onShardedFieldUpdate}
                     onUpdateInput={onAutoCompleteUpdate}
+                    searchText={fieldName}
                 />
             );
         }
@@ -131,7 +148,7 @@ export default class TableForm extends React.Component<any, any> {
                         onAutoCompleteUpdate={onAutoCompleteUpdate}
                         onFieldRemove={onFieldRemove}
                         onCheck={onCheck}
-                        defaultFieldData={{...defaultValues.fields[0]}}
+                        defaultFieldsData={defaultValues.fields}
                     />
 
                     <AutoComplete
@@ -143,6 +160,7 @@ export default class TableForm extends React.Component<any, any> {
                         dataSource={this.shardingTypesSource}
                         name={`tables.${idx}.sharding.type`}
                         onUpdateInput={ composition(this.onShardingTypeUpdate, onAutoCompleteUpdate) }
+                        searchText={shardingType}
                     />
 
                     {shardAutoComplete}

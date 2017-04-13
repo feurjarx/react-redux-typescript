@@ -5,6 +5,7 @@ import {updateOtherStepsData} from "../../../actions/index";
 import FormDataService from "../../../services/FormDataService";
 import TableForm from "./TableForm";
 import {SHARDING_TYPE_DEFAULT, FIELD_TYPE_NUMBER} from "../../../constants/index";
+import initial from "./../../../configs/frontend-data";
 
 function mapStateToProps(state, props) {
     const {servers} = state.otherStepsData;
@@ -67,11 +68,13 @@ class TablesStep extends React.Component<any, any> {
         fds.setDataByPath(name, value);
     };
 
-    onTableAdd = () => {
+    onTableAdd = (tableData = null) => {
+
+        if (!tableData) {
+            tableData = this.getDefaultTableData();
+        }
 
         const {replics} = this.state;
-        const {getDefaultTableData} = this;
-
         replics.push(
             <TableForm
                 formDataService={this.fds}
@@ -84,13 +87,13 @@ class TablesStep extends React.Component<any, any> {
                 onTableAdd={this.onTableAdd}
                 onTableRemove={this.onTableRemove}
                 onFieldRemove={this.onFieldRemove}
-                defaultValues={getDefaultTableData()}
+                defaultValues={tableData}
             />
         );
 
         this.setState({replics}, () => {
             const {fds, dispatchTablesData} = this;
-            fds.data.tables.push(getDefaultTableData());
+            fds.data.tables.push(tableData);
             dispatchTablesData();
         });
     };
@@ -132,8 +135,17 @@ class TablesStep extends React.Component<any, any> {
         dispatchTablesData();
     };
 
-    componentWillMount() {
-        this.onTableAdd();
+    componentDidMount() {
+
+        if (initial.tables) {
+            initial.tables.forEach(tableData => {
+                this.onTableAdd(tableData);
+            });
+
+        } else {
+
+            this.onTableAdd();
+        }
     }
 
     render() {
