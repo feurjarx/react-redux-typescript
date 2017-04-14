@@ -68,8 +68,7 @@ class TablesStep extends React.Component<any, any> {
         fds.setDataByPath(name, value);
     };
 
-    onTableAdd = (tableData = null) => {
-
+    addTable(tableData = null) {
         if (!tableData) {
             tableData = this.getDefaultTableData();
         }
@@ -96,6 +95,10 @@ class TablesStep extends React.Component<any, any> {
             fds.data.tables.push(tableData);
             dispatchTablesData();
         });
+    }
+
+    onTableAdd = () => {
+        this.addTable();
     };
 
     onTableRemove = () => {
@@ -139,12 +142,12 @@ class TablesStep extends React.Component<any, any> {
 
         if (initial.tables) {
             initial.tables.forEach(tableData => {
-                this.onTableAdd(tableData);
+                this.addTable(tableData);
             });
 
         } else {
 
-            this.onTableAdd();
+            this.addTable();
         }
     }
 

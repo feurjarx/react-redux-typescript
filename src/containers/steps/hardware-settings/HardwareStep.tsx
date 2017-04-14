@@ -5,6 +5,7 @@ import {updateOtherStepsData} from "../../../actions/index";
 import {connect} from "react-redux";
 import HardwareForm from './HardwareForm'
 import initial from "./../../../configs/frontend-data";
+import {prettylog} from "../../../helpers/index";
 
 @connect()
 class HardwareStep extends React.Component<any, any> {
@@ -36,8 +37,7 @@ class HardwareStep extends React.Component<any, any> {
         }
     }
 
-    onServerAdd = (serverData = null) => {
-
+    addServer(serverData = null) {
         if (!serverData) {
             serverData = this.getDefaultServerData();
         }
@@ -63,6 +63,10 @@ class HardwareStep extends React.Component<any, any> {
             fds.data['servers'].push(serverData);
             dispatchServersData();
         });
+    }
+
+    onServerAdd = () => {
+        this.addServer();
     };
 
     onServerRemove = () => {
@@ -126,14 +130,14 @@ class HardwareStep extends React.Component<any, any> {
 
     componentDidMount() {
 
-        if (initial.servers) {
-            initial.servers.forEach(serverData => {
-                this.onServerAdd(serverData);
+        const {servers} = initial;
+        if (servers) {
+            servers.forEach(serverData => {
+                this.addServer(serverData);
             });
 
         } else {
-
-            this.onServerAdd();
+            this.addServer();
         }
     }
 
