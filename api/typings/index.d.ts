@@ -1,15 +1,20 @@
 export interface TableField {
     name: string;
     type: string;
-    length: number;
-    isPrimary: boolean;
-    indexed: boolean;
-    familyName: string;
+    length?: number;
+    isPrimary?: boolean;
+    indexed?: boolean;
+    familyName?: string;
 }
 
 export interface TableData {
     name: string;
+    tableSize: number;
     fields: Array<TableField>;
+    sharding?: {
+        type?: string;
+        serverId?: any;
+    }
 }
 
 export interface ServerData {

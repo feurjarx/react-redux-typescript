@@ -13,6 +13,7 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     return t;
 };
 var Server_1 = require("../Server");
+var SlaveServer_1 = require("./SlaveServer");
 var HRow_1 = require("../HRow");
 var rabbitmq_1 = require("./../../constants/rabbitmq");
 var index_1 = require("../../helpers/index");
@@ -20,6 +21,7 @@ var sharding_1 = require("./behaviors/sharding");
 var constants_1 = require("./../../constants");
 var SqlSyntaxService_1 = require("../../services/SqlSyntaxService");
 var RabbitMQ_1 = require("../../services/RabbitMQ");
+var index_2 = require("./behaviors/calculate/index");
 var MasterServer = (function (_super) {
     __extends(MasterServer, _super);
     function MasterServer(provider) {
@@ -30,6 +32,22 @@ var MasterServer = (function (_super) {
         _this.slavesSubscriptionsMap = {};
         return _this;
     }
+    MasterServer.make = function (serversData) {
+        if (!serversData.length) {
+            return null;
+        }
+        var masterServer = new MasterServer(new RabbitMQ_1.default());
+        for (var i = 0; i < serversData.length; i++) {
+            var serverData = serversData[i];
+            if (!serverData.isMaster) {
+                var server = new SlaveServer_1.default(new RabbitMQ_1.default(), serverData);
+                server.calculateBehavior = new index_2.RandomSleepCalculating(500);
+                server.id = serverData.name;
+                masterServer.subordinates.push(server);
+            }
+        }
+        return masterServer;
+    };
     ;
     MasterServer.prototype.setShardingType = function (type) {
         switch (type) {

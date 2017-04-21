@@ -1,11 +1,16 @@
 import {SQL_LITERAL_ALL} from "../constants/index";
-import {HRowCell, HRowSelecting, HRowArrow} from "../../typings/index";
+import {HRowCell, HRowSelecting, HRowArrow, TableField} from "../../typings/index";
+import {FIELD_TYPE_NUMBER, FIELD_TYPE_STRING} from "../constants/index";
+import {random, generateWord} from "../helpers/index";
 
 export default class HRow {
     families = {};
     tableName: string;
 
+    id = Date.now();
     rowKey: string;
+
+    indexedFields: Array<string>;
 
     static calcArrowKey({table, field, value}) {
         return [table, field , value].join('*');
@@ -15,9 +20,103 @@ export default class HRow {
         return fieldsNames.sort().join('=').toUpperCase();
     }
 
+    static getFieldTypeByNameMap(fields: Array<TableField>) {
+        let map = {};
+        fields.forEach(f => map[f.name] = f.type)
+        return map;
+    }
+
+    /**
+     * @see https://habrastorage.org/getpro/habr/post_images/72f/db4/418/72fdb44187d02c8affdc9740eb691115.png
+     * @param fields
+     * @returns {Array}
+     */
+    private static getFamiliesFromFields(fields: Array<TableField>): Array<Array<string>> {
+        return fields
+            .map(f => f.familyName)
+            .filter((f, i, list) => list.indexOf(f) === i)
+            .map(familyName => (
+                fields
+                    .filter(f => f.familyName === familyName)
+                    .map(f => f.name)
+            ));
+    }
+
+    static getSizeByFieldNameMap(id: number, fields: Array<TableField>) {
+
+        const map = {};
+
+        fields.forEach(field => {
+
+            const {type, isPrimary} = field;
+
+            let fieldSize;
+            if (isPrimary) {
+                fieldSize = String(id).length;
+
+            } else {
+
+                let maxFieldSize = field.length;
+                if (!maxFieldSize) {
+                    if (type === FIELD_TYPE_STRING) {
+                        maxFieldSize = 255;
+                    }
+                    if (type === FIELD_TYPE_NUMBER) {
+                        maxFieldSize = 11;
+                    }
+                }
+
+                fieldSize = random(maxFieldSize);
+            }
+
+            map[field.name] = fieldSize;
+        });
+
+        return map;
+    }
+
     constructor(rowKey: string, tableName: string) {
         this.rowKey = rowKey;
         this.tableName = tableName;
+    }
+
+    define(fields: Array<TableField>) {
+
+        const fieldTypeByNameMap = HRow.getFieldTypeByNameMap(fields);
+        const sizeByFieldNameMap = HRow.getSizeByFieldNameMap(this.id, fields);
+
+        this.indexedFields = fields
+            .filter(f => f.indexed || f.isPrimary)
+            .map(f => f.name);
+
+        HRow
+            .getFamiliesFromFields(fields)
+            .forEach(fieldsNames => {
+
+                const fieldsValues = {};
+                fieldsNames.forEach(fieldName => {
+
+                    let fieldValue = null;
+                    switch (fieldTypeByNameMap[fieldName]) {
+                        case FIELD_TYPE_NUMBER:
+                            fieldValue = random(10);
+                            break;
+                        case FIELD_TYPE_STRING:
+                            fieldValue = generateWord(3);
+                            break;
+                    }
+
+                    fieldsValues[fieldName] = {
+                        fieldSize: sizeByFieldNameMap[fieldName],
+                        versions: {
+                            [Date.now()]: fieldValue
+                        }
+                    };
+                });
+
+                const familyKey = HRow.calcFamilyKey(fieldsNames);
+                this.families[familyKey] = fieldsValues;
+            });
     }
 
     private getSelectingByFamilyKey(familyKey: string): HRowSelecting {
@@ -108,6 +207,18 @@ export default class HRow {
         }
 
         return selecting;
+    }
+
+    getIndexedArrowKeys() {
+        const result = [];
+
+        this.getArrowsFromFields().forEach(arrow => {
+            if (this.indexedFields.indexOf(arrow.field) >= 0) {
+                result.push(HRow.calcArrowKey(arrow));
+            }
+        });
+
+        return result;
     }
 
     getArrowKeys() {

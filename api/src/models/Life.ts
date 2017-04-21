@@ -1,10 +1,7 @@
 import RabbitMQ from "../services/RabbitMQ";
 import ExpectantClient from "./clients/Expectant";
 import MasterServer from "./servers/MasterServer";
-import SlaveServer from "./servers/SlaveServer";
-import MapGenerator from "./MapGenerator";
 import Statistics from "./Statistics";
-import {RandomSleepCalculating} from "./servers/behaviors/calculate";
 import SocketLogEmitter from "../services/SocketLogEmitter";
 
 import {
@@ -15,24 +12,12 @@ import {
     CHART_TYPE_SLAVES_LOAD
 } from "../constants/index";
 
+import {FIELD_TYPE_NUMBER, HDD_ASPECT_RATIO} from "../constants/index";
+import {TableData} from "../../typings/index";
+import {hash} from "../helpers/index";
+import HRow from "./HRow";
+
 export class Life {
-
-    private static initServers(serversData) {
-
-        const masterServer = new MasterServer(new RabbitMQ());
-
-        for (let i = 0; i < serversData.length; i++) {
-            const serverData = serversData[i];
-            if (!serverData.isMaster) {
-                const server = new SlaveServer(new RabbitMQ(), serverData);
-                server.calculateBehavior = new RandomSleepCalculating(500);
-                server.id = serverData.name;
-                masterServer.subordinates.push(server);
-            }
-        }
-
-        return masterServer;
-    }
 
     active: boolean;
 
@@ -66,7 +51,8 @@ export class Life {
         const {tables} = data;
 
         const {masterServer} = this;
-        MapGenerator.fillRegions({tables}, masterServer);
+
+        this.fillRegions(tables);
 
         const regionsPiesCharts = masterServer.subordinates.map(server => ({
             serverName: server.id,
@@ -74,9 +60,40 @@ export class Life {
         }));
 
         this.bigDataInfoCallback({regionsPiesCharts});
-
-        this.masterServer = masterServer;
     };
+
+    private fillRegions(tables: Array<TableData>) {
+
+        tables.forEach(table => {
+
+            const {fields, sharding = {}} = table;
+            if (!fields.find(f => f.name === 'created_at')) {
+                fields.push({
+                    name: 'created_at',
+                    type: FIELD_TYPE_NUMBER
+                });
+            }
+
+            const tableSize = HDD_ASPECT_RATIO * table.tableSize;
+            const tableName = table.name;
+
+            let tableSizeCounter = 0;
+            for (let i = 0; tableSizeCounter < tableSize; i++) {
+                const id = i + 1;
+
+                const rowKey = hash(tableName, id, Date.now());
+                const hRow = new HRow(rowKey, tableName);
+                hRow.id = id;
+                hRow.define(fields);
+
+                const shardingType = sharding.type;
+                this.masterServer.setShardingType(shardingType);
+                this.masterServer.save(hRow, sharding);
+
+                tableSizeCounter += hRow.getSize();
+            }
+        });
+    }
 
     simulateWorkWithBigData(lifeData) {
         this.masterServer.prepare().then(() => {
@@ -95,11 +112,13 @@ export class Life {
             return;
         }
 
-        this.masterServer = Life.initServers(servers);
-        if (!this.masterServer.getSlavesNumber()) {
+        const masterServer = MasterServer.make(servers);
+        if (!masterServer) {
             this.lifeCompleteCallback();
             return;
         }
+
+        this.masterServer = masterServer;
 
         this.createCluster(lifeData);
 

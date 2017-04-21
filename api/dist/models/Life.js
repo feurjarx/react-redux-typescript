@@ -2,12 +2,12 @@
 var RabbitMQ_1 = require("../services/RabbitMQ");
 var Expectant_1 = require("./clients/Expectant");
 var MasterServer_1 = require("./servers/MasterServer");
-var SlaveServer_1 = require("./servers/SlaveServer");
-var MapGenerator_1 = require("./MapGenerator");
 var Statistics_1 = require("./Statistics");
-var calculate_1 = require("./servers/behaviors/calculate");
 var SocketLogEmitter_1 = require("../services/SocketLogEmitter");
 var index_1 = require("../constants/index");
+var index_2 = require("../constants/index");
+var index_3 = require("../helpers/index");
+var HRow_1 = require("./HRow");
 var Life = (function () {
     function Life() {
         var _this = this;
@@ -61,19 +61,6 @@ var Life = (function () {
             }
         };
     }
-    Life.initServers = function (serversData) {
-        var masterServer = new MasterServer_1.default(new RabbitMQ_1.default());
-        for (var i = 0; i < serversData.length; i++) {
-            var serverData = serversData[i];
-            if (!serverData.isMaster) {
-                var server = new SlaveServer_1.default(new RabbitMQ_1.default(), serverData);
-                server.calculateBehavior = new calculate_1.RandomSleepCalculating(500);
-                server.id = serverData.name;
-                masterServer.subordinates.push(server);
-            }
-        }
-        return masterServer;
-    };
     Life.prototype.onLifeComplete = function (callback) {
         if (callback === void 0) { callback = Function(); }
         this.lifeCompleteCallback = callback;
@@ -94,15 +81,40 @@ var Life = (function () {
     Life.prototype.createCluster = function (data) {
         var tables = data.tables;
         var masterServer = this.masterServer;
-        MapGenerator_1.default.fillRegions({ tables: tables }, masterServer);
+        this.fillRegions(tables);
         var regionsPiesCharts = masterServer.subordinates.map(function (server) { return ({
             serverName: server.id,
             chartData: server.getRegionalStatistics()
         }); });
         this.bigDataInfoCallback({ regionsPiesCharts: regionsPiesCharts });
-        this.masterServer = masterServer;
     };
     ;
+    Life.prototype.fillRegions = function (tables) {
+        var _this = this;
+        tables.forEach(function (table) {
+            var fields = table.fields, _a = table.sharding, sharding = _a === void 0 ? {} : _a;
+            if (!fields.find(function (f) { return f.name === 'created_at'; })) {
+                fields.push({
+                    name: 'created_at',
+                    type: index_2.FIELD_TYPE_NUMBER
+                });
+            }
+            var tableSize = index_2.HDD_ASPECT_RATIO * table.tableSize;
+            var tableName = table.name;
+            var tableSizeCounter = 0;
+            for (var i = 0; tableSizeCounter < tableSize; i++) {
+                var id = i + 1;
+                var rowKey = index_3.hash(tableName, id, Date.now());
+                var hRow = new HRow_1.default(rowKey, tableName);
+                hRow.id = id;
+                hRow.define(fields);
+                var shardingType = sharding.type;
+                _this.masterServer.setShardingType(shardingType);
+                _this.masterServer.save(hRow, sharding);
+                tableSizeCounter += hRow.getSize();
+            }
+        });
+    };
     Life.prototype.simulateWorkWithBigData = function (lifeData) {
         var _this = this;
         this.masterServer.prepare().then(function () {
@@ -118,11 +130,12 @@ var Life = (function () {
             this.lifeCompleteCallback();
             return;
         }
-        this.masterServer = Life.initServers(servers);
-        if (!this.masterServer.getSlavesNumber()) {
+        var masterServer = MasterServer_1.default.make(servers);
+        if (!masterServer) {
             this.lifeCompleteCallback();
             return;
         }
+        this.masterServer = masterServer;
         this.createCluster(lifeData);
         this.statistics = new Statistics_1.default({
             nServers: servers.length,

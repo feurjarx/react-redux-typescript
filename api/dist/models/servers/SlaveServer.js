@@ -22,8 +22,9 @@ var SlaveServer = (function (_super) {
     __extends(SlaveServer, _super);
     function SlaveServer(provider, serverData) {
         var _this = _super.call(this, provider) || this;
-        _this.rowsGuideMap = {};
-        _this.regionsGuideMap = {};
+        _this.rowsKeysByArrowKeyMap = {};
+        // regionsIdsByArrowKeyMap: {[arrowKey: string]: Array<number>} = {};
+        _this.regionIdByRowKeyMap = {};
         _this.successfulCounter = 0;
         _this.onClientRequestFromMaster = function (request) {
             var sqlQueryParts = request.sqlQueryParts, clientId = request.clientId, subKey = request.subKey;
@@ -65,13 +66,29 @@ var SlaveServer = (function (_super) {
     };
     SlaveServer.prototype.updateAllGuideMaps = function (hRow, regionId) {
         var _this = this;
-        this.regionsGuideMap[hRow.rowKey] = regionId;
-        hRow.getArrowKeys().forEach(function (arrowKey) {
-            if (!_this.rowsGuideMap[arrowKey]) {
-                _this.rowsGuideMap[arrowKey] = [];
+        this.regionIdByRowKeyMap[hRow.rowKey] = regionId;
+        // hRow.getArrowKeys().forEach(arrowKey => {
+        //     if (!this.regionsIdsByArrowKeyMap[arrowKey]) {
+        //         this.regionsIdsByArrowKeyMap[arrowKey] = [];
+        //     }
+        //
+        //     if (this.regionsIdsByArrowKeyMap[arrowKey].indexOf(regionId) < 0) {
+        //         this.regionsIdsByArrowKeyMap[arrowKey].push(regionId);
+        //     }
+        // });
+        hRow.getIndexedArrowKeys().forEach(function (arrowKey) {
+            if (!_this.rowsKeysByArrowKeyMap[arrowKey]) {
+                _this.rowsKeysByArrowKeyMap[arrowKey] = [];
             }
-            _this.rowsGuideMap[arrowKey].push(hRow.rowKey);
+            _this.rowsKeysByArrowKeyMap[arrowKey].push(hRow.rowKey);
         });
+        // hRow.getArrowKeys().forEach(arrowKey => {
+        //     if (!this.rowsKeysByArrowKeyMap[arrowKey]) {
+        //         this.rowsKeysByArrowKeyMap[arrowKey] = [];
+        //     }
+        //
+        //     this.rowsKeysByArrowKeyMap[arrowKey].push(hRow.rowKey);
+        // });
     };
     SlaveServer.prototype.save = function (hRow) {
         var _this = this;
@@ -131,20 +148,32 @@ var SlaveServer = (function (_super) {
             SqlSyntaxService_1.default.instance
                 .getAndsListFromWhere(sqlQueryParts.where)
                 .forEach(function (ands) {
-                var skip = false;
-                var quickSearchInfo = [];
+                // let usefulRegionsIds: Array<number>;
+                var usefulRows = [];
+                var usefulRowsKeys = [];
                 var comparator = Function();
+                var skip = false;
                 var _loop_1 = function (i) {
                     var criteria = ands[i];
                     switch (criteria.operator) {
                         case index_1.SQL_OPERATOR_EQ:
-                            var guideKey = HRow_1.default.calcArrowKey(criteria);
-                            var rowsKeys = _this.rowsGuideMap[guideKey] || [];
-                            if (!rowsKeys.length) {
-                                skip = true;
-                                break;
+                            var arrowKey = HRow_1.default.calcArrowKey(criteria);
+                            var rowsKeys = _this.rowsKeysByArrowKeyMap[arrowKey] || [];
+                            if (rowsKeys.length) {
+                                usefulRowsKeys.push.apply(usefulRowsKeys, rowsKeys);
                             }
-                            quickSearchInfo.push.apply(quickSearchInfo, rowsKeys);
+                            else {
+                                var table_1 = criteria.table, field_1 = criteria.field, value_1 = criteria.value;
+                                var rows_1 = _this.filterRows(function (hRow) { return (hRow.tableName === table_1
+                                    &&
+                                        hRow.getValueByFieldName(field_1) === value_1); });
+                                if (rows_1.length) {
+                                    usefulRows.push.apply(usefulRows, rows_1);
+                                }
+                                else {
+                                    skip = true;
+                                }
+                            }
                             break;
                         case index_1.SQL_OPERATOR_LT:
                         case index_1.SQL_OPERATOR_GT:
@@ -154,17 +183,16 @@ var SlaveServer = (function (_super) {
                             else {
                                 comparator = function (a, b) { return a < b; };
                             }
-                            var table_1 = criteria.table, field_1 = criteria.field, value_1 = criteria.value;
-                            _this
-                                .filterRows(function (hRow) { return (hRow.tableName === table_1
+                            var table_2 = criteria.table, field_2 = criteria.field, value_2 = criteria.value;
+                            var rows = _this.filterRows(function (hRow) { return (hRow.tableName === table_2
                                 &&
-                                    comparator(hRow.getValueByFieldName(field_1), value_1)); })
-                                .map(function (usefulHRow) {
-                                var selecting = usefulHRow.readBySelect(sqlQueryParts.select);
-                                processingTimeCounter += selecting.processingTime;
-                                selectings.push(selecting);
-                                currentSuccessfulCounter++;
-                            });
+                                    comparator(hRow.getValueByFieldName(field_2), value_2)); });
+                            if (rows.length) {
+                                usefulRows.push.apply(usefulRows, rows);
+                            }
+                            else {
+                                skip = true;
+                            }
                             break;
                         default:
                             throw new Error('Unexpected operator');
@@ -174,8 +202,14 @@ var SlaveServer = (function (_super) {
                     _loop_1(i);
                 }
                 if (!skip) {
-                    helpers_1.unique(quickSearchInfo).forEach(function (rowKey) {
-                        var regionId = _this.regionsGuideMap[rowKey];
+                    usefulRows.forEach(function (hRow) {
+                        var selecting = hRow.readBySelect(sqlQueryParts.select);
+                        processingTimeCounter += selecting.processingTime;
+                        selectings.push(selecting);
+                        currentSuccessfulCounter++;
+                    });
+                    helpers_1.unique(usefulRowsKeys).forEach(function (rowKey) {
+                        var regionId = _this.regionIdByRowKeyMap[rowKey];
                         var usefulHRow = _this.getRegionById(regionId).rows[rowKey];
                         if (usefulHRow) {
                             var selecting = usefulHRow.readBySelect(sqlQueryParts.select);

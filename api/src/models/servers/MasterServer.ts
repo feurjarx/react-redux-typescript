@@ -24,6 +24,7 @@ import SlaveSelectingBehavior from "./behaviors/slave-selecting/SlaveSelectingBe
 import SqlSyntaxService from "../../services/SqlSyntaxService";
 import {IQueue} from "../../services/IQueue";
 import RabbitMQ from "../../services/RabbitMQ";
+import {RandomSleepCalculating} from "./behaviors/calculate/index";
 
 export default class MasterServer extends Server {
 
@@ -36,6 +37,27 @@ export default class MasterServer extends Server {
 
     clientsSubscription: Subscription;
     slavesSubscriptionsMap: {[key: string]: Subscription} = {};
+
+    static make(serversData) {
+
+        if (!serversData.length) {
+            return null;
+        }
+
+        const masterServer = new MasterServer(new RabbitMQ());
+
+        for (let i = 0; i < serversData.length; i++) {
+            const serverData = serversData[i];
+            if (!serverData.isMaster) {
+                const server = new SlaveServer(new RabbitMQ(), serverData);
+                server.calculateBehavior = new RandomSleepCalculating(500);
+                server.id = serverData.name;
+                masterServer.subordinates.push(server);
+            }
+        }
+
+        return masterServer;
+    }
 
     constructor(provider) {
         super(provider);

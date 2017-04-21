@@ -117,7 +117,7 @@ export class FieldForm extends React.Component<any, any> {
                             name={`tables.${tableIdx}.fields.${idx}.indexed`}
                             className="data-struct-external-index-checkbox"
                             onCheck={onCheck.bind(null, {isPrimary: false})}
-                            label="внешний"
+                            label="индекс"
                             labelStyle={{color: 'rgba(0, 0, 0, 0.298039)'}}
                             defaultChecked={defaultValues.indexed}
                         />

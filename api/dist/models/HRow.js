@@ -1,8 +1,11 @@
 "use strict";
 var index_1 = require("../constants/index");
+var index_2 = require("../constants/index");
+var index_3 = require("../helpers/index");
 var HRow = (function () {
     function HRow(rowKey, tableName) {
         this.families = {};
+        this.id = Date.now();
         this.rowKey = rowKey;
         this.tableName = tableName;
     }
@@ -12,6 +15,81 @@ var HRow = (function () {
     };
     HRow.calcFamilyKey = function (fieldsNames) {
         return fieldsNames.sort().join('=').toUpperCase();
+    };
+    HRow.getFieldTypeByNameMap = function (fields) {
+        var map = {};
+        fields.forEach(function (f) { return map[f.name] = f.type; });
+        return map;
+    };
+    /**
+     * @see https://habrastorage.org/getpro/habr/post_images/72f/db4/418/72fdb44187d02c8affdc9740eb691115.png
+     * @param fields
+     * @returns {Array}
+     */
+    HRow.getFamiliesFromFields = function (fields) {
+        return fields
+            .map(function (f) { return f.familyName; })
+            .filter(function (f, i, list) { return list.indexOf(f) === i; })
+            .map(function (familyName) { return (fields
+            .filter(function (f) { return f.familyName === familyName; })
+            .map(function (f) { return f.name; })); });
+    };
+    HRow.getSizeByFieldNameMap = function (id, fields) {
+        var map = {};
+        fields.forEach(function (field) {
+            var type = field.type, isPrimary = field.isPrimary;
+            var fieldSize;
+            if (isPrimary) {
+                fieldSize = String(id).length;
+            }
+            else {
+                var maxFieldSize = field.length;
+                if (!maxFieldSize) {
+                    if (type === index_2.FIELD_TYPE_STRING) {
+                        maxFieldSize = 255;
+                    }
+                    if (type === index_2.FIELD_TYPE_NUMBER) {
+                        maxFieldSize = 11;
+                    }
+                }
+                fieldSize = index_3.random(maxFieldSize);
+            }
+            map[field.name] = fieldSize;
+        });
+        return map;
+    };
+    HRow.prototype.define = function (fields) {
+        var _this = this;
+        var fieldTypeByNameMap = HRow.getFieldTypeByNameMap(fields);
+        var sizeByFieldNameMap = HRow.getSizeByFieldNameMap(this.id, fields);
+        this.indexedFields = fields
+            .filter(function (f) { return f.indexed || f.isPrimary; })
+            .map(function (f) { return f.name; });
+        HRow
+            .getFamiliesFromFields(fields)
+            .forEach(function (fieldsNames) {
+            var fieldsValues = {};
+            fieldsNames.forEach(function (fieldName) {
+                var fieldValue = null;
+                switch (fieldTypeByNameMap[fieldName]) {
+                    case index_2.FIELD_TYPE_NUMBER:
+                        fieldValue = index_3.random(10);
+                        break;
+                    case index_2.FIELD_TYPE_STRING:
+                        fieldValue = index_3.generateWord(3);
+                        break;
+                }
+                fieldsValues[fieldName] = {
+                    fieldSize: sizeByFieldNameMap[fieldName],
+                    versions: (_a = {},
+                        _a[Date.now()] = fieldValue,
+                        _a)
+                };
+                var _a;
+            });
+            var familyKey = HRow.calcFamilyKey(fieldsNames);
+            _this.families[familyKey] = fieldsValues;
+        });
     };
     HRow.prototype.getSelectingByFamilyKey = function (familyKey) {
         var valuesMap = {};
@@ -85,6 +163,16 @@ var HRow = (function () {
             }
         }
         return selecting;
+    };
+    HRow.prototype.getIndexedArrowKeys = function () {
+        var _this = this;
+        var result = [];
+        this.getArrowsFromFields().forEach(function (arrow) {
+            if (_this.indexedFields.indexOf(arrow.field) >= 0) {
+                result.push(HRow.calcArrowKey(arrow));
+            }
+        });
+        return result;
     };
     HRow.prototype.getArrowKeys = function () {
         var result = [];
