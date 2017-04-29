@@ -5,9 +5,6 @@ import {Footer} from "./containers/Footer";
 import {Content} from "./containers/Content";
 
 export class App extends React.Component<any, any> {
-    constructor() {
-        super();
-    }
 
     render() {
         return (
