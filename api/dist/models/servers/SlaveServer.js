@@ -18,12 +18,13 @@ var HRegion_1 = require("../HRegion");
 var helpers_1 = require("../../helpers");
 var index_1 = require("../../constants/index");
 var SqlSyntaxService_1 = require("../../services/SqlSyntaxService");
+var GlobalCounter_1 = require("../../services/GlobalCounter");
+var global_counter_1 = require("../../constants/global-counter");
 var SlaveServer = (function (_super) {
     __extends(SlaveServer, _super);
     function SlaveServer(provider, serverData) {
         var _this = _super.call(this, provider) || this;
         _this.rowsKeysByArrowKeyMap = {};
-        // regionsIdsByArrowKeyMap: {[arrowKey: string]: Array<number>} = {};
         _this.regionIdByRowKeyMap = {};
         _this.successfulCounter = 0;
         _this.onClientRequestFromMaster = function (request) {
@@ -67,28 +68,12 @@ var SlaveServer = (function (_super) {
     SlaveServer.prototype.updateAllGuideMaps = function (hRow, regionId) {
         var _this = this;
         this.regionIdByRowKeyMap[hRow.rowKey] = regionId;
-        // hRow.getArrowKeys().forEach(arrowKey => {
-        //     if (!this.regionsIdsByArrowKeyMap[arrowKey]) {
-        //         this.regionsIdsByArrowKeyMap[arrowKey] = [];
-        //     }
-        //
-        //     if (this.regionsIdsByArrowKeyMap[arrowKey].indexOf(regionId) < 0) {
-        //         this.regionsIdsByArrowKeyMap[arrowKey].push(regionId);
-        //     }
-        // });
         hRow.getIndexedArrowKeys().forEach(function (arrowKey) {
             if (!_this.rowsKeysByArrowKeyMap[arrowKey]) {
                 _this.rowsKeysByArrowKeyMap[arrowKey] = [];
             }
             _this.rowsKeysByArrowKeyMap[arrowKey].push(hRow.rowKey);
         });
-        // hRow.getArrowKeys().forEach(arrowKey => {
-        //     if (!this.rowsKeysByArrowKeyMap[arrowKey]) {
-        //         this.rowsKeysByArrowKeyMap[arrowKey] = [];
-        //     }
-        //
-        //     this.rowsKeysByArrowKeyMap[arrowKey].push(hRow.rowKey);
-        // });
     };
     SlaveServer.prototype.save = function (hRow) {
         var _this = this;
@@ -148,10 +133,8 @@ var SlaveServer = (function (_super) {
             SqlSyntaxService_1.default.instance
                 .getAndsListFromWhere(sqlQueryParts.where)
                 .forEach(function (ands) {
-                // let usefulRegionsIds: Array<number>;
-                var usefulRows = [];
                 var usefulRowsKeys = [];
-                var comparator = Function();
+                var comparator = null;
                 var skip = false;
                 var _loop_1 = function (i) {
                     var criteria = ands[i];
@@ -160,54 +143,45 @@ var SlaveServer = (function (_super) {
                             var arrowKey = HRow_1.default.calcArrowKey(criteria);
                             var rowsKeys = _this.rowsKeysByArrowKeyMap[arrowKey] || [];
                             if (rowsKeys.length) {
+                                GlobalCounter_1.GlobalCounter.up(global_counter_1.GLOBAL_COUNTER_SQL_QUICK);
                                 usefulRowsKeys.push.apply(usefulRowsKeys, rowsKeys);
                             }
                             else {
-                                var table_1 = criteria.table, field_1 = criteria.field, value_1 = criteria.value;
-                                var rows_1 = _this.filterRows(function (hRow) { return (hRow.tableName === table_1
-                                    &&
-                                        hRow.getValueByFieldName(field_1) === value_1); });
-                                if (rows_1.length) {
-                                    usefulRows.push.apply(usefulRows, rows_1);
-                                }
-                                else {
-                                    skip = true;
-                                }
+                                GlobalCounter_1.GlobalCounter.up(global_counter_1.GLOBAL_COUNTER_SQL_NORMAL);
+                                comparator = function (a, b) { return a == b; };
                             }
                             break;
                         case index_1.SQL_OPERATOR_LT:
+                            comparator = function (a, b) { return a < b; };
+                            break;
                         case index_1.SQL_OPERATOR_GT:
-                            if (criteria.operator === index_1.SQL_OPERATOR_GT) {
-                                comparator = function (a, b) { return a > b; };
-                            }
-                            else {
-                                comparator = function (a, b) { return a < b; };
-                            }
-                            var table_2 = criteria.table, field_2 = criteria.field, value_2 = criteria.value;
-                            var rows = _this.filterRows(function (hRow) { return (hRow.tableName === table_2
-                                &&
-                                    comparator(hRow.getValueByFieldName(field_2), value_2)); });
-                            if (rows.length) {
-                                usefulRows.push.apply(usefulRows, rows);
-                            }
-                            else {
-                                skip = true;
-                            }
+                            comparator = function (a, b) { return a > b; };
                             break;
                         default:
                             throw new Error('Unexpected operator');
+                    }
+                    if (comparator) {
+                        var table_1 = criteria.table, field_1 = criteria.field, value_1 = criteria.value;
+                        var rowsKeys = _this
+                            .filterRows(function (hRow) {
+                            processingTimeCounter++;
+                            return (hRow.tableName === table_1
+                                &&
+                                    comparator(hRow.getValueByFieldName(field_1), value_1));
+                        })
+                            .map(function (hRow) { return hRow.rowKey; });
+                        if (rowsKeys.length) {
+                            usefulRowsKeys.push.apply(usefulRowsKeys, rowsKeys);
+                        }
+                        else {
+                            skip = true;
+                        }
                     }
                 };
                 for (var i = 0; i < ands.length && !skip; i++) {
                     _loop_1(i);
                 }
                 if (!skip) {
-                    usefulRows.forEach(function (hRow) {
-                        var selecting = hRow.readBySelect(sqlQueryParts.select);
-                        processingTimeCounter += selecting.processingTime;
-                        selectings.push(selecting);
-                        currentSuccessfulCounter++;
-                    });
                     helpers_1.unique(usefulRowsKeys).forEach(function (rowKey) {
                         var regionId = _this.regionIdByRowKeyMap[rowKey];
                         var usefulHRow = _this.getRegionById(regionId).rows[rowKey];
@@ -227,7 +201,10 @@ var SlaveServer = (function (_super) {
         else if (!sqlQueryParts.join) {
             var tableName_1 = sqlQueryParts.from[0];
             this
-                .filterRows(function (hRow) { return hRow.tableName === tableName_1; })
+                .filterRows(function (hRow) {
+                processingTimeCounter++;
+                return hRow.tableName === tableName_1;
+            })
                 .map(function (usefulHRow) {
                 var selecting = usefulHRow.readBySelect(sqlQueryParts.select);
                 processingTimeCounter += selecting.processingTime;

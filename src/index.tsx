@@ -1,41 +1,34 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import {App} from "./containers/App";
+import {App} from "./App";
 
 // custom styles
 import './../resources/styles/common.css'
-
-// vendor styles
 import 'font-awesome/css/font-awesome.css';
 import 'bootstrap/dist/css/bootstrap.css';
 
-// redux
-import {createStore} from "redux";
+// store
 import {Provider} from "react-redux";
-import {app} from "./reducers";
+import configureStore from "./configureStore";
+const store = configureStore();
 
 // material-ui
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 require("react-tap-event-plugin")();
 
-const root = document.getElementById('root');
-const store = createStore(app);
-
 function updateRender() {
-
-    const jsxContainer = (
+    ReactDOM.render(
         <MuiThemeProvider>
             <Provider store={ store }>
                 <App />
             </Provider>
-        </MuiThemeProvider>
+        </MuiThemeProvider>,
+        document.getElementById('root')
     );
-
-    ReactDOM.render(jsxContainer, root);
 }
 
 if (module['hot']) {
-    module['hot'].accept('./containers/App', () => {
+    module['hot'].accept('./App', () => {
         updateRender();
     });
 }

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Preparing} from "./preparing/Preparing";
+import Preparing from "./preparing/Preparing";
 import ChartsTabs from "./tabs/ChartsTabs";
 import LogsDrawer from "./logs-drawer/LogsDrawer";
 

@@ -38,7 +38,8 @@ var HorizontalSharding = (function () {
         configurable: true
     });
     HorizontalSharding.prototype.getSlaveServerId = function (hRow, slavesIds, _a) {
-        var _b = _a.fieldName, fieldName = _b === void 0 ? 'id' : _b, _c = _a.attemptCounter, attemptCounter = _c === void 0 ? 0 : _c;
+        var fieldName = _a.fieldName, _b = _a.attemptCounter, attemptCounter = _b === void 0 ? 0 : _b;
+        fieldName = fieldName || 'id';
         var value = hRow.getValueByFieldName(fieldName);
         if (typeof value === 'string') {
             value = index_1.str2numbers(value);

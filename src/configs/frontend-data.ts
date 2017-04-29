@@ -103,6 +103,7 @@ if (localStorage.getItem('initial')) {
                 //     type: 'Горизонтальный',
                 //     fieldName: 'id'
                 // },
+                sharding: {},
                 fields: [{
                     name: 'id',
                     type: 'Числовой',
@@ -136,6 +137,7 @@ if (localStorage.getItem('initial')) {
                 //     type: 'Горизонтальный',
                 //     fieldName: 'id'
                 // },
+                sharding: {},
                 fields: [{
                     name: 'id',
                     type: 'Числовой',
@@ -247,7 +249,7 @@ if (localStorage.getItem('initial')) {
             //     "select": [
             //         "session.user_id"
             //     ],
-            //     "where": "status = 'abc'",
+            //     "where": "session.status = 'abc'",
             //     "raw": "SELECT user_id FROM session AS s WHERE status = 'abc'"
             // },
             // {

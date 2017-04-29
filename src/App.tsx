@@ -1,14 +1,10 @@
 import * as React from "react";
 
-import {Header} from "./Header";
-import {Footer} from "./Footer";
-import {Content} from "./Content";
+import {Header} from "./containers/Header";
+import {Footer} from "./containers/Footer";
+import {Content} from "./containers/Content";
 
-export interface AppProperties { }
-
-export interface AppState { }
-
-export class App extends React.Component<AppProperties, AppState> {
+export class App extends React.Component<any, any> {
     constructor() {
         super();
     }

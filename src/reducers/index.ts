@@ -3,12 +3,12 @@ import {stopwatch} from './stopwatch';
 import {otherStepsData} from './otherStepsData';
 import chartsData from './chartsData';
 import logsInfo from './logsInfo';
+import {processActivated} from './processing';
 
-export const app = Redux.combineReducers({
+export default Redux.combineReducers({
+    processActivated,
     otherStepsData,
     chartsData,
     stopwatch,
     logsInfo
 });
-
-export default app;

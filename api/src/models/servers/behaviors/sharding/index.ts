@@ -32,8 +32,10 @@ export class HorizontalSharding implements ShardingBehavior {
     title = 'horizontal';
     repeated = true;
 
-    getSlaveServerId(hRow: HRow, slavesIds: Array<any>, {fieldName = 'id', attemptCounter = 0}) {
+    getSlaveServerId(hRow: HRow, slavesIds: Array<any>, {fieldName, attemptCounter = 0}) {
+        fieldName = fieldName || 'id';
         let value = hRow.getValueByFieldName(fieldName);
+
         if (typeof value  === 'string') {
             value = str2numbers(value);
         }

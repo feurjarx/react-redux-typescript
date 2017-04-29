@@ -13,6 +13,8 @@ import {
 } from "../../constants/index";
 
 import SqlSyntaxService from "../../services/SqlSyntaxService";
+import {GlobalCounter} from "../../services/GlobalCounter";
+import {GLOBAL_COUNTER_SQL_QUICK, GLOBAL_COUNTER_SQL_NORMAL} from "../../constants/global-counter";
 
 export default class SlaveServer extends Server {
 
@@ -24,7 +26,6 @@ export default class SlaveServer extends Server {
     maxRegions: number;
 
     rowsKeysByArrowKeyMap: {[arrowKey: string]: Array<string>} = {};
-    // regionsIdsByArrowKeyMap: {[arrowKey: string]: Array<number>} = {};
     regionIdByRowKeyMap: {[rowKey: string]: number} = {};
 
     regionMaxSize: number;
@@ -70,16 +71,6 @@ export default class SlaveServer extends Server {
     updateAllGuideMaps(hRow: HRow, regionId: number) {
         this.regionIdByRowKeyMap[hRow.rowKey] = regionId;
 
-        // hRow.getArrowKeys().forEach(arrowKey => {
-        //     if (!this.regionsIdsByArrowKeyMap[arrowKey]) {
-        //         this.regionsIdsByArrowKeyMap[arrowKey] = [];
-        //     }
-        //
-        //     if (this.regionsIdsByArrowKeyMap[arrowKey].indexOf(regionId) < 0) {
-        //         this.regionsIdsByArrowKeyMap[arrowKey].push(regionId);
-        //     }
-        // });
-
         hRow.getIndexedArrowKeys().forEach(arrowKey => {
             if (!this.rowsKeysByArrowKeyMap[arrowKey]) {
                 this.rowsKeysByArrowKeyMap[arrowKey] = [];
@@ -87,14 +78,6 @@ export default class SlaveServer extends Server {
 
             this.rowsKeysByArrowKeyMap[arrowKey].push(hRow.rowKey);
         });
-
-        // hRow.getArrowKeys().forEach(arrowKey => {
-        //     if (!this.rowsKeysByArrowKeyMap[arrowKey]) {
-        //         this.rowsKeysByArrowKeyMap[arrowKey] = [];
-        //     }
-        //
-        //     this.rowsKeysByArrowKeyMap[arrowKey].push(hRow.rowKey);
-        // });
     }
 
     save(hRow: HRow) {
@@ -172,10 +155,8 @@ export default class SlaveServer extends Server {
                 .getAndsListFromWhere(sqlQueryParts.where)
                 .forEach((ands: Array<Criteria>) => {
 
-                    // let usefulRegionsIds: Array<number>;
-                    let usefulRows: Array<HRow> = [];
                     const usefulRowsKeys: Array<string> = [];
-                    let comparator = Function();
+                    let comparator = null;
 
                     let skip = false;
                     for (let i = 0; i < ands.length && !skip; i++) {
@@ -187,63 +168,52 @@ export default class SlaveServer extends Server {
                                 const arrowKey = HRow.calcArrowKey(criteria);
                                 const rowsKeys = this.rowsKeysByArrowKeyMap[arrowKey] || [];
                                 if (rowsKeys.length) {
+                                    GlobalCounter.up(GLOBAL_COUNTER_SQL_QUICK);
                                     usefulRowsKeys.push(...rowsKeys);
-
                                 } else {
-
-                                    const {table, field, value} = criteria;
-                                    const rows = this.filterRows(hRow => (
-                                        hRow.tableName === table
-                                        &&
-                                        hRow.getValueByFieldName(field) === value
-                                    ));
-
-                                    if (rows.length) {
-                                        usefulRows.push(...rows);
-                                    } else {
-                                        skip = true;
-                                    }
+                                    GlobalCounter.up(GLOBAL_COUNTER_SQL_NORMAL);
+                                    comparator = (a, b) => a == b;
                                 }
 
                                 break;
 
                             case SQL_OPERATOR_LT:
+                                comparator = (a, b) => a < b;
+                                break;
+
                             case SQL_OPERATOR_GT:
-
-                                if (criteria.operator === SQL_OPERATOR_GT) {
-                                    comparator = (a, b) => a > b;
-                                } else {
-                                    comparator = (a, b) => a < b;
-                                }
-
-                                const {table, field, value} = criteria;
-                                const rows = this.filterRows(hRow => (
-                                    hRow.tableName === table
-                                    &&
-                                    comparator(hRow.getValueByFieldName(field), value)
-                                ));
-
-                                if (rows.length) {
-                                    usefulRows.push(...rows);
-                                } else {
-                                    skip = true;
-                                }
-
+                                comparator = (a, b) => a > b;
                                 break;
 
                             default:
                                 throw new Error('Unexpected operator');
                         }
+
+                        if (comparator) {
+                            const {table, field, value} = criteria;
+
+                            const rowsKeys = this
+                                .filterRows(hRow => {
+
+                                    processingTimeCounter++;
+
+                                    return (
+                                        hRow.tableName === table
+                                        &&
+                                        comparator(hRow.getValueByFieldName(field), value)
+                                    );
+                                })
+                                .map(hRow => hRow.rowKey);
+
+                            if (rowsKeys.length) {
+                                usefulRowsKeys.push(...rowsKeys);
+                            } else {
+                                skip = true;
+                            }
+                        }
                     }
 
                     if (!skip) {
-
-                        usefulRows.forEach(hRow => {
-                            const selecting = hRow.readBySelect(sqlQueryParts.select);
-                            processingTimeCounter += selecting.processingTime;
-                            selectings.push(selecting);
-                            currentSuccessfulCounter++;
-                        });
 
                         unique(usefulRowsKeys).forEach(rowKey => {
                             const regionId = this.regionIdByRowKeyMap[rowKey];
@@ -265,7 +235,10 @@ export default class SlaveServer extends Server {
 
             const tableName = sqlQueryParts.from[0];
             this
-                .filterRows(hRow => hRow.tableName === tableName)
+                .filterRows(hRow => {
+                    processingTimeCounter++;
+                    return hRow.tableName === tableName;
+                })
                 .map(usefulHRow => {
                     const selecting = usefulHRow.readBySelect(sqlQueryParts.select);
                     processingTimeCounter += selecting.processingTime;

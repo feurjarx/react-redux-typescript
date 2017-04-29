@@ -96,6 +96,7 @@ export default class TableForm extends React.Component<any, any> {
                     name={`tables.${idx}.sharding.slaveId`}
                     onUpdateInput={ onAutoCompleteUpdate }
                     searchText={serverId}
+                    listStyle={{overflowY: 'auto', maxHeight: 100}}
                 />
             );
         }
@@ -114,6 +115,7 @@ export default class TableForm extends React.Component<any, any> {
                     onFocus={this.onShardedFieldUpdate}
                     onUpdateInput={onAutoCompleteUpdate}
                     searchText={fieldName}
+                    listStyle={{overflowY: 'auto', maxHeight: 100}}
                 />
             );
         }
@@ -174,7 +176,7 @@ export default class TableForm extends React.Component<any, any> {
 
 const paperStyle = {
     width: 400,
-    height: 260,
+    height: 300,
     padding: 10,
     overflowY: 'auto'
 };

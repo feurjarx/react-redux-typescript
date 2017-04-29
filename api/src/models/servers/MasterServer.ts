@@ -35,6 +35,8 @@ export default class MasterServer extends Server {
     vGuideMap = {};
     guideMap = {};
 
+    hShardingFields: Array<string> = [];
+
     clientsSubscription: Subscription;
     slavesSubscriptionsMap: {[key: string]: Subscription} = {};
 
@@ -82,7 +84,7 @@ export default class MasterServer extends Server {
         return this.subordinates.find(slave => slave.id === id);
     }
 
-    updateGuideMaps(hRow: HRow, slaveId, {serverId = null}) {
+    updateGuideMaps(hRow: HRow, slaveId, {serverId = null, fieldName = null}) {
 
         if (serverId) {
             // v-sharding
@@ -93,6 +95,11 @@ export default class MasterServer extends Server {
             hRow.getArrowKeys().forEach(arrowKey => {
                 this.guideMap[arrowKey] = slaveId;
             });
+
+            const tableFieldPath = hRow.tableName + '.' + fieldName;
+            if (fieldName && this.hShardingFields.indexOf(tableFieldPath) < 0) {
+                this.hShardingFields.push(tableFieldPath);
+            }
         }
     }
 
@@ -172,29 +179,39 @@ export default class MasterServer extends Server {
                     for (let i = 0; i < ands.length; i++) {
                         const criteria = ands[i];
 
-                        if (criteria.operator !== SQL_OPERATOR_EQ) {
+                        const {operator, table, field, value} = criteria;
+
+                        if (operator !== SQL_OPERATOR_EQ) {
                             slavesIds = [];
                             break;
                         }
 
+                        const tableFieldPath = table + '.' + field;
                         // for '='
-                        if (primaryFieldName === criteria.table + '.' + criteria.field) {
+                        if (primaryFieldName === tableFieldPath) {
                             slavesIds = [];
                             // for, example "... WHERE user.id = 1 and user.id = 2"
                             break;
                         }
 
-                        const guideKey = HRow.calcArrowKey(criteria);
-                        const slaveId = this.guideMap[guideKey];
-                        if (!slaveId) {
-                            slavesIds = [];
-                            break;
-                        }
+                        if (this.hShardingFields.indexOf(tableFieldPath) >= 0) {
+                            const slaveIdx = value % this.getSlavesNumber();
+                            slavesIds.push(this.subordinates[slaveIdx].id);
 
-                        slavesIds.push(slaveId);
+                        } else {
 
-                        if (criteria.isPrimaryField) {
-                            primaryFieldName = criteria.table + '.' + criteria.field;
+                            const guideKey = HRow.calcArrowKey(criteria);
+                            const slaveId = this.guideMap[guideKey];
+                            if (!slaveId) {
+                                slavesIds = [];
+                                break;
+                            }
+
+                            slavesIds.push(slaveId);
+
+                            if (criteria.isPrimaryField) {
+                                primaryFieldName = criteria.table + '.' + criteria.field;
+                            }
                         }
                     }
 

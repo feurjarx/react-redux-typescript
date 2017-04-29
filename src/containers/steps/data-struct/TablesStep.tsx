@@ -7,15 +7,6 @@ import TableForm from "./TableForm";
 import {SHARDING_TYPE_DEFAULT, FIELD_TYPE_NUMBER} from "../../../constants/index";
 import initial from "./../../../configs/frontend-data";
 
-function mapStateToProps(state, props) {
-    const {servers} = state.otherStepsData;
-
-    return {
-        servers
-    };
-}
-
-
 class TablesStep extends React.Component<any, any> {
 
     fds: FormDataService;
@@ -25,7 +16,9 @@ class TablesStep extends React.Component<any, any> {
             name: 'user',
             tableSize: null,
             sharding: {
-                type: SHARDING_TYPE_DEFAULT
+                type: SHARDING_TYPE_DEFAULT,
+                fieldName: null,
+                serverId: null
             },
             fields: [{
                 name: 'id',
@@ -91,9 +84,9 @@ class TablesStep extends React.Component<any, any> {
         );
 
         this.setState({replics}, () => {
-            const {fds, dispatchTablesData} = this;
+            const {fds} = this;
             fds.data.tables.push(tableData);
-            dispatchTablesData();
+            this.props.share(fds.data.tables);
         });
     }
 
@@ -106,36 +99,30 @@ class TablesStep extends React.Component<any, any> {
         replics.pop();
 
         this.setState({replics}, () => {
-            const {fds, dispatchTablesData} = this;
+            const {fds} = this;
             fds.data.tables.pop();
-            dispatchTablesData();
+            this.props.share(fds.data.tables);
         });
     };
 
     onFieldRemove = (tableIdx) => {
-        const {fds, dispatchTablesData} = this;
+        const {fds} = this;
         fds.data.tables[tableIdx].fields.pop();
-        dispatchTablesData();
+        this.props.share(fds.data.tables);
     };
 
     onTextFieldChange = (event) => {
         const {name, value} = event.currentTarget;
-        const {fds, dispatchTablesData} = this;
-        fds.setDataByPath(name, value);
-        dispatchTablesData();
-    };
-
-    dispatchTablesData = () => {
         const {fds} = this;
-        const {tables} = fds.data;
-        this.props.dispatch(updateOtherStepsData({tables}));
+        fds.setDataByPath(name, value);
+        this.props.share(fds.data.tables);
     };
 
     onCheck = (event, checked) => {
         const checkboxElem = event.currentTarget;
-        const {fds, dispatchTablesData} = this;
+        const {fds} = this;
         fds.setDataByPath(checkboxElem.name, checked);
-        dispatchTablesData();
+        this.props.share(fds.data.tables);
     };
 
     componentDidMount() {
@@ -164,4 +151,18 @@ class TablesStep extends React.Component<any, any> {
     }
 }
 
-export default connect(mapStateToProps)(TablesStep);
+function mapStateToProps(state, props) {
+    const {servers} = state.otherStepsData;
+
+    return {
+        servers
+    };
+}
+
+function mapDispatchToProps(dispatch) {
+    return {
+        share: (tables) => dispatch(updateOtherStepsData({tables}))
+    };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(TablesStep);

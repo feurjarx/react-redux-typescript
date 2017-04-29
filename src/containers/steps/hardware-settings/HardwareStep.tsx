@@ -5,9 +5,7 @@ import {updateOtherStepsData} from "../../../actions/index";
 import {connect} from "react-redux";
 import HardwareForm from './HardwareForm'
 import initial from "./../../../configs/frontend-data";
-import {prettylog} from "../../../helpers/index";
 
-@connect()
 class HardwareStep extends React.Component<any, any> {
 
     fds: FormDataService;
@@ -59,9 +57,9 @@ class HardwareStep extends React.Component<any, any> {
         );
 
         this.setState({replics}, () => {
-            const {fds, dispatchServersData} = this;
+            const {fds} = this;
             fds.data['servers'].push(serverData);
-            dispatchServersData();
+            this.props.share(fds.data.servers);
         });
     }
 
@@ -81,28 +79,21 @@ class HardwareStep extends React.Component<any, any> {
         }
 
         this.setState({replics, masterIdx}, () => {
-            const {fds, dispatchServersData} = this;
+            const {fds} = this;
             fds.data['servers'].pop();
-            dispatchServersData();
+            this.props.share(fds.data.servers);
         });
     };
 
     onTextFieldChange = (event) => {
         const {target} = event;
-        const {fds, dispatchServersData} = this;
+        const {fds} = this;
 
         if (target.name) {
             fds.setDataByPath(target.name, target.value);
         }
 
-        dispatchServersData();
-    };
-
-    dispatchServersData = () => {
-        const {fds} = this;
-        this.props.dispatch(updateOtherStepsData({
-            servers: fds.data.servers
-        }));
+        this.props.share(fds.data.servers);
     };
 
     onCheckHandle = (event, checked) => {
@@ -112,20 +103,20 @@ class HardwareStep extends React.Component<any, any> {
 
         this.setState({masterIdx: checked ? idx : null}, () => {
 
-            const {fds, dispatchServersData} = this;
+            const {fds} = this;
             fds.setDataByPath(checkboxElem.name, checked);
-            dispatchServersData();
+            this.props.share(fds.data.servers);
         });
     };
 
     onSliderUpdate = (v: number, name: string) => {
-        const {fds, dispatchServersData} = this;
+        const {fds} = this;
 
         if (name) {
             fds.setDataByPath(name, v);
         }
 
-        dispatchServersData();
+        this.props.share(fds.data.servers);
     };
 
     componentDidMount() {
@@ -154,4 +145,14 @@ class HardwareStep extends React.Component<any, any> {
     }
 }
 
-export default HardwareStep;
+function mapDispatchToProps(dispatch) {
+    return {
+        share: (servers) => dispatch(updateOtherStepsData({servers}))
+    }
+}
+
+function mapStateToProps(state, props) {
+    return {};
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(HardwareStep);

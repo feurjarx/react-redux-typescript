@@ -50,8 +50,8 @@ class RegionsPiesChart extends React.Component<any, any> {
                                     <Pie
                                         key={i}
                                         data={[{name: 'Сервер не заполнен', value: 100}]}
-                                        cx={(diameter + interval) * i + radius + interval}
-                                        cy={radius}
+                                        cx={(diameter + 20) * i + radius + 20}
+                                        cy={1.5 * radius}
                                         labelLine={false}
                                         outerRadius={radius}
                                         fill="#8884d8"

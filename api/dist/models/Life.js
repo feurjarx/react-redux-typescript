@@ -8,6 +8,8 @@ var index_1 = require("../constants/index");
 var index_2 = require("../constants/index");
 var index_3 = require("../helpers/index");
 var HRow_1 = require("./HRow");
+var GlobalCounter_1 = require("../services/GlobalCounter");
+var global_counter_1 = require("../constants/global-counter");
 var Life = (function () {
     function Life() {
         var _this = this;
@@ -51,6 +53,7 @@ var Life = (function () {
                     if (statistics.isEqualCompletedClients()) {
                         statistics.unsubscribeFromProp(Statistics_1.default.SLAVES_LAST_PROCESSING_TIME_LIST);
                         _this.lifeCompleteCallback();
+                        GlobalCounter_1.GlobalCounter.reset();
                         setTimeout(function () {
                             _this.masterServer.close();
                             _this.active = false;
@@ -141,6 +144,8 @@ var Life = (function () {
             nServers: servers.length,
             nClients: clients.length
         });
+        GlobalCounter_1.GlobalCounter.init(global_counter_1.GLOBAL_COUNTER_SQL_QUICK);
+        GlobalCounter_1.GlobalCounter.init(global_counter_1.GLOBAL_COUNTER_SQL_NORMAL);
         this.simulateWorkWithBigData(lifeData);
         this.statistics.subscribeToProp(Statistics_1.default.SLAVES_LAST_PROCESSING_TIME_LIST, function (data) { return _this.lifeInfoCallback(data, index_1.CHART_TYPE_SLAVES_LOAD); });
     };

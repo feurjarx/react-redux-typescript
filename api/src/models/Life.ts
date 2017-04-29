@@ -16,6 +16,8 @@ import {FIELD_TYPE_NUMBER, HDD_ASPECT_RATIO} from "../constants/index";
 import {TableData} from "../../typings/index";
 import {hash} from "../helpers/index";
 import HRow from "./HRow";
+import {GlobalCounter} from "../services/GlobalCounter";
+import {GLOBAL_COUNTER_SQL_QUICK, GLOBAL_COUNTER_SQL_NORMAL} from "../constants/global-counter";
 
 export class Life {
 
@@ -30,7 +32,6 @@ export class Life {
 
     onLifeComplete(callback = Function()) {
         this.lifeCompleteCallback = callback;
-
         return this;
     };
 
@@ -127,6 +128,9 @@ export class Life {
             nClients: clients.length
         });
 
+        GlobalCounter.init(GLOBAL_COUNTER_SQL_QUICK);
+        GlobalCounter.init(GLOBAL_COUNTER_SQL_NORMAL);
+
         this.simulateWorkWithBigData(lifeData);
 
         this.statistics.subscribeToProp(
@@ -195,6 +199,9 @@ export class Life {
                     statistics.unsubscribeFromProp(Statistics.SLAVES_LAST_PROCESSING_TIME_LIST);
 
                     this.lifeCompleteCallback();
+
+                    GlobalCounter.reset();
+
                     setTimeout(() => {
                         this.masterServer.close();
                         this.active = false;

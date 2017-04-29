@@ -29,6 +29,7 @@ var MasterServer = (function (_super) {
         _this.subordinates = [];
         _this.vGuideMap = {};
         _this.guideMap = {};
+        _this.hShardingFields = [];
         _this.slavesSubscriptionsMap = {};
         return _this;
     }
@@ -66,7 +67,7 @@ var MasterServer = (function (_super) {
     };
     MasterServer.prototype.updateGuideMaps = function (hRow, slaveId, _a) {
         var _this = this;
-        var _b = _a.serverId, serverId = _b === void 0 ? null : _b;
+        var _b = _a.serverId, serverId = _b === void 0 ? null : _b, _c = _a.fieldName, fieldName = _c === void 0 ? null : _c;
         if (serverId) {
             // v-sharding
             this.vGuideMap[hRow.tableName] = serverId;
@@ -76,6 +77,10 @@ var MasterServer = (function (_super) {
             hRow.getArrowKeys().forEach(function (arrowKey) {
                 _this.guideMap[arrowKey] = slaveId;
             });
+            var tableFieldPath = hRow.tableName + '.' + fieldName;
+            if (fieldName && this.hShardingFields.indexOf(tableFieldPath) < 0) {
+                this.hShardingFields.push(tableFieldPath);
+            }
         }
     };
     MasterServer.prototype.save = function (hRow, shardingOptions) {
@@ -128,25 +133,33 @@ var MasterServer = (function (_super) {
                 var primaryFieldName = null;
                 for (var i = 0; i < ands.length; i++) {
                     var criteria = ands[i];
-                    if (criteria.operator !== constants_1.SQL_OPERATOR_EQ) {
+                    var operator = criteria.operator, table = criteria.table, field = criteria.field, value = criteria.value;
+                    if (operator !== constants_1.SQL_OPERATOR_EQ) {
                         slavesIds = [];
                         break;
                     }
+                    var tableFieldPath = table + '.' + field;
                     // for '='
-                    if (primaryFieldName === criteria.table + '.' + criteria.field) {
+                    if (primaryFieldName === tableFieldPath) {
                         slavesIds = [];
                         // for, example "... WHERE user.id = 1 and user.id = 2"
                         break;
                     }
-                    var guideKey = HRow_1.default.calcArrowKey(criteria);
-                    var slaveId = _this.guideMap[guideKey];
-                    if (!slaveId) {
-                        slavesIds = [];
-                        break;
+                    if (_this.hShardingFields.indexOf(tableFieldPath) >= 0) {
+                        var slaveIdx = value % _this.getSlavesNumber();
+                        slavesIds.push(_this.subordinates[slaveIdx].id);
                     }
-                    slavesIds.push(slaveId);
-                    if (criteria.isPrimaryField) {
-                        primaryFieldName = criteria.table + '.' + criteria.field;
+                    else {
+                        var guideKey = HRow_1.default.calcArrowKey(criteria);
+                        var slaveId = _this.guideMap[guideKey];
+                        if (!slaveId) {
+                            slavesIds = [];
+                            break;
+                        }
+                        slavesIds.push(slaveId);
+                        if (criteria.isPrimaryField) {
+                            primaryFieldName = criteria.table + '.' + criteria.field;
+                        }
                     }
                 }
                 result.push.apply(result, slavesIds);

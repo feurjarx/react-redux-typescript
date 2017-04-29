@@ -7,3 +7,5 @@ export const FIELD_TYPE_STRING = 'Строковый';
 
 export const CHART_TYPE_REQUESTS_DIAGRAM = 'requests_diagram';
 export const CHART_TYPE_SLAVES_LOAD = 'slaves_load_chart';
+
+export const PROCESS_ACTIVATED = 'process_activated';

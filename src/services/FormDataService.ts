@@ -27,20 +27,6 @@ class FormDataService {
         });
     }
 
-    removeArrayElem(index: number, hint: string, path: string) {
-        const { data } = this;
-
-        let targetParent = data;
-
-        const pathParts = path.split('.');
-        pathParts.every(key => {
-            targetParent = targetParent[key];
-            return  key !== hint;
-        });
-
-        delete targetParent[index];
-    }
-
     setDataByPath(path: string, value: any) {
         const { data } = this;
 
@@ -62,7 +48,7 @@ class FormDataService {
         targetParent[targetKey] = value;
 
 
-        prettylog(data);
+        prettylog(data.tables);
     }
 }
 

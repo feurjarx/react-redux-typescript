@@ -172,7 +172,7 @@ export class RequestsStep extends React.Component<any, any> {
 
             <form onChange={ handleFormChange } id="life-data-form">
 
-                <Paper style={{padding: 25, minWidth: 300}} zDepth={3}>
+                <Paper style={{padding: 25, width: 300, height: '100%'}} zDepth={3}>
 
                     <div id="clients-settings-block" className="v-internal-interval-10">
 
@@ -216,15 +216,16 @@ export class RequestsStep extends React.Component<any, any> {
                         */}
                     </div>
                 </Paper>
-                <div id="sqlbox-block">
-                    <textarea onKeyUp={onTextareaKeyUp}
-                        ref="sqlbox"
-                        defaultValue={sqlsRaw}
-                    />
-                </div>
-                <div id="json-display-block" ref="jsonDisplayBlock">
-                    <JsonDisplay raw={displayValue}/>
-                </div>
+                <Paper style={{width: '40%', height: '100%'}} zDepth={3}>
+                    <div id="sqlbox-block">
+                        <textarea onKeyUp={onTextareaKeyUp} ref="sqlbox" defaultValue={sqlsRaw} />
+                    </div>
+                </Paper>
+                <Paper style={{width: '30%', height: '100%'}} zDepth={3}>
+                    <div id="json-display-block" ref="jsonDisplayBlock">
+                        <JsonDisplay raw={displayValue}/>
+                    </div>
+                </Paper>
             </form>
         )
     }
@@ -236,6 +237,8 @@ const JsonDisplay = (props) => {
     const {raw} = props;
 
     return (
-        <pre><code className="JSON">{raw}</code></pre>
+        <pre>
+            <code className="JSON">{raw}</code>
+        </pre>
     );
 };
