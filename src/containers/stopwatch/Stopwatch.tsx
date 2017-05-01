@@ -1,60 +1,54 @@
 import * as React from "react";
 import {connect} from "react-redux";
-import Timer = NodeJS.Timer;
-
-function mapStateToProps(state, props) {
-    return state;
-}
 
 class Stopwatch extends React.Component<any, any> {
 
-    state = {
-        stopped: true,
-        time: 0
-    };
-
-    private timerId;
+    timerId;
 
     constructor() {
         super();
+
+        this.state = {
+            stopped: true,
+            time: 0
+        };
     }
 
-    start = () => {
+    start() {
 
-        if (this.state.stopped) {
+        this.reset();
 
-            this.reset();
+        this.timerId = setInterval(() => {
 
-            this.timerId = setInterval(() => {
+            let { time } = this.state;
+            time += 10;
 
-                let { time } = this.state;
-                time += 10;
+            this.setState({ time });
 
-                this.setState({ time });
+        }, 10);
 
-            }, 10);
-
-            this.setState({
-                stopped: false
-            });
-        }
+        this.setState({
+            stopped: false
+        });
     };
 
-    reset = () => {
+    reset() {
         this.setState({
             time: 0
         });
     };
 
-    stop = () => {
-        if (!this.state.stopped) {
-            clearInterval(this.timerId);
+    stop() {
+        clearInterval(this.timerId);
 
-            this.setState({
-                stopped: true
-            });
-        }
+        this.setState({
+            stopped: true
+        });
     };
+
+    componentWillUnmount() {
+        clearInterval(this.timerId);
+    }
 
     componentWillReceiveProps(props) {
 
@@ -84,6 +78,12 @@ class Stopwatch extends React.Component<any, any> {
             </b>
         )
     }
+}
+
+function mapStateToProps(state, props) {
+    return {
+        stopwatch: state.stopwatch
+    };
 }
 
 export default connect(mapStateToProps)(Stopwatch);

@@ -43,11 +43,15 @@ const codeMirrorConfig = {
     theme: 'eclipse'
 };
 
+// Bad component!!!
+
 export class RequestsStep extends React.Component<any, any> {
 
     fds: FormDataService;
 
     sqlsRaw: string;
+
+    timerId;
 
     constructor(props) {
         super();
@@ -125,7 +129,6 @@ export class RequestsStep extends React.Component<any, any> {
         this.updateDisplay(sqls);
     };
 
-    private timerId;
     onTextareaKeyUp = (editor) => {
         clearTimeout(this.timerId);
         this.timerId = setTimeout(() => {
