@@ -24,8 +24,7 @@ class SlavesLoadChart extends React.Component<any, React.ComponentState> {
 
     initChart(initialChartData) {
 
-        const {serversIds} = initialChartData;
-        this.chartSource = serversIds.map(id => ({
+        this.chartSource = initialChartData.serversIds.map(id => ({
             type: "line",
             // type: "spline",
             name: id,
@@ -50,8 +49,6 @@ class SlavesLoadChart extends React.Component<any, React.ComponentState> {
 
     componentWillReceiveProps(props) {
 
-        const {chart} = this;
-
         const {slavesLoadNewTimeList, initial} = props;
         if (initial) {
             this.initChart(initial);
@@ -70,14 +67,17 @@ class SlavesLoadChart extends React.Component<any, React.ComponentState> {
                 }
             });
 
-            chart.render();
+            this.chart.render();
 
             this.xCounter++;
         }
     }
 
-    render() {
+    shouldComponentUpdate(nextProps, nextState) {
+        return false;
+    }
 
+    render() {
         return (
             <div style={{width: '100%'}} id={ this.chartId }></div>
         );

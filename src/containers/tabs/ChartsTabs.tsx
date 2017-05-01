@@ -1,7 +1,7 @@
 import * as React from "react";
 import RegionsPiesCharts from "./../regions-pies-charts/RegionsPiesCharts";
 import RequestsDiagram from "../requests-diagram/RequestsDiagram";
-import SlavesLoadChart from "../cpu-chart/SlavesLoadChart";
+import SlavesLoadChart from "../slaves-load-chart/SlavesLoadChart";
 import {Tabs, Tab} from 'material-ui/Tabs';
 import SwipeableViews from 'react-swipeable-views';
 import {connect} from "react-redux";

@@ -17,15 +17,16 @@ class LogsDrawer extends React.Component<any, any> {
 
     showLimit = 50;
 
+    logs = [];
+    connected = false;
+    scrollLocked = false;
+
     constructor() {
         super();
 
         this.state = {
             open: false,
-            logs: [],
-            showLogs: [],
-            scrollLocked: false,
-            connected: false
+            showLogs: []
         }
     }
 
@@ -37,39 +38,36 @@ class LogsDrawer extends React.Component<any, any> {
         this.setState({open});
     };
 
-    componentWillReceiveProps(props) {
-        const {logsJson, stopwatch} = props;
+    componentWillReceiveProps(nextProps) {
+        const {logsJson, stopwatch} = nextProps;
 
-        let {connected, showLogs, logs} = this.state;
+        let {showLogs} = this.state;
 
-        if (stopwatch === 'start' && !this.state.connected) {
-            logs = [];
+        let connected = this.connected;
+
+        if (stopwatch === 'start' && !this.connected) {
+            this.logs = [];
             connected = true;
         }
 
-        if (stopwatch === 'stop' && this.state.connected) {
+        if (stopwatch === 'stop' && this.connected) {
             connected = false;
         }
 
         if (logsJson) {
             const newLogs = JSON.parse(logsJson);
-            logs = logs.concat(newLogs);
+            this.logs = this.logs.concat(newLogs);
             showLogs = this.getShowLogs();
         }
 
-        this.setState({
-            connected,
-            showLogs,
-            logs
-        })
+        this.setState({showLogs}, () => this.connected = connected);
     }
 
     getShowLogs() {
         const {showLimit} = this;
-        const {logs} = this.state;
-        let showLogs = logs;
-        if (logs.length > showLimit) {
-            showLogs = logs.slice((-1) * showLimit);
+        let showLogs = this.logs;
+        if (this.logs.length > showLimit) {
+            showLogs = this.logs.slice((-1) * showLimit);
         }
 
         return showLogs;
@@ -82,36 +80,33 @@ class LogsDrawer extends React.Component<any, any> {
 
     onLogsScroll = () => {
 
-        const {
-            scrollLocked,
-            connected,
-            logs,
-            open
-        } = this.state;
+        const {open} = this.state;
 
-        if (open && !connected && !scrollLocked) {
+        if (open && !this.connected && !this.scrollLocked) {
 
             let {showLogs} = this.state;
             const scrollerElem = this.refs['logsScroller'] as HTMLElement;
 
-            const logsLength = logs.length;
+            const logsLength = this.logs.length;
             const showLogsLength = showLogs.length;
 
             if (scrollerElem.scrollTop === 0 && logsLength > showLogsLength) {
-                this.setState({scrollLocked: true}, () => {
 
-                    const {showLimit} = this;
-                    showLogs = logs.slice((-1) * (showLimit + showLogsLength));
+                this.scrollLocked = true;
 
-                    this.setState({showLogs, scrollLocked: false})
-                });
+                showLogs = this.logs.slice((-1) * (this.showLimit + showLogsLength));
+
+                this.setState(
+                    {showLogs},
+                    () => this.scrollLocked = false
+                );
             }
         }
     };
 
     render() {
 
-        const {open, showLogs, logs} = this.state;
+        const {open, showLogs} = this.state;
 
         const {
             onRequestChange,
@@ -130,7 +125,7 @@ class LogsDrawer extends React.Component<any, any> {
             );
         }
 
-        const labelText = `Консоль событий ${logs.length ? '(' + logs.length + ')' : ''}`;
+        const labelText = `Консоль событий ${this.logs.length ? '(' + this.logs.length + ')' : ''}`;
 
         return (
             <div>
