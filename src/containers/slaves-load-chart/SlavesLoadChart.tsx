@@ -47,9 +47,9 @@ class SlavesLoadChart extends React.Component<any, React.ComponentState> {
         this.xCounter = 0;
     }
 
-    componentWillReceiveProps(props) {
+    componentWillReceiveProps(nextProps) {
 
-        const {slavesLoadNewTimeList, initial} = props;
+        const {slavesLoadNewTimeList, initial} = nextProps;
         if (initial) {
             this.initChart(initial);
 
@@ -73,7 +73,7 @@ class SlavesLoadChart extends React.Component<any, React.ComponentState> {
         }
     }
 
-    shouldComponentUpdate(nextProps, nextState) {
+    shouldComponentUpdate() {
         return false;
     }
 

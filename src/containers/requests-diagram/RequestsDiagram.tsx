@@ -6,15 +6,6 @@ import ChartDataPoint = CanvasJS.ChartDataPoint;
 
 const CanvasJS = require('canvasjs/dist/canvasjs.js');
 
-function mapStateToProps(state) {
-    const {requestsDiagramNewItem, initial} = state.chartsData;
-
-    return {
-        requestsDiagramNewItem,
-        initial
-    };
-}
-
 class RequestsDiagram extends React.Component<any, React.ComponentState> {
 
     chartId = 'life-rt-chart';
@@ -23,13 +14,8 @@ class RequestsDiagram extends React.Component<any, React.ComponentState> {
     dataPoints: Array<CanvasJS.ChartDataPoint> = [];
     idxPointByServerIdMap = {};
 
-    constructor() {
-        super();
-    }
-
     initChart(initialChartData) {
 
-        // this.clear();
         this.idxPointByServerIdMap = {};
         this.dataPoints = [];
 
@@ -64,9 +50,9 @@ class RequestsDiagram extends React.Component<any, React.ComponentState> {
         });
     }
 
-    componentWillReceiveProps(props) {
+    componentWillReceiveProps(nextProps) {
 
-        const {requestsDiagramNewItem, initial} = props;
+        const {requestsDiagramNewItem, initial} = nextProps;
         if (initial) {
             this.initChart(initial);
 
@@ -80,12 +66,25 @@ class RequestsDiagram extends React.Component<any, React.ComponentState> {
         }
     }
 
+    shouldComponentUpdate() {
+        return false;
+    }
+
     render() {
 
         return (
             <div style={{width: '100%'}} id={this.chartId}></div>
         );
     }
+}
+
+function mapStateToProps(state) {
+    const {requestsDiagramNewItem, initial} = state.chartsData;
+
+    return {
+        requestsDiagramNewItem,
+        initial
+    };
 }
 
 export default connect(mapStateToProps)(RequestsDiagram);
