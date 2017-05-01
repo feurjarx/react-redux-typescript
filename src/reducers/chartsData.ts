@@ -20,8 +20,6 @@ export default function chartsData(state = {}, action) {
             return {
                 ...state,
                 initial: action.data,
-                // requestsDiagramNewItem: null,
-                // slavesLoadNewTimeList: []
             };
 
         case PUSH_NEW_ITEM_TO_REQUESTS_DIAGRAM:

@@ -4,31 +4,11 @@ import * as Recharts from "recharts/lib";
 import {pallete} from "./../../configs"
 const {PieChart, Pie, Cell, Tooltip} = Recharts;
 
-function mapStateToProps(state) {
-    const {regionsPiesCharts} = state.chartsData;
-    return {
-        pies: regionsPiesCharts,
-    };
-}
-
 class RegionsPiesChart extends React.Component<any, any> {
-
-    constructor() {
-        super();
-
-        this.state = {
-            pies: []
-        };
-    }
-
-    componentWillReceiveProps(props) {
-        const {pies = []} = props;
-        this.setState({pies});
-    }
 
     render() {
 
-        const {pies} = this.state;
+        const {pies} = this.props;
 
         let pieChart: JSX.Element = null;
         if (pies.length) {
@@ -106,5 +86,12 @@ const PieLabel = ({cx, cy, midAngle, innerRadius, outerRadius, percent}) => {
         </text>
     );
 };
+
+function mapStateToProps(state) {
+    const {regionsPiesCharts = []} = state.chartsData;
+    return {
+        pies: regionsPiesCharts,
+    };
+}
 
 export default connect(mapStateToProps)(RegionsPiesChart);
