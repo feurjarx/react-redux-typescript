@@ -18,13 +18,15 @@ import {
 
 import {
     SHARDING_TYPE_HORIZONTAL,
-    SHARDING_TYPE_VERTICAL, SQL_OPERATOR_EQ, RESPONSE_TYPE_RECEIVED, RESPONSE_TYPE_SENT
+    SHARDING_TYPE_VERTICAL, SQL_OPERATOR_EQ, RESPONSE_TYPE_RECEIVED, RESPONSE_TYPE_SENT, RESPONSE_TYPE_STOPPED,
+    RESPONSE_TYPE_FULL_STOPPED
 } from "./../../constants"
 import SlaveSelectingBehavior from "./behaviors/slave-selecting/SlaveSelectingBehavior";
 import SqlSyntaxService from "../../services/SqlSyntaxService";
 import {IQueue} from "../../services/IQueue";
 import RabbitMQ from "../../services/RabbitMQ";
 import {RandomSleepCalculating} from "./behaviors/calculate/index";
+import {ServerData} from "../../../../typings/index";
 
 export default class MasterServer extends Server {
 
@@ -46,14 +48,15 @@ export default class MasterServer extends Server {
             return null;
         }
 
-        const masterServer = new MasterServer(new RabbitMQ());
+        const masterServerData = serversData.find(s => s.isMaster);
+        const masterServer = new MasterServer(new RabbitMQ(), masterServerData);
 
         for (let i = 0; i < serversData.length; i++) {
             const serverData = serversData[i];
             if (!serverData.isMaster) {
                 const server = new SlaveServer(new RabbitMQ(), serverData);
                 server.calculateBehavior = new RandomSleepCalculating(500);
-                server.id = serverData.name;
+                // server.id = serverData.name;
                 masterServer.subordinates.push(server);
             }
         }
@@ -61,8 +64,8 @@ export default class MasterServer extends Server {
         return masterServer;
     }
 
-    constructor(provider) {
-        super(provider);
+    constructor(provider, serverData: ServerData) {
+        super(provider, serverData);
     };
 
     setShardingType(type) {
@@ -230,12 +233,24 @@ export default class MasterServer extends Server {
             .consume(queueName, { lazy })
             .subscribe(clientRequest => {
 
+                const onClientReply = clientRequest.onReply;
+
+                if (this.hasFailed()) {
+
+                    console.log('Сбой мастер-сервера и всех его репликаций');
+
+                    onClientReply({
+                        type: RESPONSE_TYPE_FULL_STOPPED
+                    });
+
+                    return;
+                }
+
                 // clientRequest.onReply({error: 404});
 
                 let processingTimeCounter = 0;
 
                 const {clientId, sqlQueryParts} = clientRequest;
-                const onClientReply = clientRequest.onReply;
                 console.log(`Мастер-сервер получил запрос от клиента #${clientId}: ${sqlQueryParts.raw}`);
 
                 if (sqlQueryParts.select) {
@@ -266,6 +281,7 @@ export default class MasterServer extends Server {
                             const slavesNames = responses.map(it => it.slaveId);
                             const slavesRequestsDiagramData = responses.map(it => ({
                                 requestsCounter: it.requestsCounter,
+                                failedCounter: it.failedCounter,
                                 slaveId: it.slaveId
                             }));
 

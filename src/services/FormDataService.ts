@@ -48,7 +48,7 @@ class FormDataService {
         targetParent[targetKey] = value;
 
 
-        prettylog(data.tables);
+        prettylog(data.servers);
     }
 }
 

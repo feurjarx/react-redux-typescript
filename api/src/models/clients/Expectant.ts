@@ -3,7 +3,12 @@ import {Subscription} from "rxjs";
 import {RABBITMQ_QUEUE_MASTER_SERVER} from  "../../constants/rabbitmq";
 import {SqlQueryParts} from "../../../typings/index";
 import {random} from "../../helpers/index";
-import {RESPONSE_TYPE_STOPPED, RESPONSE_TYPE_RECEIVED, RESPONSE_TYPE_SENT} from "../../constants/index";
+import {
+    RESPONSE_TYPE_STOPPED,
+    RESPONSE_TYPE_RECEIVED,
+    RESPONSE_TYPE_SENT,
+    RESPONSE_TYPE_FULL_STOPPED
+} from "../../constants/index";
 
 export default class ExpectantClient extends Client {
 
@@ -65,6 +70,11 @@ export default class ExpectantClient extends Client {
                             this.stop();
                         }
 
+                        break;
+
+                    case RESPONSE_TYPE_FULL_STOPPED:
+                        response.type = RESPONSE_TYPE_FULL_STOPPED;
+                        this.stop();
                         break;
 
                     default:

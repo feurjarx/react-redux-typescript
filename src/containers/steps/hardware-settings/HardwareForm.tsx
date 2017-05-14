@@ -71,9 +71,12 @@ class HardwareForm extends React.Component<any, any> {
                     <TextField
                         defaultValue={defaultValues.name}
                         name={`servers.${idx}.name`}
-                        floatingLabelText="Наименование сервера"
+                        hintText="Наименование сервера"
                         onChange={onTextFieldChange}
                     />
+                    {/*
+                     floatingLabelText="Наименование сервера"
+                     */}
 
                     <InfoSlider
                         label="Доступное пространство"
@@ -97,17 +100,15 @@ class HardwareForm extends React.Component<any, any> {
                         disabled={sliderDisabled}
                     />
 
-                    {/*
-                     <InfoSlider
-                         defaultValue={defaultValues.replicationNumber}
-                         label="Кол-во репликаций"
-                         name={`servers.${idx}.replicationNumber`}
-                         shortSyntax=""
-                         max={3}
-                         step={1}
-                         onChange={onSliderUpdate}
-                     />
-                    */}
+                    <InfoSlider
+                        defaultValue={defaultValues.replicationNumber}
+                        label="Кол-во репликаций"
+                        name={`servers.${idx}.replicationNumber`}
+                        shortSyntax=""
+                        max={3}
+                        step={1}
+                        onChange={onSliderUpdate}
+                    />
 
                     <InfoSlider
                         defaultValue={defaultValues.pDie}

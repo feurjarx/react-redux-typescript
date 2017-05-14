@@ -9,6 +9,7 @@ export default function(inititalState = {}) {
     return Redux.createStore(
         rootReducer,
         inititalState,
-        Redux.applyMiddleware(thunk, logger)
+        // Redux.applyMiddleware(thunk, logger)
+        Redux.applyMiddleware(thunk)
     );
 }

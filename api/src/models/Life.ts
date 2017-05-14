@@ -9,7 +9,7 @@ import {
     RESPONSE_TYPE_STOPPED,
     RESPONSE_TYPE_SENT,
     CHART_TYPE_REQUESTS_DIAGRAM,
-    CHART_TYPE_SLAVES_LOAD
+    CHART_TYPE_SLAVES_LOAD, RESPONSE_TYPE_FULL_STOPPED
 } from "../constants/index";
 
 import {FIELD_TYPE_NUMBER, HDD_ASPECT_RATIO} from "../constants/index";
@@ -87,7 +87,7 @@ export class Life {
                 hRow.id = id;
                 hRow.define(fields);
 
-                const shardingType = sharding.type;
+                const shardingType = sharding.type || 'normal';
                 this.masterServer.setShardingType(shardingType);
                 this.masterServer.save(hRow, sharding);
 
@@ -196,22 +196,31 @@ export class Life {
 
                 statistics.upCompletedClients();
                 if (statistics.isEqualCompletedClients()) {
-                    statistics.unsubscribeFromProp(Statistics.SLAVES_LAST_PROCESSING_TIME_LIST);
-
-                    this.lifeCompleteCallback();
-
-                    GlobalCounter.reset();
-
-                    setTimeout(() => {
-                        this.masterServer.close();
-                        this.active = false;
-                        SocketLogEmitter.instance.emitForce(); // остаток логов на выпуск
-                    }, 5000);
+                    this.gameover();
                 }
 
                 break;
+
+            case RESPONSE_TYPE_FULL_STOPPED:
+                this.gameover();
+                break;
         }
     };
+
+
+    gameover() {
+        this.statistics.unsubscribeFromProp(Statistics.SLAVES_LAST_PROCESSING_TIME_LIST);
+
+        this.lifeCompleteCallback();
+
+        GlobalCounter.reset();
+
+        setTimeout(() => {
+            this.masterServer.close();
+            this.active = false;
+            SocketLogEmitter.instance.emitForce(); // остаток логов на выпуск
+        }, 5000);
+    }
 
     destroy() {
         this.masterServer.close();

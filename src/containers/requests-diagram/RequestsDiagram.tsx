@@ -26,7 +26,7 @@ class RequestsDiagram extends React.Component<any, React.ComponentState> {
             this.dataPoints.push({
                 x: i,
                 y: 0,
-                label: `Регион сервер ${id}`
+                label: `Регион сервер ${id}`,
             });
 
             idxPointByServerIdMap[id] = i;
@@ -58,11 +58,19 @@ class RequestsDiagram extends React.Component<any, React.ComponentState> {
 
         } else if (requestsDiagramNewItem) {
 
-            const {slaveId, requestsCounter} = requestsDiagramNewItem;
+            const {slaveId, requestsCounter, failedCounter} = requestsDiagramNewItem;
             const idx = this.idxPointByServerIdMap[slaveId];
             this.dataPoints[idx].y = requestsCounter;
 
+            this.updateDataPointLabel(this.dataPoints[idx], failedCounter);
+
             this.chart.render();
+        }
+    }
+
+    updateDataPointLabel(chartPoint: ChartDataPoint, failedsNumber: number) {
+        if (failedsNumber) {
+            chartPoint.label = chartPoint.label.split(/\(\[x\]\d+\)/g)[0] + `([x]${failedsNumber})`;
         }
     }
 

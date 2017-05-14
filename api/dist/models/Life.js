@@ -51,15 +51,11 @@ var Life = (function () {
                 case index_1.RESPONSE_TYPE_STOPPED:
                     statistics.upCompletedClients();
                     if (statistics.isEqualCompletedClients()) {
-                        statistics.unsubscribeFromProp(Statistics_1.default.SLAVES_LAST_PROCESSING_TIME_LIST);
-                        _this.lifeCompleteCallback();
-                        GlobalCounter_1.GlobalCounter.reset();
-                        setTimeout(function () {
-                            _this.masterServer.close();
-                            _this.active = false;
-                            SocketLogEmitter_1.default.instance.emitForce(); // остаток логов на выпуск
-                        }, 5000);
+                        _this.gameover();
                     }
+                    break;
+                case index_1.RESPONSE_TYPE_FULL_STOPPED:
+                    _this.gameover();
                     break;
             }
         };
@@ -111,7 +107,7 @@ var Life = (function () {
                 var hRow = new HRow_1.default(rowKey, tableName);
                 hRow.id = id;
                 hRow.define(fields);
-                var shardingType = sharding.type;
+                var shardingType = sharding.type || 'normal';
                 _this.masterServer.setShardingType(shardingType);
                 _this.masterServer.save(hRow, sharding);
                 tableSizeCounter += hRow.getSize();
@@ -150,6 +146,17 @@ var Life = (function () {
         this.statistics.subscribeToProp(Statistics_1.default.SLAVES_LAST_PROCESSING_TIME_LIST, function (data) { return _this.lifeInfoCallback(data, index_1.CHART_TYPE_SLAVES_LOAD); });
     };
     ;
+    Life.prototype.gameover = function () {
+        var _this = this;
+        this.statistics.unsubscribeFromProp(Statistics_1.default.SLAVES_LAST_PROCESSING_TIME_LIST);
+        this.lifeCompleteCallback();
+        GlobalCounter_1.GlobalCounter.reset();
+        setTimeout(function () {
+            _this.masterServer.close();
+            _this.active = false;
+            SocketLogEmitter_1.default.instance.emitForce(); // остаток логов на выпуск
+        }, 5000);
+    };
     Life.prototype.destroy = function () {
         this.masterServer.close();
     };

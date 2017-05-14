@@ -2,7 +2,7 @@ import Server from "../Server";
 import {ServerData, ClientRequestFromMaster, SqlQueryParts, Criteria, HRowSelecting} from "../../../typings/index";
 import HRow from "../HRow";
 import HRegion from "../HRegion";
-import {range, unique} from '../../helpers';
+import {range, unique, random} from '../../helpers';
 import {Subscription} from "rxjs";
 import {IQueue} from "../../services/IQueue";
 import {
@@ -37,7 +37,7 @@ export default class SlaveServer extends Server {
     distanceToMasterKm;
 
     constructor(provider: IQueue, serverData: ServerData) {
-        super(provider);
+        super(provider, serverData);
 
         this.regions = [];
 
@@ -54,6 +54,8 @@ export default class SlaveServer extends Server {
             .map(id => new HRegion(id, this.id, regionMaxSize));
 
         this.regionMaxSize = regionMaxSize;
+
+        this.id = serverData.name;
     };
 
     calcTransferTime() {
@@ -144,7 +146,17 @@ export default class SlaveServer extends Server {
         });
     }
 
+
     read(sqlQueryParts: SqlQueryParts) {
+
+        if (this.hasFailed()) {
+
+            return {
+                processingTime: 0,
+                selectings: [],
+                found: 0
+            };
+        }
 
         let currentSuccessfulCounter = 0;
         let processingTimeCounter = 0;
@@ -290,6 +302,7 @@ export default class SlaveServer extends Server {
                     clientId,
                     slaveId: this.id,
                     requestsCounter: this.requestsCounter,
+                    failedCounter: this.failedCounter,
                     ...this.read(sqlQueryParts)
                 });
             });

@@ -93,12 +93,13 @@ export default class TableForm extends React.Component<any, any> {
                     filter={AutoComplete.noFilter}
                     floatingLabelText="Укажите сервер"
                     dataSource={serversSource}
-                    name={`tables.${idx}.sharding.slaveId`}
+                    name={`tables.${idx}.sharding.serverId`}
                     onUpdateInput={ onAutoCompleteUpdate }
                     searchText={serverId}
                     listStyle={{overflowY: 'auto', maxHeight: 100}}
                 />
             );
+            // name={`tables.${idx}.sharding.slaveId`}
         }
 
         let shardedFieldAutoComplete: JSX.Element;

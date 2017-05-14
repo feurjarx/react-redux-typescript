@@ -59,6 +59,10 @@ var ExpectantClient = (function (_super) {
                         _this.stop();
                     }
                     break;
+                case index_2.RESPONSE_TYPE_FULL_STOPPED:
+                    response.type = index_2.RESPONSE_TYPE_FULL_STOPPED;
+                    _this.stop();
+                    break;
                 default:
                     throw new Error("Unexpected response type from server. Type: " + response.type);
             }

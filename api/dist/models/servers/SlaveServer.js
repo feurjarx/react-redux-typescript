@@ -23,7 +23,7 @@ var global_counter_1 = require("../../constants/global-counter");
 var SlaveServer = (function (_super) {
     __extends(SlaveServer, _super);
     function SlaveServer(provider, serverData) {
-        var _this = _super.call(this, provider) || this;
+        var _this = _super.call(this, provider, serverData) || this;
         _this.rowsKeysByArrowKeyMap = {};
         _this.regionIdByRowKeyMap = {};
         _this.successfulCounter = 0;
@@ -37,7 +37,7 @@ var SlaveServer = (function (_super) {
                 .then(function () {
                 console.log("\u0420\u0435\u0433\u0438\u043E\u043D \u0441\u0435\u0440\u0432\u0435\u0440 #" + _this.id + " \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u043B \u043C\u0430\u0441\u0442\u0435\u0440\u0443 \u043E\u0442\u0432\u0435\u0442 \u043D\u0430 \u0437\u0430\u043F\u0440\u043E\u0441 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId);
                 onMasterReply(__assign({ subKey: subKey,
-                    clientId: clientId, slaveId: _this.id, requestsCounter: _this.requestsCounter }, _this.read(sqlQueryParts)));
+                    clientId: clientId, slaveId: _this.id, requestsCounter: _this.requestsCounter, failedCounter: _this.failedCounter }, _this.read(sqlQueryParts)));
             });
         };
         _this.regions = [];
@@ -51,6 +51,7 @@ var SlaveServer = (function (_super) {
         _this.regions = helpers_1.range(0, maxRegions)
             .map(function (id) { return new HRegion_1.default(id, _this.id, regionMaxSize); });
         _this.regionMaxSize = regionMaxSize;
+        _this.id = serverData.name;
         return _this;
     }
     ;
@@ -126,6 +127,13 @@ var SlaveServer = (function (_super) {
     };
     SlaveServer.prototype.read = function (sqlQueryParts) {
         var _this = this;
+        if (this.hasFailed()) {
+            return {
+                processingTime: 0,
+                selectings: [],
+                found: 0
+            };
+        }
         var currentSuccessfulCounter = 0;
         var processingTimeCounter = 0;
         var selectings = [];

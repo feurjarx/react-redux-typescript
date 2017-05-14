@@ -24,8 +24,8 @@ var RabbitMQ_1 = require("../../services/RabbitMQ");
 var index_2 = require("./behaviors/calculate/index");
 var MasterServer = (function (_super) {
     __extends(MasterServer, _super);
-    function MasterServer(provider) {
-        var _this = _super.call(this, provider) || this;
+    function MasterServer(provider, serverData) {
+        var _this = _super.call(this, provider, serverData) || this;
         _this.subordinates = [];
         _this.vGuideMap = {};
         _this.guideMap = {};
@@ -37,13 +37,14 @@ var MasterServer = (function (_super) {
         if (!serversData.length) {
             return null;
         }
-        var masterServer = new MasterServer(new RabbitMQ_1.default());
+        var masterServerData = serversData.find(function (s) { return s.isMaster; });
+        var masterServer = new MasterServer(new RabbitMQ_1.default(), masterServerData);
         for (var i = 0; i < serversData.length; i++) {
             var serverData = serversData[i];
             if (!serverData.isMaster) {
                 var server = new SlaveServer_1.default(new RabbitMQ_1.default(), serverData);
                 server.calculateBehavior = new index_2.RandomSleepCalculating(500);
-                server.id = serverData.name;
+                // server.id = serverData.name;
                 masterServer.subordinates.push(server);
             }
         }
@@ -174,10 +175,17 @@ var MasterServer = (function (_super) {
         this.clientsSubscription = this.provider
             .consume(queueName, { lazy: lazy })
             .subscribe(function (clientRequest) {
+            var onClientReply = clientRequest.onReply;
+            if (_this.hasFailed()) {
+                console.log('Сбой мастер-сервера и всех его репликаций');
+                onClientReply({
+                    type: constants_1.RESPONSE_TYPE_FULL_STOPPED
+                });
+                return;
+            }
             // clientRequest.onReply({error: 404});
             var processingTimeCounter = 0;
             var clientId = clientRequest.clientId, sqlQueryParts = clientRequest.sqlQueryParts;
-            var onClientReply = clientRequest.onReply;
             console.log("\u041C\u0430\u0441\u0442\u0435\u0440-\u0441\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u0437\u0430\u043F\u0440\u043E\u0441 \u043E\u0442 \u043A\u043B\u0438\u0435\u043D\u0442\u0430 #" + clientId + ": " + sqlQueryParts.raw);
             if (sqlQueryParts.select) {
                 // для простых случае с оператором "=" по словарям
@@ -198,6 +206,7 @@ var MasterServer = (function (_super) {
                         var slavesNames = responses.map(function (it) { return it.slaveId; });
                         var slavesRequestsDiagramData = responses.map(function (it) { return ({
                             requestsCounter: it.requestsCounter,
+                            failedCounter: it.failedCounter,
                             slaveId: it.slaveId
                         }); });
                         var slavesProcessingTimeList = responses.map(function (it) { return it.processingTime; });
