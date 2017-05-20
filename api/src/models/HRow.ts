@@ -22,7 +22,7 @@ export default class HRow {
 
     static getFieldTypeByNameMap(fields: Array<TableField>) {
         let map = {};
-        fields.forEach(f => map[f.name] = f.type)
+        fields.forEach(f => map[f.name] = f.type);
         return map;
     }
 

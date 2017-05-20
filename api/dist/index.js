@@ -37,4 +37,4 @@ exports.run = function () {
     });
     httpServer.listen(socket_io_1.default.port);
 };
-exports.run();
+//run(); 

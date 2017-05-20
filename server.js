@@ -1,6 +1,6 @@
 const express = require('express');
 const webpack = require('webpack');
-// const api = require('./api/dist');
+const api = require('./api/dist');
 
 const webpackDevMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');

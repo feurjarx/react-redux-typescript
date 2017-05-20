@@ -207,7 +207,6 @@ export class Life {
         }
     };
 
-
     gameover() {
         this.statistics.unsubscribeFromProp(Statistics.SLAVES_LAST_PROCESSING_TIME_LIST);
 

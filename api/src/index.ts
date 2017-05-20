@@ -63,4 +63,4 @@ export const run = () => {
     httpServer.listen(ioConfig.port);
 };
 
-run();
+//run();
